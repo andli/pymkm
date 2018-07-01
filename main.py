@@ -7,7 +7,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "0.1.0"
 __license__ = "MIT"
 
-from rauth import OAuth1Service
+from requests_oauthlib import OAuth1Session
 import yaml
 
 
@@ -21,17 +21,15 @@ def main():
     except Exception as error:
         print("You must copy config_template.yml to config.yml and populate the fields.")
 
-    mkmService = OAuth1Service(
-        name='mkm',
-        consumer_key='', 
-        consumer_secret='',
-        request_token_url='', #https://api.twitter.com/oauth/request_token',
-        access_token_url='', #https://api.twitter.com/oauth/access_token',
-        authorize_url='', #https://api.twitter.com/oauth/authorize',
-        base_url='' #https://api.twitter.com/1.1/'
+    mkmService = OAuth1Session(
+        config.app_token,
+        client_secret=config.app_secret,
+        resource_owner_key=config.access_token,
+        resource_owner_secret=config.access_token_secret
         )
-
-    
+    url = 'https://www.mkmapi.eu/ws/v1.1/account'
+    r = mkmService.get(url)
+    print(r)   
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """

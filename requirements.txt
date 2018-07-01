@@ -1,2 +1,2 @@
-rauth=0.7.3
+requests_oauthlib=1.0.0
 pyyaml=3.12
