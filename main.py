@@ -36,7 +36,7 @@ def main():
     r = mkmService.get(url)
     print(r.request.headers)
     print('---')
-    print(r)
+    print(r.content)
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
