@@ -24,6 +24,8 @@ class PyMKM:
             print("You must copy config_template.yml to config.yml and populate the fields.")
             sys.exit(0)
 
+        #TODO: test if config is OK, if not throw exception
+
     def get_account(self):
         url = 'https://www.mkmapi.eu/ws/v1.1/output.json/account'
         if (self.config != None):
@@ -36,4 +38,8 @@ class PyMKM:
             )
 
         r = self.mkmService.get(url)
-        return r
+        if (r.status_code == requests.codes.ok):
+            return r.json()
+        else:
+            return r.code 
+            #TODO: return someting better, throw exception?

@@ -16,7 +16,6 @@ def main():
     api = PyMKM()
     response = api.get_account()
     print(response)
-    print(response.content)
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
