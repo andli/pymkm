@@ -1,2 +1,2 @@
-requests_oauthlib=1.0.0
-pyyaml=3.12
+requests_oauthlib==1.0.0
+pyyaml==3.12
