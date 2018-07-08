@@ -9,13 +9,18 @@ __license__ = "MIT"
 
 from pymkm import PyMKM
 
+
 def main():
     """ Main entry point of the app """
     print(">>> Welcome to a pymkm test app.")
 
     api = PyMKM()
-    response = api.get_account()
-    print(response)
+    try:
+        response = api.get_account()
+        print(response)
+    except ValueError as err:
+        print(err)
+
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
