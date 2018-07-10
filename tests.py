@@ -4,34 +4,48 @@ https://docs.python.org/3/library/unittest.html
 """
 import random
 import unittest
+from unittest.mock import Mock, MagicMock
+import yaml
+from requests_oauthlib import OAuth1Session
+from pymkm import PyMKM
 
 
-class TestSequenceFunctions(unittest.TestCase):
+class TestPyMkmApiCalls(unittest.TestCase):
     """ This is one of potentially many TestCases """
 
+    class MockResponse:
+        def __init__(self, json_data, status_code):
+            self.json_data = json_data
+            self.status_code = status_code
+
+        def json(self):
+            return self.json_data
+
+    api = None
+
     def setUp(self):
-        self.seq = list(range(10))
+        config = yaml.dump(yaml.load(
+            """
+                app_token: 'aaaaa'
+                app_secret: 'bbbbb'
+                access_token: 'ccccccccccc'
+                access_token_secret: 'dddddddddd'
+            """
+        ))
 
-    def test_shuffle(self):
-        """ make sure the shuffled sequence does not lose any elements """
-        random.shuffle(self.seq)
-        self.seq.sort()
-        self.assertEqual(self.seq, list(range(10)))
+        self.api = PyMKM(config)
 
-        # should raise an exception for an immutable sequence
-        self.assertRaises(TypeError, random.shuffle, (1, 2, 3))
+    def test_getAccount(self):
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(return_value=self.MockResponse("", 401))
 
-    def test_choice(self):
-        """ test a choice """
-        element = random.choice(self.seq)
-        self.assertTrue(element in self.seq)
-
-    def test_sample(self):
-        """ test that an exception is raised """
         with self.assertRaises(ValueError):
-            random.sample(self.seq, 20)
-        for element in random.sample(self.seq, 5):
-            self.assertTrue(element in self.seq)
+            self.api.get_account(mockMkmService)
+        mockMkmService.get.assert_called()
+
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse("test", 200))
+        self.assertEqual(self.api.get_account(mockMkmService), "test")
 
 
 if __name__ == '__main__':
