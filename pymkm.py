@@ -29,24 +29,55 @@ class PyMKM:
         else:
             self.config = config
 
-    def get_account(self, mkmService=None):
-        url = 'https://www.mkmapi.eu/ws/v1.1/output.json/account'
-        if (mkmService == None):
-            if (self.config != None):
-                print(">>> Getting account details...")
-                mkmService = OAuth1Session(
-                    self.config['app_token'],
-                    client_secret=self.config['app_secret'],
-                    resource_owner_key=self.config['access_token'],
-                    resource_owner_secret=self.config['access_token_secret'],
-                    realm=url
-                )
-                if (mkmService == None):
-                    raise ConnectionError("Failed to establish OAuth session.")
+    def __handle_errors(self, response):
+        if (response.status_code == requests.codes.ok):
+            return True
+        else:
+            raise ValueError("Error: Response status code "+str(response.status_code))
 
+    def __setup_service(self, url, mkmService):
+        if (self.config != None):
+            mkmService = OAuth1Session(
+                self.config['app_token'],
+                client_secret=self.config['app_secret'],
+                resource_owner_key=self.config['access_token'],
+                resource_owner_secret=self.config['access_token_secret'],
+                realm=url
+            )
+            if (mkmService == None):
+                raise ConnectionError("Failed to establish OAuth session.")
+        return mkmService
+
+    def get_account(self, mkmService=None):
+        url = 'https://api.cardmarket.com/ws/v1.1/output.json/account'
+        if (mkmService == None):
+            mkmService = self.__setup_service(url, mkmService)
+
+        print(">>> Getting account details...")
         r = mkmService.get(url)
 
-        if (r.status_code == requests.codes.ok):
+        if (self.__handle_errors(r)):
             return r.json()
-        else:
-            raise ValueError("Error: HTTP "+str(r.status_code))
+
+    def set_vacation_status(self, vacation_status=False, mkmService=None):
+        url = 'https://api.cardmarket.com/ws/v1.1/output.json/account/vacation'
+        if (mkmService == None):
+            mkmService = self.__setup_service(url, mkmService)
+
+        print(">>> Setting vacation status to: " + str(vacation_status))
+        r = mkmService.get(url + '/' + str(vacation_status).lower())
+
+        if (self.__handle_errors(r)):
+            return r.json()
+    
+    def set_display_language(self, display_langauge=1, mkmService=None):
+        """ 1: English, 2: French, 3: German, 4: Spanish, 5: Italian """
+        url = 'https://api.cardmarket.com/ws/v1.1/output.json/account/language'
+        if (mkmService == None):
+            mkmService = self.__setup_service(url, mkmService)
+
+        print(">>> Setting display language to: " + str(display_langauge))
+        r = mkmService.get(url + '/' + str(display_langauge).lower())
+
+        if (self.__handle_errors(r)):
+            return r.json()

@@ -1,6 +1,5 @@
 """
-This file demonstrates common uses for the Python unittest module
-https://docs.python.org/3/library/unittest.html
+Python unittest
 """
 import random
 import unittest
