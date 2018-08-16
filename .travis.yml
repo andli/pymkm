@@ -3,7 +3,10 @@ language: python
 virtualenv:
   system_site_packages: true
 python:
+  - '3.4'
   - '3.6'
 install:
   - pip install -r requirements.txt
-script: python tests.py
+  - pip install coverage
+script: coverage run python -m unittest
+after_success: coverage report
