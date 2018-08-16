@@ -16,8 +16,8 @@ def main():
 
     api = PyMKM()
     try:
-        #response = api.get_account()
-        #print(response)
+        response = api.get_games()
+        print(response)
         #response = api.set_display_language(2)
         #print(response)
         response = api.set_vacation_status(True)

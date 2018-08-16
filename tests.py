@@ -13,9 +13,10 @@ class TestPyMkmApiCalls(unittest.TestCase):
     """ This is one of potentially many TestCases """
 
     class MockResponse:
-        def __init__(self, json_data, status_code):
+        def __init__(self, json_data, status_code, content):
             self.json_data = json_data
             self.status_code = status_code
+            self.content = content
 
         def json(self):
             return self.json_data
@@ -36,14 +37,14 @@ class TestPyMkmApiCalls(unittest.TestCase):
 
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(return_value=self.MockResponse("", 401))
+        mockMkmService.get = MagicMock(return_value=self.MockResponse("", 401, 'testing error'))
 
         with self.assertRaises(ValueError):
             self.api.get_account(mockMkmService)
         mockMkmService.get.assert_called()
 
         mockMkmService.get = MagicMock(
-            return_value=self.MockResponse("test", 200))
+            return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mockMkmService), "test")
 
 
