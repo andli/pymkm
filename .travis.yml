@@ -6,5 +6,5 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install coverage
-script: coverage run --include=./*.py .\tests.py
+script: coverage run --include=pymkm.py .\tests.py
 after_success: coverage report
