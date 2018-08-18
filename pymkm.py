@@ -78,18 +78,18 @@ class PyMKM:
         mkmOAuth = self.__setup_service(url, mkmOAuth)
 
         print(">>> Setting vacation status to: " + str(vacation_status))
-        r = mkmOAuth.put(url) #, data={'isOnVacation': str(vacation_status).lower()})
-
+        r = mkmOAuth.put(url) 
+        
         if (self.__handle_errors(r)):
             return r.json()
 
-    """ def set_display_language(self, display_langauge=1, mkmService=None):
+    def set_display_language(self, display_langauge=1, mkmOAuth=None):
         ### 1: English, 2: French, 3: German, 4: Spanish, 5: Italian
-        url = self.base_url + '/account/language'
-        mkmService = self.__setup_service(url, mkmService)
+        url = self.base_url + '/account/language/'+ str(display_langauge).lower()
+        mkmOAuth = self.__setup_service(url, mkmOAuth)
 
         print(">>> Setting display language to: " + str(display_langauge))
-        r = requests.get(url + '/' + str(display_langauge).lower())
+        r = mkmOAuth.put(url)
 
         if (self.__handle_errors(r)):
-            return r.json() """
+            return r.json()
