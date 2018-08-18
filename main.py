@@ -17,9 +17,14 @@ def main():
     api = PyMKM()
     try:
         #response = api.get_games()
-        response = api.set_display_language(1)
+        #response = api.set_display_language(1)
         #response = api.set_vacation_status(False)
-        #print(response)
+        #response = api.get_shoppingcart_articles()
+        response = api.get_stock()
+        print(len(response['article']))
+        """for art in response['article']:
+            print(art)
+            """
     except ValueError as err:
         print(err)
 
