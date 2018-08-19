@@ -8,6 +8,7 @@ __version__ = "0.1.0"
 __license__ = "MIT"
 
 import sys
+import re
 import requests
 from requests_oauthlib import OAuth1Session
 import json
@@ -30,11 +31,14 @@ class PyMKM:
         else:
             self.config = config
 
-    def __handle_errors(self, response):
-        if (response.status_code == requests.codes.ok):
+    def __handle_response(self, response):
+        handled_codes = (
+            requests.codes.ok,
+            requests.codes.no_content,
+            requests.codes.partial_content,
+        )
+        if (response.status_code in handled_codes):
             return True
-        elif (response.status_code == requests.codes.partial_content):
-            return True #TODO: handle 206 better
         else:
             raise ValueError("Error: Response status code {}: {}".format(
                 str(response.status_code), str(response.content)))
@@ -62,7 +66,7 @@ class PyMKM:
         print(">> Getting all games...")
         r = mkmOAuth.get(url)
 
-        if (self.__handle_errors(r)):
+        if (self.__handle_response(r)):
             return r.json()
 
     def get_account(self, mkmOAuth=None):
@@ -72,7 +76,7 @@ class PyMKM:
         print(">> Getting account details...")
         r = mkmOAuth.get(url)
 
-        if (self.__handle_errors(r)):
+        if (self.__handle_response(r)):
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, mkmOAuth=None):
@@ -83,7 +87,7 @@ class PyMKM:
         print(">> Setting vacation status to: " + str(vacation_status))
         r = mkmOAuth.put(url)
 
-        if (self.__handle_errors(r)):
+        if (self.__handle_response(r)):
             return r.json()
 
     def set_display_language(self, display_langauge=1, mkmOAuth=None):
@@ -95,7 +99,7 @@ class PyMKM:
         print(">> Setting display language to: " + str(display_langauge))
         r = mkmOAuth.put(url)
 
-        if (self.__handle_errors(r)):
+        if (self.__handle_response(r)):
             return r.json()
 
     def get_stock(self, start=None, mkmOAuth=None):
@@ -107,15 +111,37 @@ class PyMKM:
         print(">> Getting stock...")
         r = mkmOAuth.get(url)
 
-        if (self.__handle_errors(r)):
-            return r.json()
+        max_items = self.__get_max_items_from_header(r)  
+
+        if (r.status_code == requests.codes.no_content or start > max_items):
+            # terminate
+            print("STOP")
+            return []
+        elif (r.status_code == requests.codes.partial_content):
+            print('> ' + r.headers['Content-Range'])
+            articles = r.json()['article']
+            return articles.extend(self.get_stock(start+100))
+        
+        # if (self.__handle_response(r)):
+            # return r.json()
+
+    def __get_max_items_from_header(self, r):
+        max_items=0
+        try:
+            max_items=int(
+                re.search('\/(\d+)', r.headers['Content-Range']).group(1))
+        except AttributeError:
+            # AAA, ZZZ not found in the original string
+            found=''  # apply your error handling
+        return max_items
+
 
     def get_shoppingcart_articles(self, mkmOAuth=None):
-        url = self.base_url + '/stock/shoppingcart-articles'
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        url=self.base_url + '/stock/shoppingcart-articles'
+        mkmOAuth=self.__setup_service(url, mkmOAuth)
 
         print(">> Getting articles in other users' shopping carts...")
-        r = mkmOAuth.get(url)
+        r=mkmOAuth.get(url)
 
-        if (self.__handle_errors(r)):
+        if (self.__handle_response(r)):
             return r.json()
