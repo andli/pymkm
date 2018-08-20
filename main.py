@@ -22,11 +22,12 @@ def main():
         #print(api.set_display_language(1))
         #print(api.set_vacation_status(False))
         #print(api.get_articles_in_shoppingcarts())
-        print('# items: ' + str(len(api.get_stock(1))))
+        #print('# items: ' + str(len(api.get_stock(1))))
         #print(api.get_expansions(1)['expansion'][52]['idExpansion'])
         #print(str(len(api.get_cards_in_expansion(1599)['expansion'])))
         #with open('data.json', 'w') as outfile:
         #   json.dump(api.get_cards_in_expansion(1599), outfile)
+        print(api.get_product(272464))
     except ValueError as err:
         print(err)
 

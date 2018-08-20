@@ -99,6 +99,16 @@ class PyMKM:
 
         if (self.__handle_response(r)):
             return r.json()
+    
+    def get_product(self, product_id, mkm_oauth=None):
+        url = '{}/products/{}'.format(self.base_url, str(product_id))
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
+
+        print(">> Getting all expansions for game id " + str(product_id))
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
 
     def get_account(self, mkm_oauth=None):
         url = '{}/account'.format(self.base_url)
@@ -157,7 +167,6 @@ class PyMKM:
 
         max_items = self.__get_max_items_from_header(r)
 
-        print("status code " + str(r.status_code))
         if (start > max_items or r.status_code == requests.codes.no_content):
             # terminate recursion
             """ NOTE: funny thing is, even though the API talks about it, 
@@ -167,7 +176,7 @@ class PyMKM:
 
         if (r.status_code == requests.codes.partial_content):
             print('> ' + r.headers['Content-Range'])
-            print('# articles in response: ' + str(len(r.json()['article'])))
+            #print('# articles in response: ' + str(len(r.json()['article'])))
             return r.json()['article'] + self.get_stock(start+100)
 
         if (self.__handle_response(r)):
