@@ -10,9 +10,9 @@ __license__ = "MIT"
 import sys
 import re
 import requests
-from requests_oauthlib import OAuth1Session
 import json
-
+from requests_oauthlib import OAuth1Session
+import urllib.parse
 
 class PyMKM:
     config = None
@@ -84,6 +84,18 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Getting all expansions for game id " + str(game_id))
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    def get_cards_in_expansion(self, game_id, expansion_name, mkm_oauth=None):
+        # Response: Expansion with Product objects
+        encoded_expansion_name = urllib.parse.quote(expansion_name)
+        url = '{}/expansion/{}/{}'.format(self.base_url, str(game_id), encoded_expansion_name) 
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
+
+        print(">> Getting all cards for expansion: " + expansion_name)
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):

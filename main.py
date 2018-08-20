@@ -22,8 +22,8 @@ def main():
         #response = api.get_articles_in_shoppingcarts()
         #response = api.get_stock(1)
         # print('# items: ' + str(len(response)))
-        print(api.get_expansions(1))
-
+        #print(api.get_expansions(1)['expansion'][52]['name'])
+        print(api.get_cards_in_expansion(1, api.get_expansions(1)['expansion'][52]['name']))
     except ValueError as err:
         print(err)
 

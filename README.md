@@ -16,3 +16,4 @@ These calls are implemented so far. They are not fully tested with different edg
 * `get_articles_in_shoppingcarts`
 * `get_stock`
 * `get_expansions`
+* `get_cards_in_expansion`
