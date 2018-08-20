@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Module Docstring
+This is the main module responsible for calling the cardmarket.com API and returning JSON responses.
 """
 
 __author__ = "Andreas Ehrlund"

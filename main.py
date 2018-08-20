@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Module Docstring
+This is a test program for showcasing the PyMKM module.
 """
 
 __author__ = "Andreas Ehrlund"
