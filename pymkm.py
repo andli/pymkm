@@ -89,7 +89,7 @@ class PyMKM:
         if (self.__handle_response(r)):
             return r.json()
 
-    def get_shoppingcart_articles(self, mkmOAuth=None):
+    def get_articles_in_shoppingcarts(self, mkmOAuth=None):
         url = self.base_url + '/stock/shoppingcart-articles'
         mkmOAuth = self.__setup_service(url, mkmOAuth)
 

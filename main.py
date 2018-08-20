@@ -19,7 +19,7 @@ def main():
         #response = api.get_games()
         #response = api.set_display_language(1)
         #response = api.set_vacation_status(False)
-        #response = api.get_shoppingcart_articles()
+        #response = api.get_articles_in_shoppingcarts()
         response = api.get_stock(1)
         print('# items: ' + str(len(response)))
 
