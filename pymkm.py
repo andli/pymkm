@@ -157,8 +157,12 @@ class PyMKM:
 
         max_items = self.__get_max_items_from_header(r)
 
+        print("status code " + str(r.status_code))
         if (start > max_items or r.status_code == requests.codes.no_content):
             # terminate recursion
+            """ NOTE: funny thing is, even though the API talks about it, 
+            it never responds with 204 (no_content). Therefore we check for 
+            exceeding content-range instead."""
             return []
 
         if (r.status_code == requests.codes.partial_content):
