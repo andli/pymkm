@@ -7,7 +7,7 @@ Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/docume
 1. Install requirements using `pip install -r requirements.txt`
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
 
-## Supported calls
+## supported calls
 These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
 * `get_games`
 * `get_account`
@@ -15,3 +15,4 @@ These calls are implemented so far. They are not fully tested with different edg
 * `set_display_language`
 * `get_articles_in_shoppingcarts`
 * `get_stock`
+* `get_expansions`

@@ -20,7 +20,7 @@ class PyMKM:
 
     def __init__(self, config=None):
         if (config == None):
-            print(">> Loading config file...")
+            print(">> Loading config file")
             try:
                 self.config = json.load(open('config.json'))
             except Exception as error:
@@ -69,67 +69,77 @@ class PyMKM:
             found = ''  # apply your error handling
         return max_items
 
-    def get_games(self, mkmOAuth=None):
+    def get_games(self, mkm_oauth=None):
         url = self.base_url + '/games'
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all games...")
-        r = mkmOAuth.get(url)
+        print(">> Getting all games")
+        r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
-    def get_account(self, mkmOAuth=None):
+    def get_expansions(self, game_id, mkm_oauth=None):
+        url = self.base_url + '/expansion/' + str(game_id)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
+
+        print(">> Getting all expansions for game id " + str(game_id))
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    def get_account(self, mkm_oauth=None):
         url = self.base_url + '/account'
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting account details...")
-        r = mkmOAuth.get(url)
+        print(">> Getting account details")
+        r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
-    def get_articles_in_shoppingcarts(self, mkmOAuth=None):
+    def get_articles_in_shoppingcarts(self, mkm_oauth=None):
         url = self.base_url + '/stock/shoppingcart-articles'
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting articles in other users' shopping carts...")
-        r = mkmOAuth.get(url)
+        print(">> Getting articles in other users' shopping carts")
+        r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
-    def set_vacation_status(self, vacation_status=False, mkmOAuth=None):
+    def set_vacation_status(self, vacation_status=False, mkm_oauth=None):
         url = self.base_url + '/account/vacation/' + \
             str(vacation_status).lower()
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Setting vacation status to: " + str(vacation_status))
-        r = mkmOAuth.put(url)
+        r = mkm_oauth.put(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
-    def set_display_language(self, display_langauge=1, mkmOAuth=None):
+    def set_display_language(self, display_langauge=1, mkm_oauth=None):
         # 1: English, 2: French, 3: German, 4: Spanish, 5: Italian
         url = self.base_url + '/account/language/' + \
             str(display_langauge).lower()
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Setting display language to: " + str(display_langauge))
-        r = mkmOAuth.put(url)
+        r = mkm_oauth.put(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
-    def get_stock(self, start=None, mkmOAuth=None):
+    def get_stock(self, start=None, mkm_oauth=None):
         url = self.base_url + '/stock'
         if (start):
             url = url + '/' + str(start)
-        mkmOAuth = self.__setup_service(url, mkmOAuth)
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting stock...")
-        r = mkmOAuth.get(url)
+        print(">> Getting stock")
+        r = mkm_oauth.get(url)
 
         max_items = self.__get_max_items_from_header(r)
 
@@ -137,11 +147,11 @@ class PyMKM:
             # terminate recursion
             print("STOP")
             return []
-        
+
         if (r.status_code == requests.codes.partial_content):
             print('> ' + r.headers['Content-Range'])
             print('# articles in response: ' + str(len(r.json()['article'])))
             return r.json()['article'] + self.get_stock(start+100)
-        
+
         if (self.__handle_response(r)):
-                return r.json()
+            return r.json()
