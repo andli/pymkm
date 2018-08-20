@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm)
 
 # pymkm
-Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_1.1:Main_Page) (version 1.1, which is OAuth1).
+Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_1.1:Main_Page) (version 1.1, which uses OAuth1).
 
 ## how?
 1. Install requirements using `pip install -r requirements.txt`
