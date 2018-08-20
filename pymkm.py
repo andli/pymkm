@@ -165,19 +165,20 @@ class PyMKM:
         print(">> Getting stock")
         r = mkm_oauth.get(url)
 
-        max_items = self.__get_max_items_from_header(r)
+        if (start is not None):
+            max_items = self.__get_max_items_from_header(r)
 
-        if (start > max_items or r.status_code == requests.codes.no_content):
-            # terminate recursion
-            """ NOTE: funny thing is, even though the API talks about it, 
-            it never responds with 204 (no_content). Therefore we check for 
-            exceeding content-range instead."""
-            return []
+            if (start > max_items or r.status_code == requests.codes.no_content):
+                # terminate recursion
+                """ NOTE: funny thing is, even though the API talks about it, 
+                it never responds with 204 (no_content). Therefore we check for 
+                exceeding content-range instead."""
+                return []
 
-        if (r.status_code == requests.codes.partial_content):
-            print('> ' + r.headers['Content-Range'])
-            #print('# articles in response: ' + str(len(r.json()['article'])))
-            return r.json()['article'] + self.get_stock(start+100)
+            if (r.status_code == requests.codes.partial_content):
+                print('> ' + r.headers['Content-Range'])
+                #print('# articles in response: ' + str(len(r.json()['article'])))
+                return r.json()['article'] + self.get_stock(start+100)
 
         if (self.__handle_response(r)):
             return r.json()
