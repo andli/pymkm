@@ -1,4 +1,5 @@
 __pycache__/
 .vscode/
 config.json
+data.json
 .coverage

@@ -4,7 +4,7 @@ Module Docstring
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __license__ = "MIT"
 
 import sys
@@ -12,11 +12,11 @@ import re
 import requests
 import json
 from requests_oauthlib import OAuth1Session
-import urllib.parse
+
 
 class PyMKM:
     config = None
-    base_url = 'https://api.cardmarket.com/ws/v1.1/output.json'
+    base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
 
     def __init__(self, config=None):
         if (config == None):
@@ -70,7 +70,7 @@ class PyMKM:
         return max_items
 
     def get_games(self, mkm_oauth=None):
-        url = self.base_url + '/games'
+        url = '{}/games'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Getting all games")
@@ -80,7 +80,7 @@ class PyMKM:
             return r.json()
 
     def get_expansions(self, game_id, mkm_oauth=None):
-        url = self.base_url + '/expansion/' + str(game_id)
+        url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Getting all expansions for game id " + str(game_id))
@@ -89,20 +89,19 @@ class PyMKM:
         if (self.__handle_response(r)):
             return r.json()
 
-    def get_cards_in_expansion(self, game_id, expansion_name, mkm_oauth=None):
+    def get_cards_in_expansion(self, expansion_id, mkm_oauth=None):
         # Response: Expansion with Product objects
-        encoded_expansion_name = urllib.parse.quote(expansion_name)
-        url = '{}/expansion/{}/{}'.format(self.base_url, str(game_id), encoded_expansion_name) 
+        url = '{}/expansions/{}/singles'.format(self.base_url, expansion_id)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all cards for expansion: " + expansion_name)
+        print(">> Getting all cards for expansion id: " + str(expansion_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
             return r.json()
 
     def get_account(self, mkm_oauth=None):
-        url = self.base_url + '/account'
+        url = '{}/account'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Getting account details")
@@ -112,7 +111,7 @@ class PyMKM:
             return r.json()
 
     def get_articles_in_shoppingcarts(self, mkm_oauth=None):
-        url = self.base_url + '/stock/shoppingcart-articles'
+        url = '{}/stock/shoppingcart-articles'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Getting articles in other users' shopping carts")
@@ -122,30 +121,33 @@ class PyMKM:
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, mkm_oauth=None):
-        url = self.base_url + '/account/vacation/' + \
-            str(vacation_status).lower()
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Account_Vacation
+        url = '{}/account/vacation'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Setting vacation status to: " + str(vacation_status))
-        r = mkm_oauth.put(url)
+        r = mkm_oauth.put(
+            url, params={'onVacation': str(vacation_status).lower()})
+        # cancelOrders
+        # relistItems
 
         if (self.__handle_response(r)):
             return r.json()
 
     def set_display_language(self, display_langauge=1, mkm_oauth=None):
         # 1: English, 2: French, 3: German, 4: Spanish, 5: Italian
-        url = self.base_url + '/account/language/' + \
-            str(display_langauge).lower()
+        url = '{}/account/language'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         print(">> Setting display language to: " + str(display_langauge))
-        r = mkm_oauth.put(url)
+        r = mkm_oauth.put(url, params={'idDisplayLanguage': display_langauge})
 
         if (self.__handle_response(r)):
             return r.json()
 
     def get_stock(self, start=None, mkm_oauth=None):
-        url = self.base_url + '/stock'
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        url = '{}/stock'.format(self.base_url)
         if (start):
             url = url + '/' + str(start)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
@@ -157,7 +159,6 @@ class PyMKM:
 
         if (start > max_items or r.status_code == requests.codes.no_content):
             # terminate recursion
-            print("STOP")
             return []
 
         if (r.status_code == requests.codes.partial_content):
