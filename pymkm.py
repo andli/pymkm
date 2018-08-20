@@ -59,6 +59,16 @@ class PyMKM:
 
         return oauth
 
+    def __get_max_items_from_header(self, r):
+        max_items = 0
+        try:
+            max_items = int(
+                re.search('\/(\d+)', r.headers['Content-Range']).group(1))
+        except AttributeError:
+            # AAA, ZZZ not found in the original string
+            found = ''  # apply your error handling
+        return max_items
+
     def get_games(self, mkmOAuth=None):
         url = self.base_url + '/games'
         mkmOAuth = self.__setup_service(url, mkmOAuth)
@@ -74,6 +84,16 @@ class PyMKM:
         mkmOAuth = self.__setup_service(url, mkmOAuth)
 
         print(">> Getting account details...")
+        r = mkmOAuth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    def get_shoppingcart_articles(self, mkmOAuth=None):
+        url = self.base_url + '/stock/shoppingcart-articles'
+        mkmOAuth = self.__setup_service(url, mkmOAuth)
+
+        print(">> Getting articles in other users' shopping carts...")
         r = mkmOAuth.get(url)
 
         if (self.__handle_response(r)):
@@ -111,37 +131,17 @@ class PyMKM:
         print(">> Getting stock...")
         r = mkmOAuth.get(url)
 
-        max_items = self.__get_max_items_from_header(r)  
+        max_items = self.__get_max_items_from_header(r)
 
-        if (r.status_code == requests.codes.no_content or start > max_items):
-            # terminate
+        if (start > max_items or r.status_code == requests.codes.no_content):
+            # terminate recursion
             print("STOP")
             return []
-        elif (r.status_code == requests.codes.partial_content):
-            print('> ' + r.headers['Content-Range'])
-            articles = r.json()['article']
-            return articles.extend(self.get_stock(start+100))
         
-        # if (self.__handle_response(r)):
-            # return r.json()
-
-    def __get_max_items_from_header(self, r):
-        max_items=0
-        try:
-            max_items=int(
-                re.search('\/(\d+)', r.headers['Content-Range']).group(1))
-        except AttributeError:
-            # AAA, ZZZ not found in the original string
-            found=''  # apply your error handling
-        return max_items
-
-
-    def get_shoppingcart_articles(self, mkmOAuth=None):
-        url=self.base_url + '/stock/shoppingcart-articles'
-        mkmOAuth=self.__setup_service(url, mkmOAuth)
-
-        print(">> Getting articles in other users' shopping carts...")
-        r=mkmOAuth.get(url)
-
+        if (r.status_code == requests.codes.partial_content):
+            print('> ' + r.headers['Content-Range'])
+            print('# articles in response: ' + str(len(r.json()['article'])))
+            return r.json()['article'] + self.get_stock(start+100)
+        
         if (self.__handle_response(r)):
-            return r.json()
+                return r.json()
