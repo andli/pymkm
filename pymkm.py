@@ -104,7 +104,7 @@ class PyMKM:
         url = '{}/products/{}'.format(self.base_url, str(product_id))
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all expansions for game id " + str(product_id))
+        print(">> Getting data for product id " + str(product_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):

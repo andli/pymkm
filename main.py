@@ -17,6 +17,7 @@ def main():
 
     api = PyMKM()
     try:
+        print('>>> Testing api methods...')
         # print(api.get_account())
         # print(api.get_games())
         # print(api.set_display_language(1))
@@ -30,14 +31,31 @@ def main():
         # print(api.get_product(272464))
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
-        
-        d = api.get_stock()['article']
-        keys = ['idArticle', 'idProduct', 'price']
-        dd = [{x:y for x,y in art.items() if x in keys} for art in d]
-        print(dd)
 
+        
     except ValueError as err:
         print(err)
+    
+    __update_stock_prices_to_trend(api)
+
+def __update_stock_prices_to_trend(api):
+    try:
+        d = api.get_stock()['article']
+    except ValueError as err:
+        print(err)
+
+    keys = ['idArticle', 'idProduct', 'price', 'isFoil']
+    stock_list = [{x:y for x,y in art.items() if x in keys} for art in d]
+
+    for article in stock_list:
+        if not article['isFoil']:
+            r = api.get_product(article['idProduct'])
+            article.update({'newPrice': r['product']['priceGuide']['TREND']})
+            print(article)
+        break
+
+
+    #print(stock_list)
 
 
 if __name__ == "__main__":
