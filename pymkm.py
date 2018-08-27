@@ -7,7 +7,8 @@ __author__ = "Andreas Ehrlund"
 __version__ = "0.2.0"
 __license__ = "MIT"
 
-import sys, logging
+import sys
+import logging
 import re
 import requests
 import json
@@ -41,8 +42,7 @@ class PyMKM:
         if (response.status_code in handled_codes):
             return True
         else:
-            raise ValueError("Error: Response status code {}: {}".format(
-                str(response.status_code), str(response.content)))
+            raise exceptions.ConnectionError(response)
 
     def __setup_service(self, url, oauth):
         if (oauth == None):
@@ -95,12 +95,13 @@ class PyMKM:
         url = '{}/expansions/{}/singles'.format(self.base_url, expansion_id)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        logging.debug(">> Getting all cards for expansion id: " + str(expansion_id))
+        logging.debug(
+            ">> Getting all cards for expansion id: " + str(expansion_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
             return r.json()
-    
+
     def get_product(self, product_id, mkm_oauth=None):
         url = '{}/products/{}'.format(self.base_url, str(product_id))
         mkm_oauth = self.__setup_service(url, mkm_oauth)
@@ -150,7 +151,8 @@ class PyMKM:
         url = '{}/account/language'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        logging.debug(">> Setting display language to: " + str(display_langauge))
+        logging.debug(">> Setting display language to: " +
+                      str(display_langauge))
         r = mkm_oauth.put(url, params={'idDisplayLanguage': display_langauge})
 
         if (self.__handle_response(r)):
@@ -178,8 +180,25 @@ class PyMKM:
 
             if (r.status_code == requests.codes.partial_content):
                 print('> ' + r.headers['Content-Range'])
-                #print('# articles in response: ' + str(len(r.json()['article'])))
+                # print('# articles in response: ' + str(len(r.json()['article'])))
                 return r.json()['article'] + self.get_stock(start+100)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    def set_stock(self, payload=None, mkm_oauth=None):
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        url = '{}/stock'.format(self.base_url)
+
+        mkm_oauth = self.__setup_service(url, mkm_oauth)
+
+        logging.debug(">> Updating stock")
+        #HACK: from file
+#        with open('data.json') as f:
+#            payload = json.load(f)
+        with open('data.xml', 'r') as f:
+            payload = f.read()
+        r = mkm_oauth.put(url, data=payload)
 
         if (self.__handle_response(r)):
             return r.json()

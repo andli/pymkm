@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<request>
+    <article>
+        <idArticle>350551150</idArticle>
+        <price>3</price>
+    </article>
+    <article>
+        <idArticle>350551206</idArticle>
+        <price>3</price>
+    </article>
+</request>
