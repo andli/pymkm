@@ -2,7 +2,8 @@
 <request>
     <article>
         <idArticle>350551150</idArticle>
-        <price>3</price>
+        <count>1</count>
+        <price>0.66</price>
     </article>
     <article>
         <idArticle>350551206</idArticle>
