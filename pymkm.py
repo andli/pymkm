@@ -7,7 +7,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "0.2.0"
 __license__ = "MIT"
 
-import sys
+import sys, logging
 import re
 import requests
 import json
@@ -15,12 +15,13 @@ from requests_oauthlib import OAuth1Session
 
 
 class PyMKM:
+    logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
 
     def __init__(self, config=None):
         if (config == None):
-            print(">> Loading config file")
+            logging.debug(">> Loading config file")
             try:
                 self.config = json.load(open('config.json'))
             except Exception as error:
@@ -73,7 +74,7 @@ class PyMKM:
         url = '{}/games'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all games")
+        logging.debug(">> Getting all games")
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -83,7 +84,7 @@ class PyMKM:
         url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all expansions for game id " + str(game_id))
+        logging.debug(">> Getting all expansions for game id " + str(game_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -94,7 +95,7 @@ class PyMKM:
         url = '{}/expansions/{}/singles'.format(self.base_url, expansion_id)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting all cards for expansion id: " + str(expansion_id))
+        logging.debug(">> Getting all cards for expansion id: " + str(expansion_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -104,7 +105,7 @@ class PyMKM:
         url = '{}/products/{}'.format(self.base_url, str(product_id))
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting data for product id " + str(product_id))
+        logging.debug(">> Getting data for product id " + str(product_id))
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -114,7 +115,7 @@ class PyMKM:
         url = '{}/account'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting account details")
+        logging.debug(">> Getting account details")
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -124,7 +125,7 @@ class PyMKM:
         url = '{}/stock/shoppingcart-articles'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting articles in other users' shopping carts")
+        logging.debug(">> Getting articles in other users' shopping carts")
         r = mkm_oauth.get(url)
 
         if (self.__handle_response(r)):
@@ -135,7 +136,7 @@ class PyMKM:
         url = '{}/account/vacation'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Setting vacation status to: " + str(vacation_status))
+        logging.debug(">> Setting vacation status to: " + str(vacation_status))
         r = mkm_oauth.put(
             url, params={'onVacation': str(vacation_status).lower()})
         # cancelOrders
@@ -149,7 +150,7 @@ class PyMKM:
         url = '{}/account/language'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Setting display language to: " + str(display_langauge))
+        logging.debug(">> Setting display language to: " + str(display_langauge))
         r = mkm_oauth.put(url, params={'idDisplayLanguage': display_langauge})
 
         if (self.__handle_response(r)):
@@ -162,7 +163,7 @@ class PyMKM:
             url = url + '/' + str(start)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        print(">> Getting stock")
+        logging.debug(">> Getting stock")
         r = mkm_oauth.get(url)
 
         if (start is not None):

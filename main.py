@@ -9,11 +9,12 @@ __license__ = "MIT"
 
 from pymkm import PyMKM
 import json
+import tableprint as tp
 
 
 def main():
     """ Main entry point of the app """
-    print(">>> Welcome to a pymkm test app.")
+    tp.banner("Welcome to the pymkm test app!")
 
     api = PyMKM()
     try:
@@ -39,24 +40,36 @@ def main():
     __update_stock_prices_to_trend(api)
 
 def __update_stock_prices_to_trend(api):
+    ''' This function updates all prices in the user's stock to TREND. '''
     try:
         d = api.get_stock()['article']
     except ValueError as err:
         print(err)
 
-    keys = ['idArticle', 'idProduct', 'price', 'isFoil']
+    keys = ['idArticle', 'idProduct', 'product', 'price', 'isFoil']
     stock_list = [{x:y for x,y in art.items() if x in keys} for art in d]
 
+    total_price_diff = 0
+    index = 0
     for article in stock_list:
         if not article['isFoil']:
             r = api.get_product(article['idProduct'])
             article.update({'newPrice': r['product']['priceGuide']['TREND']})
-            print(article)
-        break
+            price_diff = article['newPrice'] - article['price']
+            total_price_diff += price_diff
+            print('{}: {:.2f}'.format(article['product']['enName'], price_diff))
+            index += 1
+        if index == 20:
+            break
 
+    print(str(round(total_price_diff, 2)))
+    with open('data.json', 'w') as outfile:
+        json.dump(stock_list, outfile)
+    #TODO: ask user if they want to set new prices, give list of top changes
 
-    #print(stock_list)
-
+def __get_top_10_expensive_articles_in_stock(api):
+    #TODO: use a fancy list printing lib to output the list
+    return None
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
