@@ -49,6 +49,7 @@ def __update_stock_prices_to_trend(api):
     keys = ['idArticle', 'idProduct', 'product', 'price', 'isFoil']
     stock_list = [{x:y for x,y in art.items() if x in keys} for art in d]
 
+    updated_articles = []
     total_price_diff = 0
     index = 0
     for article in stock_list:
@@ -57,7 +58,7 @@ def __update_stock_prices_to_trend(api):
             article.update({'newPrice': r['product']['priceGuide']['TREND']})
             price_diff = article['newPrice'] - article['price']
             total_price_diff += price_diff
-            print('{}: {:.2f}'.format(article['product']['enName'], price_diff))
+            updated_articles.append([article['product']['enName'], article['price'], article['newPrice'], price_diff])
             index += 1
         if index == 20:
             break
@@ -65,6 +66,7 @@ def __update_stock_prices_to_trend(api):
     print(str(round(total_price_diff, 2)))
     with open('data.json', 'w') as outfile:
         json.dump(stock_list, outfile)
+    tp.table(sorted(updated_articles, key=lambda x: x[3], reverse=True), ['Name','Old price', 'New price', 'Diff (sorted)'], width=28)
     #TODO: ask user if they want to set new prices, give list of top changes
 
 def __get_top_10_expensive_articles_in_stock(api):
