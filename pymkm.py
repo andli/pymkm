@@ -42,7 +42,7 @@ class PyMKM:
         if (response.status_code in handled_codes):
             return True
         else:
-            raise exceptions.ConnectionError(response)
+            raise requests.exceptions.ConnectionError(response)
 
     def __setup_service(self, url, oauth):
         if (oauth == None):
