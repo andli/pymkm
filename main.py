@@ -4,7 +4,7 @@ This is a test program for showcasing the PyMKM module.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __license__ = "MIT"
 
 from pymkm import PyMKM
@@ -16,7 +16,7 @@ from distutils.util import strtobool
 
 def main():
     """ Main entry point of the app """
-    tp.banner("Welcome to the pymkm example app!")
+    tp.banner(" Welcome to the pymkm example app! ")
 
     api = PyMKM()
     try:
@@ -36,7 +36,6 @@ def main():
         #   json.dump(api.get_stock(), outfile)
         
         print(__update_stock_prices_to_trend(api))
-        #print(api.set_stock())
 
     except ConnectionError as err:
         print(err)
@@ -52,7 +51,7 @@ def __update_stock_prices_to_trend(api):
     keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
     stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
 
-    updated_articles = []
+    table_data = []
     uploadable_json = []
     total_price_diff = 0
     index = 0
@@ -64,7 +63,7 @@ def __update_stock_prices_to_trend(api):
             new_price = r['product']['priceGuide']['TREND']
             price_diff = new_price - article['price']
             total_price_diff += price_diff
-            updated_articles.append(
+            table_data.append(
                 [article['product']['enName'], article['price'], new_price, price_diff])
             uploadable_json.append({
                 "idArticle": article['idArticle'],
@@ -75,7 +74,7 @@ def __update_stock_prices_to_trend(api):
             bar.update(index)
 
     print('') #HACK: table breaks because of progress bar rendering
-    tp.table(sorted(updated_articles, key=lambda x: x[3], reverse=True), [
+    tp.table(sorted(table_data, key=lambda x: x[3], reverse=True), [
              'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
     print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
 
