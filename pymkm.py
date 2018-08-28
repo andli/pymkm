@@ -16,7 +16,7 @@ from requests_oauthlib import OAuth1Session
 
 
 class PyMKM:
-    logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
 
@@ -59,6 +59,12 @@ class PyMKM:
                     raise ConnectionError("Failed to establish OAuth session.")
 
         return oauth
+    
+    def __json_to_xml(self, json_input):
+        from dicttoxml import dicttoxml
+        
+        xml = dicttoxml(json_input, custom_root='request', attr_type=False, item_func=lambda x: 'article')
+        return xml.decode('utf-8')
 
     def __get_max_items_from_header(self, r):
         max_items = 0
@@ -193,12 +199,8 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
         logging.debug(">> Updating stock")
-        #HACK: from file
-#        with open('data.json') as f:
-#            payload = json.load(f)
-        with open('data.xml', 'r') as f:
-            payload = f.read()
-        r = mkm_oauth.put(url, data=payload)
+        xml_payload = self.__json_to_xml(payload)
+        r = mkm_oauth.put(url, data=xml_payload)
 
         if (self.__handle_response(r)):
-            return r.json()
+            return r.json

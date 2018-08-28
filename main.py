@@ -15,7 +15,7 @@ from distutils.util import strtobool
 
 def main():
     """ Main entry point of the app """
-    tp.banner("Welcome to the pymkm test app!")
+    tp.banner("Welcome to the pymkm example app!")
 
     api = PyMKM()
     try:
@@ -33,12 +33,12 @@ def main():
         # print(api.get_product(272464))
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
-        __update_stock_prices_to_trend(api)
-        print(api.set_stock())
+        
+        print(__update_stock_prices_to_trend(api))
+        #print(api.set_stock())
 
-    except ValueError as err:
+    except ConnectionError as err:
         print(err)
-
 
 
 def __update_stock_prices_to_trend(api):
@@ -68,36 +68,35 @@ def __update_stock_prices_to_trend(api):
                 "price": article['newPrice']
             })
             index += 1
-        if index == 5:  # HACK: don't do too many queries
+        if index == 10:  # HACK: don't do too many queries
             break
 
-    with open('data.json', 'w') as outfile:
-        json.dump(uploadable_json, outfile)
+    #with open('data.json', 'w') as outfile:
+    #    json.dump(uploadable_json, outfile)
     tp.table(sorted(updated_articles, key=lambda x: x[3], reverse=True), [
              'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
     print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
 
-    """if prompt("Do you want to update these prices?") == True:
+    if __prompt("Do you want to update these prices?") == True:
         # Update articles on MKM
-        #api.set_stock(uploadable_json)
+        api.set_stock(uploadable_json)
         print('Prices updated.')
     else:
         print('Prices not updated.')
-    """
 
 def __get_top_10_expensive_articles_in_stock(api):
     # TODO: use a fancy list printing lib to output the list
     return None
 
 
-def prompt(query):
+def __prompt(query):
     print('{} [y/n]: '.format(query))
     val = input()
     try:
         ret = strtobool(val)
     except ValueError:
         print("Please answer with y/n")
-        return prompt(query)
+        return __prompt(query)
     return ret
 
 

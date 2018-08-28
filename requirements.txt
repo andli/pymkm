@@ -1,3 +1,4 @@
 requests_oauthlib==1.0.0
 pyyaml==3.12
 tableprint==0.8.0
+dicttoxml==1.7.4
