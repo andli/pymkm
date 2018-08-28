@@ -16,7 +16,7 @@ from requests_oauthlib import OAuth1Session
 
 
 class PyMKM:
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
 
@@ -197,9 +197,9 @@ class PyMKM:
         url = '{}/stock'.format(self.base_url)
 
         mkm_oauth = self.__setup_service(url, mkm_oauth)
+        xml_payload = self.__json_to_xml(payload)
 
         logging.debug(">> Updating stock")
-        xml_payload = self.__json_to_xml(payload)
         r = mkm_oauth.put(url, data=xml_payload)
 
         if (self.__handle_response(r)):

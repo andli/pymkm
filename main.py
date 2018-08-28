@@ -10,6 +10,7 @@ __license__ = "MIT"
 from pymkm import PyMKM
 import json
 import tableprint as tp
+import progressbar
 from distutils.util import strtobool
 
 
@@ -55,6 +56,8 @@ def __update_stock_prices_to_trend(api):
     uploadable_json = []
     total_price_diff = 0
     index = 0
+
+    bar = progressbar.ProgressBar(max_value=len(stock_list))
     for article in stock_list:
         if not article['isFoil']:
             r = api.get_product(article['idProduct'])
@@ -68,11 +71,11 @@ def __update_stock_prices_to_trend(api):
                 "price": article['newPrice']
             })
             index += 1
+            bar.update(index)
         if index == 10:  # HACK: don't do too many queries
             break
 
-    #with open('data.json', 'w') as outfile:
-    #    json.dump(uploadable_json, outfile)
+    print('') #HACK: table breaks because of progress bar rendering
     tp.table(sorted(updated_articles, key=lambda x: x[3], reverse=True), [
              'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
     print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
