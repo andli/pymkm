@@ -34,7 +34,7 @@ def main():
         # print(api.get_product(272464))
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
-        
+
         print(__update_stock_prices_to_trend(api))
 
     except ConnectionError as err:
@@ -73,8 +73,8 @@ def __update_stock_prices_to_trend(api):
             index += 1
             bar.update(index)
 
-    print('') #HACK: table breaks because of progress bar rendering
-    tp.table(sorted(table_data, key=lambda x: x[3], reverse=True), [
+    print('')  # HACK: table breaks because of progress bar rendering
+    tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
              'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
     print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
 
@@ -84,6 +84,7 @@ def __update_stock_prices_to_trend(api):
         print('Prices updated.')
     else:
         print('Prices not updated.')
+
 
 def __get_top_10_expensive_articles_in_stock(api):
     # TODO: use a fancy list printing lib to output the list
