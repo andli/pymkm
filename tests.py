@@ -5,6 +5,7 @@ import random
 import unittest
 from unittest.mock import Mock, MagicMock
 import yaml
+import requests
 from requests_oauthlib import OAuth1Session
 from pymkm import PyMKM
 
@@ -37,9 +38,10 @@ class TestPyMkmApiCalls(unittest.TestCase):
 
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(return_value=self.MockResponse("", 401, 'testing error'))
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse("", 401, 'testing error'))
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(requests.exceptions.ConnectionError):
             self.api.get_account(mockMkmService)
         mockMkmService.get.assert_called()
 
