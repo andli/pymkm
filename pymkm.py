@@ -198,6 +198,7 @@ class PyMKM:
 
         mkm_oauth = self.__setup_service(url, mkm_oauth)
         xml_payload = self.__json_to_xml(payload)
+        print(xml_payload)
 
         logging.debug(">> Updating stock")
         r = mkm_oauth.put(url, data=xml_payload)

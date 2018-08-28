@@ -49,7 +49,7 @@ def __update_stock_prices_to_trend(api):
     except ValueError as err:
         print(err)
 
-    keys = ['idArticle', 'idProduct', 'product', 'price', 'isFoil']
+    keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
     stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
 
     updated_articles = []
@@ -61,19 +61,18 @@ def __update_stock_prices_to_trend(api):
     for article in stock_list:
         if not article['isFoil']:
             r = api.get_product(article['idProduct'])
-            article.update({'newPrice': r['product']['priceGuide']['TREND']})
-            price_diff = article['newPrice'] - article['price']
+            new_price = r['product']['priceGuide']['TREND']
+            price_diff = new_price - article['price']
             total_price_diff += price_diff
             updated_articles.append(
-                [article['product']['enName'], article['price'], article['newPrice'], price_diff])
+                [article['product']['enName'], article['price'], new_price, price_diff])
             uploadable_json.append({
                 "idArticle": article['idArticle'],
-                "price": article['newPrice']
+                "price": new_price,
+                "count": article['count']
             })
             index += 1
             bar.update(index)
-        if index == 10:  # HACK: don't do too many queries
-            break
 
     print('') #HACK: table breaks because of progress bar rendering
     tp.table(sorted(updated_articles, key=lambda x: x[3], reverse=True), [
