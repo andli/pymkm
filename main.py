@@ -50,7 +50,9 @@ def __update_stock_prices_to_trend(api):
 
     keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
     stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
-
+    #HACK: filter out a foil product
+    stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+ 
     table_data = []
     uploadable_json = []
     total_price_diff = 0
@@ -58,8 +60,8 @@ def __update_stock_prices_to_trend(api):
 
     bar = progressbar.ProgressBar(max_value=len(stock_list))
     for article in stock_list:
+        r = api.get_product(article['idProduct'])
         if not article['isFoil']:
-            r = api.get_product(article['idProduct'])
             new_price = r['product']['priceGuide']['TREND']
             price_diff = new_price - article['price']
             total_price_diff += price_diff
@@ -70,21 +72,25 @@ def __update_stock_prices_to_trend(api):
                 "price": new_price,
                 "count": article['count']
             })
-            index += 1
-            bar.update(index)
+        else:
+            print(r['product']['priceGuide'])
+        index += 1
+        bar.update(index)
+    
+    if len(uploadable_json) > 0:
+        print('')  # HACK: table breaks because of progress bar rendering
+        tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
+                'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
+        print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
 
-    print('')  # HACK: table breaks because of progress bar rendering
-    tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
-             'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
-    print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
-
-    if __prompt("Do you want to update these prices?") == True:
-        # Update articles on MKM
-        api.set_stock(uploadable_json)
-        print('Prices updated.')
+        if __prompt("Do you want to update these prices?") == True:
+            # Update articles on MKM
+            api.set_stock(uploadable_json)
+            print('Prices updated.')
+        else:
+            print('Prices not updated.')
     else:
-        print('Prices not updated.')
-
+        print('No prices to update.')
 
 def __get_top_10_expensive_articles_in_stock(api):
     # TODO: use a fancy list printing lib to output the list

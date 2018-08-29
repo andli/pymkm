@@ -205,3 +205,7 @@ class PyMKM:
 
         if (self.__handle_response(r)):
             return r.json
+
+    def get_articles(self):
+        #https://www.mkmapi.eu/ws/documentation/API_2.0:Articles
+        return None
