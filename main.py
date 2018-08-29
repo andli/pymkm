@@ -20,7 +20,7 @@ def main():
 
     api = PyMKM()
     try:
-        print('>>> Testing api methods...')
+        print('>>> Running api methods...')
         # print(api.get_account())
         # print(api.get_games())
         # print(api.set_display_language(1))
@@ -78,7 +78,7 @@ def __update_stock_prices_to_trend(api):
         bar.update(index)
     
     if len(uploadable_json) > 0:
-        print('')  # HACK: table breaks because of progress bar rendering
+        print('')  #table breaks because of progress bar rendering
         tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
                 'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
         print('Total price difference: {}'.format(str(round(total_price_diff, 2))))
