@@ -18,6 +18,7 @@ class TestPyMkmApiCalls(unittest.TestCase):
             self.json_data = json_data
             self.status_code = status_code
             self.content = content
+            self.headers = {'X-Request-Limit-Count': 5000, 'X-Request-Limit-Max': 1234} #TODO: write a test for these
 
         def json(self):
             return self.json_data
