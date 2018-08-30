@@ -11,6 +11,7 @@ from pymkm import PyMKM
 import json
 import tableprint as tp
 import progressbar
+import statistics
 from distutils.util import strtobool
 
 
@@ -38,7 +39,8 @@ def main():
         # print(__update_stock_prices_to_trend(api))
         #with open('data.json', 'w') as outfile:
             #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        __show_prices_for_product(api, 319751, "Arvad the Cursed")
+        #__show_prices_for_product(api, 319751, "Arvad the Cursed")
+        __show_top_10_expensive_articles_in_stock(api)
 
     except ConnectionError as err:
         print(err)
@@ -64,18 +66,14 @@ def __show_prices_for_product(api, product_id, product_name):
         print('Top 10 cheapest articles of ' + product_name)
         tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10], 
             ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
+        print('Total average price: ' + str(round(__calculate_average(table_data, 3,4),2)))
+        print('Total median price: ' + str(round(__calculate_median(table_data, 3,4),2)))
     else:
         print('No prices found.')
 
 def __update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
-    try:
-        d = api.get_stock()['article']
-    except ValueError as err:
-        print(err)
-
-    keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
-    stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
+    stock_list = __get_stock_as_array(api)
     # HACK: filter out a foil product
     stock_list = [x for x in stock_list if x['idProduct'] == 319751]
 
@@ -119,9 +117,27 @@ def __update_stock_prices_to_trend(api):
     else:
         print('No prices to update.')
 
+def __get_stock_as_array(api):
+    try:
+        d = api.get_stock()['article']
+    except ValueError as err:
+        print(err)
 
-def __get_top_10_expensive_articles_in_stock(api):
-    # TODO: use a fancy list printing lib to output the list
+    keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
+    stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
+    return stock_list
+
+
+def __show_top_10_expensive_articles_in_stock(api):
+    stock_list = __get_stock_as_array(api)
+    table_data = []
+    for article in stock_list:
+        table_data.append(
+            [str(article['idProduct']), article['product']['enName'], article['price']])
+    if len(stock_list) > 0:
+        print('Top 10 most expensive articles in stock:')
+        tp.table(sorted(table_data, key=lambda x: x[2], reverse=True)[:10], [
+            'Product ID', 'Name', 'Price'], width=36)
     return None
 
 
@@ -135,6 +151,17 @@ def __prompt(query):
         return __prompt(query)
     return ret
 
+def __calculate_average(table, col_no_count, col_no_price):
+    flat_array = []
+    for row in table:
+        flat_array.extend([row[col_no_price] * row[col_no_count]])
+    return statistics.mean(flat_array)
+
+def __calculate_median(table, col_no_count, col_no_price):
+    flat_array = []
+    for row in table:
+        flat_array.extend([row[col_no_price] * row[col_no_count]])
+    return statistics.median(flat_array)
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
