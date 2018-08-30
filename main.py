@@ -36,14 +36,16 @@ def main():
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
 
-        print(__update_stock_prices_to_trend(api))
+        #print(__update_stock_prices_to_trend(api))
         #with open('data.json', 'w') as outfile:
             #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        #__show_prices_for_product(api, 319751, "Arvad the Cursed")
-        #__show_top_10_expensive_articles_in_stock(api)
+        __show_prices_for_product(api, 319751, "Arvad the Cursed")
+        __show_top_10_expensive_articles_in_stock(api)
 
     except ConnectionError as err:
         print(err)
+    
+    __show_requests_left(api)
 
 def __show_prices_for_product(api, product_id, product_name):
     articles = api.get_articles(product_id, **{
@@ -75,7 +77,7 @@ def __update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api)
     # HACK: filter out a foil product
-    #stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+    stock_list = [x for x in stock_list if x['idProduct'] == 319751]
 
     table_data = []
     uploadable_json = []
@@ -140,6 +142,8 @@ def __show_top_10_expensive_articles_in_stock(api):
             'Product ID', 'Name', 'Price'], width=36)
     return None
 
+def __show_requests_left(api):
+    print('>> Cardmarket.com requests used today: {}/{}'.format(api.requests_count, api.requests_max))
 
 def __prompt(query):
     print('{} [y/n]: '.format(query))

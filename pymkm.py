@@ -20,7 +20,8 @@ class PyMKM:
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
     conditions = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO']
-    
+    requests_max = 0
+    requests_count = 0
 
     def __init__(self, config=None):
         if (config == None):
@@ -42,9 +43,9 @@ class PyMKM:
             requests.codes.partial_content,
         )
         if (response.status_code in handled_codes):
-            # TODO: move requests count to handle code 429, Too Many Requests
-            print('>> Cardmarket.com requests left today: {}/{}'.format(
-                response.headers['X-Request-Limit-Count'], response.headers['X-Request-Limit-Max']))
+            # TODO: use requests count to handle code 429, Too Many Requests
+            self.requests_count = response.headers['X-Request-Limit-Count']
+            self.requests_max = response.headers['X-Request-Limit-Max']
             return True
         else:
             raise requests.exceptions.ConnectionError(response)
@@ -220,7 +221,7 @@ class PyMKM:
         """for key, value in kwargs.items():
             print("{} = {}".format(key, value))
         """
-        
+
         logging.debug(">> Getting articles on product: " +
                       str(product_id))
         r = mkm_oauth.get(url, params=kwargs)
