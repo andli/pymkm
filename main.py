@@ -36,11 +36,11 @@ def main():
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
 
-        # print(__update_stock_prices_to_trend(api))
+        print(__update_stock_prices_to_trend(api))
         #with open('data.json', 'w') as outfile:
             #json.dump(self.__show_prices_for_product(api, 319751), outfile)
         #__show_prices_for_product(api, 319751, "Arvad the Cursed")
-        __show_top_10_expensive_articles_in_stock(api)
+        #__show_top_10_expensive_articles_in_stock(api)
 
     except ConnectionError as err:
         print(err)
@@ -75,7 +75,7 @@ def __update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api)
     # HACK: filter out a foil product
-    stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+    #stock_list = [x for x in stock_list if x['idProduct'] == 319751]
 
     table_data = []
     uploadable_json = []
@@ -96,8 +96,8 @@ def __update_stock_prices_to_trend(api):
                 "price": new_price,
                 "count": article['count']
             })
-        else:
-            print(r['product']['priceGuide'])
+        #else: #FOIL
+            #print(r['product']['priceGuide'])
         index += 1
         bar.update(index)
 
