@@ -19,6 +19,8 @@ class PyMKM:
     logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
+    conditions = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO']
+    
 
     def __init__(self, config=None):
         if (config == None):
@@ -34,15 +36,15 @@ class PyMKM:
             self.config = config
 
     def __handle_response(self, response):
-        # TODO: move requests count to handle code 429, Too Many Requests
-        print('>> Cardmarket.com requests left today: {}/{}'.format(
-            response.headers['X-Request-Limit-Count'], response.headers['X-Request-Limit-Max']))
         handled_codes = (
             requests.codes.ok,
             requests.codes.no_content,
             requests.codes.partial_content,
         )
         if (response.status_code in handled_codes):
+            # TODO: move requests count to handle code 429, Too Many Requests
+            print('>> Cardmarket.com requests left today: {}/{}'.format(
+                response.headers['X-Request-Limit-Count'], response.headers['X-Request-Limit-Max']))
             return True
         else:
             raise requests.exceptions.ConnectionError(response)
@@ -209,28 +211,20 @@ class PyMKM:
         if (self.__handle_response(r)):
             return r.json
 
-    def get_articles(self, product_id, start=None, max_results=None, user_type=None, 
-    min_user_score=None, min_condition=None, is_foil=None, 
-    is_signed=None, is_altered=None, min_available=None, mkm_oauth=None):
+    def get_articles(self, product_id, mkm_oauth=None, **kwargs):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Articles
-        # is productid needed?
+        # 
         url = '{}/articles/{}'.format(self.base_url, product_id)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        logging.debug(">> Setting display language to: " +
-                      str(display_langauge))
-        r = mkm_oauth.get(url, params={
-            'idProduct': xxx,
-            'start': xxx,
-            'maxResults': xxx,
-            'userType': xxx,
-            'minUserScore': xxx,
-            'minCondition': xxx,
-            'isFoil': xxx,
-            'isSigned': xxx,
-            'isAltered': xxx,
-            'minAvailable': xxx,
-        })
+        """for key, value in kwargs.items():
+            print("{} = {}".format(key, value))
+        """
+        
+        logging.debug(">> Getting articles on product: " +
+                      str(product_id))
+        r = mkm_oauth.get(url, params=kwargs)
 
         if (self.__handle_response(r)):
+            #TODO: handle 206 or 307
             return r.json()
