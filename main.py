@@ -39,7 +39,7 @@ def main():
         #print(__update_stock_prices_to_trend(api))
         #with open('data.json', 'w') as outfile:
             #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        __show_prices_for_product(api, 319751, "Arvad the Cursed")
+        __show_prices_for_product(api, 270428)
         __show_top_10_expensive_articles_in_stock(api)
 
     except ConnectionError as err:
@@ -47,7 +47,7 @@ def main():
     
     __show_requests_left(api)
 
-def __show_prices_for_product(api, product_id, product_name):
+def __show_prices_for_product(api, product_id):
     articles = api.get_articles(product_id, **{
         'isFoil': 'true',
         'isAltered': 'false',
@@ -65,7 +65,7 @@ def __show_prices_for_product(api, product_id, product_name):
             article['price']
             ])
     if len(table_data) > 0:
-        print('Top 10 cheapest articles of ' + product_name)
+        print('Top 10 cheapest articles for chosen product')
         tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10], 
             ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
         print('Total average price: ' + str(round(__calculate_average(table_data, 3,4),2)))

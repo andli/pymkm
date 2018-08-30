@@ -39,7 +39,7 @@ class PyMKM:
     def __handle_response(self, response):
         handled_codes = (
             requests.codes.ok,
-            requests.codes.no_content,
+            requests.codes.no_content, #TODO: handle 204 better
             requests.codes.partial_content,
         )
         if (response.status_code in handled_codes):
@@ -228,4 +228,5 @@ class PyMKM:
 
         if (self.__handle_response(r)):
             #TODO: handle 206 or 307
+            print(r)
             return r.json()
