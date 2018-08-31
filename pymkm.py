@@ -78,9 +78,8 @@ class PyMKM:
         try:
             max_items = int(
                 re.search('\/(\d+)', r.headers['Content-Range']).group(1))
-        except AttributeError:
-            # AAA, ZZZ not found in the original string
-            found = ''  # apply your error handling
+        except KeyError:
+            return None #TODO: return something better?
         return max_items
 
     def get_games(self, mkm_oauth=None):
@@ -212,21 +211,33 @@ class PyMKM:
         if (self.__handle_response(r)):
             return r.json
 
-    def get_articles(self, product_id, mkm_oauth=None, **kwargs):
+    def get_articles(self, product_id, start=0, mkm_oauth=None, **kwargs):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Articles
-        # 
         url = '{}/articles/{}'.format(self.base_url, product_id)
         mkm_oauth = self.__setup_service(url, mkm_oauth)
 
-        """for key, value in kwargs.items():
-            print("{} = {}".format(key, value))
-        """
+        #for key, value in kwargs.items():
+        #    print("{} = {}".format(key, value))
 
-        logging.debug(">> Getting articles on product: " +
-                      str(product_id))
-        r = mkm_oauth.get(url, params=kwargs)
+        logging.debug(">> Getting articles on product: " + str(product_id))
+        params = kwargs
+        params.update({'start': start, 'maxResults': 1000})
+
+        r = mkm_oauth.get(url, params=params)
+
+        max_items = 0 
+        if (r.status_code == requests.codes.partial_content): #TODO: we get 401 here...
+            max_items = self.__get_max_items_from_header(r)
+            print('> Content-Range header: ' + r.headers['Content-Range'])
+            print('DEBUG # articles in response: ' + str(len(r.json()['article'])))     
+            return r.json()['article'] + self.get_articles(product_id, start=start+1000, kwargs=kwargs)
+
+        if (start > max_items or r.status_code == requests.codes.no_content):
+            # terminate recursion
+            """ NOTE: funny thing is, even though the API talks about it,
+            it never responds with 204 (no_content). Therefore we check for
+            exceeding content-range instead."""
+            return []
 
         if (self.__handle_response(r)):
-            #TODO: handle 206 or 307
-            print(r)
             return r.json()

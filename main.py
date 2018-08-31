@@ -39,8 +39,8 @@ def main():
         #print(__update_stock_prices_to_trend(api))
         #with open('data.json', 'w') as outfile:
             #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        __show_prices_for_product(api, 270428)
-        __show_top_10_expensive_articles_in_stock(api)
+        __show_prices_for_product(api, 294758)
+        #__show_top_10_expensive_articles_in_stock(api)
 
     except ConnectionError as err:
         print(err)
@@ -49,19 +49,19 @@ def main():
 
 def __show_prices_for_product(api, product_id):
     articles = api.get_articles(product_id, **{
-        'isFoil': 'true',
-        'isAltered': 'false',
-        'isSigned': 'false',
-        'minCondition': 'EX',
-        'idLanguage': 1
+        #'isFoil': 'true',
+        #'isAltered': 'false',
+        #'isSigned': 'false',
+        'minCondition': 'PO',
+        #'idLanguage': 1
         })
     table_data = []
-    for article in articles['article']:
+    for article in articles:
         table_data.append([
-            article['seller']['username'], 
-            article['seller']['address']['country'], 
-            article['condition'], 
-            article['count'], 
+            article['seller']['username'],
+            article['seller']['address']['country'],
+            article['condition'],
+            article['count'],
             article['price']
             ])
     if len(table_data) > 0:
@@ -70,6 +70,7 @@ def __show_prices_for_product(api, product_id):
             ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
         print('Total average price: ' + str(round(__calculate_average(table_data, 3,4),2)))
         print('Total median price: ' + str(round(__calculate_median(table_data, 3,4),2)))
+        print('Total # of articles:' + str(len(table_data)))
     else:
         print('No prices found.')
 
