@@ -10,11 +10,13 @@ Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/docume
 ## supported calls
 These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
 * `get_games`
-* `get_account`
-* `set_vacation_status`
-* `set_display_language`
-* `get_articles_in_shoppingcarts`
-* `get_stock`
 * `get_expansions`
 * `get_cards_in_expansion`
 * `get_product`
+* `get_account`
+* `get_articles_in_shoppingcarts`
+* `set_vacation_status`
+* `set_display_language`
+* `get_stock`
+* `set_stock`
+* `get_articles`
