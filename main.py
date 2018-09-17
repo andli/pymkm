@@ -26,6 +26,7 @@ def main():
         print("╭" + 8 * "─" + " MENU " + 48 * "─" + "╮")
         print("│ 1: Show top 10 expensive items in stock" + 22 * " " + "│")
         print("│ 2: Update stock prices" + 39 * " " + "│")
+        print("│ 3: Show prices for a product" + 33 * " " + "│")
         print("│ 0: Exit" + 54 * " " + "│")
         print("╰" + 62 * "─" + "╯")
 
@@ -41,6 +42,12 @@ def main():
                 update_stock_prices_to_trend(api=api)
             except ConnectionError as err:
                 print(err)
+                print(err)
+        elif choice == "3":
+            try:
+                show_prices_for_product(294758, api=api)
+            except ConnectionError as err:
+                print(err)
         elif choice == "0":
             loop = False
         else:
@@ -53,7 +60,7 @@ def show_prices_for_product(product_id, api): #294758 works
         # 'isFoil': 'true',
         # 'isAltered': 'false',
         'isSigned': 'false',
-        'minCondition': 'PO',
+        'minCondition': 'PO'
         #'idLanguage': 1
         })#['article']
     table_data = []

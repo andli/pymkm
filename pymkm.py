@@ -13,6 +13,7 @@ import re
 import requests
 import json
 from requests_oauthlib import OAuth1Session
+from requests import ConnectionError
 
 
 class api_wrapper(object):
@@ -21,7 +22,7 @@ class api_wrapper(object):
         self.function = function
 
     def __call__(self, *arg, **kwargs):
-        #print("DEBUG Entering", self.function.__name__)
+        logging.debug(">> Entering", self.function.__name__)
         #print(arg)
         #print(kwargs)
         self.function(*arg, **kwargs)
@@ -30,11 +31,11 @@ class api_wrapper(object):
             if (int(api.requests_max) > 0):
                 print('>> Cardmarket.com requests used today: {}/{}'.format(
                     api.requests_count, api.requests_max))
-        #print("DEBUG Exited", self.function.__name__)
+        logging.debug(">> Exited", self.function.__name__)
 
 
 class PyMKM:
-    logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
     conditions = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO']
@@ -255,4 +256,8 @@ class PyMKM:
             if (start + INCREMENT >= max_items and self.__handle_response(r)):
                 return r.json()['article']
             else:
-                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, kwargs=kwargs)
+                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, kwargs=kwargs) #TODO: something with kwargs is wrong, check 401 url vs 200 url
+        elif (r.status_code == requests.codes.ok):
+            return r.json()['article']
+        else:
+            raise ConnectionError(r)
