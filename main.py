@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 This is a test program for showcasing the PyMKM module.
 """
@@ -14,8 +15,6 @@ import tableprint as tp
 import progressbar
 import statistics
 from distutils.util import strtobool
-from consolemenu import *
-from consolemenu.items import *
 
 
 def main():
@@ -30,7 +29,7 @@ def main():
         print("│ 0: Exit" + 54 * " " + "│")
         print("╰" + 62 * "─" + "╯")
 
-        choice = input ("Action number: ")
+        choice = input("Action number: ")
 
         if choice == "1":
             try:
@@ -55,14 +54,14 @@ def main():
 
 
 @api_wrapper
-def show_prices_for_product(product_id, api): #294758 works
+def show_prices_for_product(product_id, api):  # 294758 works
     articles = api.get_articles(product_id, **{
         # 'isFoil': 'true',
         # 'isAltered': 'false',
         'isSigned': 'false',
         'minCondition': 'PO'
-        #'idLanguage': 1
-        })#['article']
+        # 'idLanguage': 1
+    })  # ['article']
     table_data = []
     for article in articles:
         table_data.append([
@@ -76,11 +75,12 @@ def show_prices_for_product(product_id, api): #294758 works
         print('Top 10 cheapest articles for chosen product')
         tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10],
                  ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
-        print('Total average price: ' +
-              str(round(__calculate_average(table_data, 3, 4), 2)))
-        print('Total median price: ' +
-              str(round(__calculate_median(table_data, 3, 4), 2)))
-        print('Total # of articles:' + str(len(table_data)))
+        print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
+            str(round(__calculate_average(table_data, 3, 4), 2)),
+            str(round(__calculate_median(table_data, 3, 4), 2)),
+            str(len(table_data))
+        )
+        )
     else:
         print('No prices found.')
 
@@ -90,7 +90,7 @@ def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    #stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 319751]
 
     table_data = []
     uploadable_json = []
