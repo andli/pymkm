@@ -44,7 +44,7 @@ def main():
                 print(err)
         elif choice == "3":
             try:
-                show_prices_for_product(294758, api=api)
+                show_prices_for_product(264154, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "0":
@@ -56,11 +56,11 @@ def main():
 @api_wrapper
 def show_prices_for_product(product_id, api):  # 294758 works
     articles = api.get_articles(product_id, **{
-        # 'isFoil': 'true',
-        # 'isAltered': 'false',
+        'isFoil': 'true',
+        'isAltered': 'false',
         'isSigned': 'false',
-        'minCondition': 'PO'
-        # 'idLanguage': 1
+        'minCondition': 'GD',
+        'idLanguage': 1
     })  # ['article']
     table_data = []
     for article in articles:
