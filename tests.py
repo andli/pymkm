@@ -1,10 +1,10 @@
 """
 Python unittest
 """
+import json
 import random
 import unittest
 from unittest.mock import Mock, MagicMock
-import yaml
 import requests
 from requests_oauthlib import OAuth1Session
 from pymkm import PyMKM
@@ -26,14 +26,16 @@ class TestPyMkmApiCalls(unittest.TestCase):
     api = None
 
     def setUp(self):
-        config = yaml.dump(yaml.load(
+        config = json.loads(
             """
-                app_token: 'aaaaa'
-                app_secret: 'bbbbb'
-                access_token: 'ccccccccccc'
-                access_token_secret: 'dddddddddd'
+                {
+                    "app_token": "aaaaa",
+                    "app_secret": "bbbbb",
+                    "access_token": "ccccccccccc",
+                    "access_token_secret": "dddddddddd"
+                }
             """
-        ))
+        )
 
         self.api = PyMKM(config)
 
