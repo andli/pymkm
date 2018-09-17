@@ -55,6 +55,9 @@ class PyMKM:
             self.config = config
 
     def __handle_response(self, response):
+        self.requests_count = response.headers['X-Request-Limit-Count']
+        self.requests_max = response.headers['X-Request-Limit-Max']
+        
         handled_codes = (
             requests.codes.ok,
             requests.codes.no_content,  # TODO: handle 204 better
@@ -62,8 +65,6 @@ class PyMKM:
         )
         if (response.status_code in handled_codes):
             # TODO: use requests count to handle code 429, Too Many Requests
-            self.requests_count = response.headers['X-Request-Limit-Count']
-            self.requests_max = response.headers['X-Request-Limit-Max']
             return True
         else:
             raise requests.exceptions.ConnectionError(response)
@@ -91,13 +92,12 @@ class PyMKM:
                         attr_type=False, item_func=lambda x: 'article')
         return xml.decode('utf-8')
 
-    def __get_max_items_from_header(self, r):
+    def __get_max_items_from_header(self, response):
         max_items = 0
         try:
-            max_items = int(
-                re.search('\/(\d+)', r.headers['Content-Range']).group(1))
-        except KeyError:
-            return None  # TODO: return something better?
+            max_items = int(re.search('\/(\d+)', response.headers['Content-Range']).group(1))
+        except KeyError as err:
+            logging.debug(">>> Header error finding content-range")
         return max_items
 
     def get_games(self, api=None):
@@ -231,6 +231,7 @@ class PyMKM:
 
     def get_articles(self, product_id, start=0, api=None, **kwargs):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Articles
+        INCREMENT = 1000
         url = '{}/articles/{}'.format(self.base_url, product_id)
         mkm_oauth = self.__setup_service(url, api)
 
@@ -239,25 +240,19 @@ class PyMKM:
 
         logging.debug(">> Getting articles on product: " + str(product_id))
         params = kwargs
-        params.update({'start': start, 'maxResults': 1000})
+
+        if (start > 0):
+            params.update({'start': start, 'maxResults': INCREMENT})
 
         r = mkm_oauth.get(url, params=params)
 
-        max_items = 0
-        # TODO: we get 401 here...
-        if (r.status_code == requests.codes.partial_content):
+        max_items = 0 
+        if (r.status_code == requests.codes.partial_content 
+        or r.status_code == requests.codes.no_content):
             max_items = self.__get_max_items_from_header(r)
-            print('> Content-Range header: ' + r.headers['Content-Range'])
-            print('DEBUG # articles in response: ' +
-                  str(len(r.json()['article'])))
-            return r.json()['article'] + self.get_articles(product_id, start=start+1000, kwargs=kwargs)
-
-        if (start > max_items or r.status_code == requests.codes.no_content):
-            # terminate recursion
-            """ NOTE: funny thing is, even though the API talks about it,
-            it never responds with 204 (no_content). Therefore we check for
-            exceeding content-range instead."""
-            return []
-
-        if (self.__handle_response(r)):
-            return r.json()
+            logging.debug('> Content-Range header: ' + r.headers['Content-Range'])
+            logging.debug('> # articles in response: ' + str(len(r.json()['article'])))  
+            if (start + INCREMENT >= max_items and self.__handle_response(r)):
+                return r.json()['article']
+            else:
+                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, kwargs=kwargs)

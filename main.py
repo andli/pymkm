@@ -58,8 +58,8 @@ def show_prices_for_product(product_id, api):
         # 'isAltered': 'false',
         'isSigned': 'false',
         'minCondition': 'PO',
-        # 'idLanguage': 1
-    })
+        #'idLanguage': 1
+        })#['article']
     table_data = []
     for article in articles:
         table_data.append([
