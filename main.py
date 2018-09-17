@@ -8,17 +8,17 @@ __version__ = "0.3.0"
 __license__ = "MIT"
 
 from pymkm import PyMKM
+from pymkm import api_wrapper
 import json
 import tableprint as tp
 import progressbar
 import statistics
 from distutils.util import strtobool
+from consolemenu import *
+from consolemenu.items import *
 
 
 def main():
-    """ Main entry point of the app """
-    tp.banner(" Welcome to the pymkm example app! ")
-
     api = PyMKM()
     try:
         print('>>> Running api methods...')
@@ -36,25 +36,30 @@ def main():
         # with open('data.json', 'w') as outfile:
         #   json.dump(api.get_stock(), outfile)
 
-        #print(__update_stock_prices_to_trend(api))
-        #with open('data.json', 'w') as outfile:
-            #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        __show_prices_for_product(api, 294758)
-        #__show_top_10_expensive_articles_in_stock(api)
+        # print(__update_stock_prices_to_trend(api))
+        # with open('data.json', 'w') as outfile:
+        #json.dump(self.__show_prices_for_product(api, 319751), outfile)
+        #__show_prices_for_product(294758, api=api)
+        show_top_10_expensive_articles_in_stock(api=api)
 
     except ConnectionError as err:
         print(err)
-    
-    __show_requests_left(api)
 
-def __show_prices_for_product(api, product_id):
+    # Create the menu
+    menu = ConsoleMenu("Welcome to the pymkm example app!", "It's fantastic.")
+    menu.append_item(FunctionItem("List top 10 articles in stock",
+                                  show_top_10_expensive_articles_in_stock, [api]))
+
+
+@api_wrapper
+def show_prices_for_product(product_id, api):
     articles = api.get_articles(product_id, **{
-        #'isFoil': 'true',
-        #'isAltered': 'false',
-        #'isSigned': 'false',
+        # 'isFoil': 'true',
+        # 'isAltered': 'false',
+        'isSigned': 'false',
         'minCondition': 'PO',
-        #'idLanguage': 1
-        })
+        # 'idLanguage': 1
+    })
     table_data = []
     for article in articles:
         table_data.append([
@@ -63,22 +68,26 @@ def __show_prices_for_product(api, product_id):
             article['condition'],
             article['count'],
             article['price']
-            ])
+        ])
     if len(table_data) > 0:
         print('Top 10 cheapest articles for chosen product')
-        tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10], 
-            ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
-        print('Total average price: ' + str(round(__calculate_average(table_data, 3,4),2)))
-        print('Total median price: ' + str(round(__calculate_median(table_data, 3,4),2)))
+        tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10],
+                 ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
+        print('Total average price: ' +
+              str(round(__calculate_average(table_data, 3, 4), 2)))
+        print('Total median price: ' +
+              str(round(__calculate_median(table_data, 3, 4), 2)))
         print('Total # of articles:' + str(len(table_data)))
     else:
         print('No prices found.')
 
-def __update_stock_prices_to_trend(api):
+
+@api_wrapper
+def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
-    stock_list = __get_stock_as_array(api)
+    stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+    #stock_list = [x for x in stock_list if x['idProduct'] == 319751]
 
     table_data = []
     uploadable_json = []
@@ -99,8 +108,8 @@ def __update_stock_prices_to_trend(api):
                 "price": new_price,
                 "count": article['count']
             })
-        #else: #FOIL
-            #print(r['product']['priceGuide'])
+        # else: #FOIL
+            # print(r['product']['priceGuide'])
         index += 1
         bar.update(index)
 
@@ -120,20 +129,12 @@ def __update_stock_prices_to_trend(api):
     else:
         print('No prices to update.')
 
-def __get_stock_as_array(api):
-    try:
-        d = api.get_stock()['article']
-    except ValueError as err:
-        print(err)
 
-    keys = ['idArticle', 'idProduct', 'product', 'count', 'price', 'isFoil']
-    stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
-    return stock_list
-
-
-def __show_top_10_expensive_articles_in_stock(api):
-    stock_list = __get_stock_as_array(api)
+@api_wrapper
+def show_top_10_expensive_articles_in_stock(api):
+    stock_list = __get_stock_as_array(api=api)
     table_data = []
+
     for article in stock_list:
         table_data.append(
             [str(article['idProduct']), article['product']['enName'], article['price']])
@@ -143,8 +144,15 @@ def __show_top_10_expensive_articles_in_stock(api):
             'Product ID', 'Name', 'Price'], width=36)
     return None
 
-def __show_requests_left(api):
-    print('>> Cardmarket.com requests used today: {}/{}'.format(api.requests_count, api.requests_max))
+
+def __get_stock_as_array(api):
+    d = api.get_stock()['article']
+
+    keys = ['idArticle', 'idProduct',
+            'product', 'count', 'price', 'isFoil']
+    stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
+    return stock_list
+
 
 def __prompt(query):
     print('{} [y/n]: '.format(query))
@@ -156,17 +164,20 @@ def __prompt(query):
         return __prompt(query)
     return ret
 
+
 def __calculate_average(table, col_no_count, col_no_price):
     flat_array = []
     for row in table:
         flat_array.extend([row[col_no_price] * row[col_no_count]])
     return statistics.mean(flat_array)
 
+
 def __calculate_median(table, col_no_count, col_no_price):
     flat_array = []
     for row in table:
         flat_array.extend([row[col_no_price] * row[col_no_count]])
     return statistics.median(flat_array)
+
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
