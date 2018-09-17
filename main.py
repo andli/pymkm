@@ -20,39 +20,35 @@ from consolemenu.items import *
 
 def main():
     api = PyMKM()
-    try:
-        print('>>> Running api methods...')
-        # print(api.get_account())
-        # print(api.get_games())
-        # print(api.set_display_language(1))
-        # print(api.set_vacation_status(False))
-        # print(api.get_articles_in_shoppingcarts())
-        # print('# items: ' + str(len(api.get_stock(1))))
-        # print(api.get_expansions(1)['expansion'][52]['idExpansion'])
-        # print(str(len(api.get_cards_in_expansion(1599)['expansion'])))
-        # with open('data.json', 'w') as outfile:
-        #   json.dump(api.get_cards_in_expansion(1599), outfile)
-        # print(api.get_product(272464))
-        # with open('data.json', 'w') as outfile:
-        #   json.dump(api.get_stock(), outfile)
 
-        # print(__update_stock_prices_to_trend(api))
-        # with open('data.json', 'w') as outfile:
-        #json.dump(self.__show_prices_for_product(api, 319751), outfile)
-        #__show_prices_for_product(294758, api=api)
-        show_top_10_expensive_articles_in_stock(api=api)
+    loop = True
+    while loop:
+        print("╭" + 8 * "─" + " MENU " + 48 * "─" + "╮")
+        print("│ 1: Show top 10 expensive items in stock" + 22 * " " + "│")
+        print("│ 2: Update stock prices" + 39 * " " + "│")
+        print("│ 0: Exit" + 54 * " " + "│")
+        print("╰" + 62 * "─" + "╯")
 
-    except ConnectionError as err:
-        print(err)
+        choice = input ("Action number: ")
 
-    # Create the menu
-    menu = ConsoleMenu("Welcome to the pymkm example app!", "It's fantastic.")
-    menu.append_item(FunctionItem("List top 10 articles in stock",
-                                  show_top_10_expensive_articles_in_stock, [api]))
+        if choice == "1":
+            try:
+                show_top_10_expensive_articles_in_stock(api=api)
+            except ConnectionError as err:
+                print(err)
+        elif choice == "2":
+            try:
+                update_stock_prices_to_trend(api=api)
+            except ConnectionError as err:
+                print(err)
+        elif choice == "0":
+            loop = False
+        else:
+            print("Not a valid choice, try again.")
 
 
 @api_wrapper
-def show_prices_for_product(product_id, api):
+def show_prices_for_product(product_id, api): #294758 works
     articles = api.get_articles(product_id, **{
         # 'isFoil': 'true',
         # 'isAltered': 'false',
