@@ -35,7 +35,7 @@ class api_wrapper(object):
 
 
 class PyMKM:
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    logging.basicConfig(stream=sys.stderr, level=logging.WARN)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
     conditions = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO']
@@ -256,7 +256,7 @@ class PyMKM:
             if (start + INCREMENT >= max_items and self.__handle_response(r)):
                 return r.json()['article']
             else:
-                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, kwargs=kwargs) #TODO: something with kwargs is wrong, check 401 url vs 200 url
+                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
         elif (r.status_code == requests.codes.ok):
             return r.json()['article']
         else:
