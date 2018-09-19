@@ -72,8 +72,8 @@ def show_prices_for_product(product_id, api):  # 294758 works
             article['price']
         ])
     if len(table_data) > 0:
-        print('Top 10 cheapest articles for chosen product')
-        tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:10],
+        print('Top 15 cheapest articles for chosen product')
+        tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:15],
                  ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
         print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
             str(round(__calculate_average(table_data, 3, 4), 2)),
@@ -90,7 +90,7 @@ def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    # stock_list = [x for x in stock_list if x['idProduct'] == 319751]
+    stock_list = [x for x in stock_list if x['idProduct'] == 301546]
 
     table_data = []
     uploadable_json = []
@@ -115,6 +115,7 @@ def update_stock_prices_to_trend(api):
             # print(r['product']['priceGuide'])
         index += 1
         bar.update(index)
+    bar.finish()
 
     if len(uploadable_json) > 0:
         print('')  # table breaks because of progress bar rendering
