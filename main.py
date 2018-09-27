@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This is a test program for showcasing the PyMKM module.
+This is a working app for showcasing the PyMKM module.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "0.3.0"
+__version__ = "0.9.0"
 __license__ = "MIT"
 
 from pymkm import PyMKM
 from pymkm import api_wrapper
+from helper import PyMKM_Helper
 import json
 import tableprint as tp
 import progressbar
-import statistics
+import math
 from distutils.util import strtobool
 
 
@@ -22,12 +23,13 @@ def main():
 
     loop = True
     while loop:
-        print("╭" + 8 * "─" + " MENU " + 48 * "─" + "╮")
-        print("│ 1: Show top 10 expensive items in stock" + 22 * " " + "│")
-        print("│ 2: Update stock prices" + 39 * " " + "│")
-        print("│ 3: Show prices for a product" + 33 * " " + "│")
-        print("│ 0: Exit" + 54 * " " + "│")
-        print("╰" + 62 * "─" + "╯")
+        menu_items = [
+            "Show top 10 expensive items in stock",
+            "Update stock prices",
+            "Show prices for Coiling Oracle promo",
+            "Show account info"
+        ]
+        __print_menu(menu_items)
 
         choice = input("Action number: ")
 
@@ -44,13 +46,34 @@ def main():
                 print(err)
         elif choice == "3":
             try:
-                show_prices_for_product(264154, api=api)
+                show_prices_for_product(18204, api=api)
+            except ConnectionError as err:
+                print(err)
+        elif choice == "4":
+            try:
+                show_account_info(api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "0":
             loop = False
         else:
             print("Not a valid choice, try again.")
+
+def __print_menu(menu_items):
+    menu_top = "╭" + 3 * "─" + " MENU " + 50 * "─" + "╮"
+    print(menu_top)
+    index = 1
+    for item in menu_items:
+        print("│ {}: {}{}│".format(str(index), menu_items[index - 1], (len(menu_top) -
+              len(menu_items[index - 1]) - 6) * " "))
+        index += 1
+    print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
+    print("╰" + (len(menu_top) - 2) * "─" + "╯")
+
+
+@api_wrapper
+def show_account_info(api):
+    print(api.get_account())
 
 
 @api_wrapper
@@ -60,8 +83,9 @@ def show_prices_for_product(product_id, api):  # 294758 works
         'isAltered': 'false',
         'isSigned': 'false',
         'minCondition': 'GD',
+        'country': api.get_account()['account']['country'],
         'idLanguage': 1
-    })  # ['article']
+    })
     table_data = []
     for article in articles:
         table_data.append([
@@ -72,17 +96,21 @@ def show_prices_for_product(product_id, api):  # 294758 works
             article['price']
         ])
     if len(table_data) > 0:
-        print('Top 15 cheapest articles for chosen product')
-        tp.table(sorted(table_data, key=lambda x: x[4], reverse=False)[:15],
-                 ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
-        print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
-            str(round(__calculate_average(table_data, 3, 4), 2)),
-            str(round(__calculate_median(table_data, 3, 4), 2)),
-            str(len(table_data))
-        )
-        )
+        __print_product_top_list(table_data, 4, 20)
     else:
         print('No prices found.')
+
+
+def __print_product_top_list(table_data, sort_column, rows):
+    print('Top {} cheapest articles for chosen product'.format(rows))
+    tp.table(sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
+             ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
+    print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
+        str(PyMKM_Helper.calculate_average(table_data, 3, 4)),
+        str(PyMKM_Helper.calculate_median(table_data, 3, 4)),
+        str(len(table_data))
+    )
+    )
 
 
 @api_wrapper
@@ -90,7 +118,9 @@ def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    stock_list = [x for x in stock_list if x['idProduct'] == 301546]
+    #stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+    #stock_list = [x for x in stock_list if x['isFoil']]
+    # 301546 expensive
 
     table_data = []
     uploadable_json = []
@@ -101,18 +131,18 @@ def update_stock_prices_to_trend(api):
     for article in stock_list:
         r = api.get_product(article['idProduct'])
         if not article['isFoil']:
-            new_price = r['product']['priceGuide']['TREND']
-            price_diff = new_price - article['price']
-            total_price_diff += price_diff
-            table_data.append(
-                [article['product']['enName'], article['price'], new_price, price_diff])
-            uploadable_json.append({
-                "idArticle": article['idArticle'],
-                "price": new_price,
-                "count": article['count']
-            })
-        # else: #FOIL
-            # print(r['product']['priceGuide'])
+            new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
+        else:  # FOIL
+            new_price = __get_foil_price(api, article['idProduct'])
+        price_diff = new_price - article['price']
+        total_price_diff += price_diff
+        table_data.append(
+            [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
+        uploadable_json.append({
+            "idArticle": article['idArticle'],
+            "price": new_price,
+            "count": article['count']
+        })
         index += 1
         bar.update(index)
     bar.finish()
@@ -120,7 +150,7 @@ def update_stock_prices_to_trend(api):
     if len(uploadable_json) > 0:
         print('')  # table breaks because of progress bar rendering
         tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
-            'Name', 'Old price', 'New price', 'Diff (sorted)'], width=28)
+            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=24)
         print('Total price difference: {}'.format(
             str(round(total_price_diff, 2))))
 
@@ -149,6 +179,65 @@ def show_top_10_expensive_articles_in_stock(api):
     return None
 
 
+def __get_foil_price(api, product_id):
+    # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
+    # 1) See filter parameters below.
+    # 2) Set price to lowest + (median - lowest / 2), rounded to closest quarter Euro.
+    # 3) Undercut price in own country if not contradicting 2)
+    # 4) Never go below 0.25 for foils
+
+    account_country = api.get_account()['account']['country']
+    articles = api.get_articles(product_id, **{
+        'isFoil': 'true',
+        'isAltered': 'false',
+        'isSigned': 'false',
+        'minCondition': 'GD',
+        'idLanguage': 1  # English
+    })
+
+    keys = ['idArticle', 'count', 'price', 'condition', 'seller']
+    foil_articles = [{x: y for x, y in art.items() if x in keys}
+                     for art in articles]
+    local_articles = []
+    for article in foil_articles:
+        if article['seller']['address']['country'] == account_country:
+            local_articles.append(article)
+
+    local_table_data = []
+    for article in local_articles:
+        if article:
+            local_table_data.append([
+                article['seller']['username'],
+                article['seller']['address']['country'],
+                article['condition'],
+                article['count'],
+                article['price']
+            ])
+
+    table_data = []
+    for article in articles:
+        if article:
+            table_data.append([
+                article['seller']['username'],
+                article['seller']['address']['country'],
+                article['condition'],
+                article['count'],
+                article['price']
+            ])
+
+    median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
+    lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
+    median_guided = math.ceil(
+        (lowest_price + (median_price - lowest_price) / 2) * 4) / 4
+    if len(local_table_data) > 0:
+        lowest_in_country = math.floor(
+            PyMKM_Helper.calculate_lowest(local_table_data, 4)*4)/4
+
+        return max(0.25, min(median_guided, lowest_in_country))
+    else:
+        return median_guided
+
+
 def __get_stock_as_array(api):
     d = api.get_stock()['article']
 
@@ -167,20 +256,6 @@ def __prompt(query):
         print("Please answer with y/n")
         return __prompt(query)
     return ret
-
-
-def __calculate_average(table, col_no_count, col_no_price):
-    flat_array = []
-    for row in table:
-        flat_array.extend([row[col_no_price] * row[col_no_count]])
-    return statistics.mean(flat_array)
-
-
-def __calculate_median(table, col_no_count, col_no_price):
-    flat_array = []
-    for row in table:
-        flat_array.extend([row[col_no_price] * row[col_no_count]])
-    return statistics.median(flat_array)
 
 
 if __name__ == "__main__":

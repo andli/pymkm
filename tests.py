@@ -8,10 +8,9 @@ from unittest.mock import Mock, MagicMock
 import requests
 from requests_oauthlib import OAuth1Session
 from pymkm import PyMKM
-
+from helper import PyMKM_Helper
 
 class TestPyMkmApiCalls(unittest.TestCase):
-    """ This is one of potentially many TestCases """
 
     class MockResponse:
         def __init__(self, json_data, status_code, content):
@@ -52,6 +51,32 @@ class TestPyMkmApiCalls(unittest.TestCase):
             return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mockMkmService), "test")
 
+class TestPyMkmHelperFunctions(unittest.TestCase):
+
+    def setUp(self):
+        self.helper = PyMKM_Helper()
+    def test_calculate_average(self):
+        table = [
+            ['Yxskaft', 'SE', 'NM', 1, 1.21],
+            ['Frazze11', 'SE', 'NM', 3, 1.3],
+            ['andli826', 'SE', 'NM', 2, 1.82]
+        ]
+        self.assertEqual(self.helper.calculate_average(table, 3, 4), 1.46)
+    def test_calculate_median(self):
+        table = [
+            ['Yxskaft', 'SE', 'NM', 1, 1.21],
+            ['Frazze11', 'SE', 'NM', 3, 1.3],
+            ['andli826', 'SE', 'NM', 2, 1.82]
+        ]
+        self.assertEqual(self.helper.calculate_median(table, 3, 4), 1.3)
+        self.assertEqual(self.helper.calculate_average(table, 3, 4), 1.46)
+    def test_calculate_lowest(self):
+        table = [
+            ['Yxskaft', 'SE', 'NM', 1, 1.21],
+            ['Frazze11', 'SE', 'NM', 3, 1.3],
+            ['andli826', 'SE', 'NM', 2, 1.82]
+        ]
+        self.assertEqual(self.helper.calculate_lowest(table, 4), 1.21)
 
 if __name__ == '__main__':
     unittest.main()
