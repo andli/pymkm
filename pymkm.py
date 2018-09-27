@@ -22,7 +22,7 @@ class api_wrapper(object):
         self.function = function
 
     def __call__(self, *arg, **kwargs):
-        logging.debug(">> Entering", self.function.__name__)
+        logging.debug(">> Entering {}".format(self.function.__name__))
         #print(arg)
         #print(kwargs)
         self.function(*arg, **kwargs)
@@ -31,7 +31,7 @@ class api_wrapper(object):
             if (int(api.requests_max) > 0):
                 print('>> Cardmarket.com requests used today: {}/{}'.format(
                     api.requests_count, api.requests_max))
-        logging.debug(">> Exited", self.function.__name__)
+        logging.debug(">> Exited {}".format(self.function.__name__))
 
 
 class PyMKM:
