@@ -5,7 +5,7 @@ python:
   - '3.6'
 install:
   - travis_retry pip install -r requirements-dev.txt
-script: coverage run --include=pymkm.py tests.py
+script: coverage run --omit tests.py .\tests.py
 after_success: 
   - coverage report
   - bash <(curl -s https://codecov.io/bash)
