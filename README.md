@@ -3,11 +3,13 @@
 # pymkm
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
-The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest .25 €. 
+The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest .25 €. A confirmation step allows you to check the result before uploading the new prices.
 
 **NOTE:** Use this functionality at your own risk, I take no responsibility for the resulting prices.
 
 The app also keeps track of how many API requests your have left each day.
+
+![Screengrab](https://raw.githubusercontent.com/andli/pymkm/master/screengrab.png)
 
 ## how?
 1. Install requirements using `pip install -r requirements.txt`
