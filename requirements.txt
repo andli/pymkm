@@ -1,4 +1,4 @@
-requests_oauthlib~=1.0.0
-tableprint~=0.8.0
-dicttoxml~=1.7.4
-progressbar2~=3.38.0
+requests_oauthlib
+tableprint
+dicttoxml
+progressbar2
