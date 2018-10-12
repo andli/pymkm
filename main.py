@@ -119,6 +119,7 @@ def update_stock_prices_to_trend(api):
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
     #stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
     #stock_list = [x for x in stock_list if x['isFoil']]
     # 301546 expensive
 
@@ -215,7 +216,7 @@ def __get_foil_price(api, product_id):
             ])
 
     table_data = []
-    for article in articles:
+    for article in foil_articles:
         if article:
             table_data.append([
                 article['seller']['username'],
@@ -227,15 +228,16 @@ def __get_foil_price(api, product_id):
 
     median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
     lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
-    median_guided = math.ceil(
-        (lowest_price + (median_price - lowest_price) / 2) * 4) / 4
-    if len(local_table_data) > 0:
-        lowest_in_country = math.floor(
-            PyMKM_Helper.calculate_lowest(local_table_data, 4)*4)/4
+    median_guided = PyMKM_Helper.round_up_to_quarter(lowest_price + (median_price - lowest_price) / 4)
 
-        return max(0.25, min(median_guided, lowest_in_country))
+    if len(local_table_data) > 0:
+        # Undercut if there is local competition
+        lowest_in_country = PyMKM_Helper.round_down_to_quarter(
+            PyMKM_Helper.calculate_lowest(local_table_data, 4))
+        return max(0.25, min(median_guided, lowest_in_country - 0.25))
     else:
-        return median_guided
+        # No competition in our country, set price a bit higher.
+        return PyMKM_Helper.round_up_to_quarter(median_guided * 1.2)
 
 
 def __get_stock_as_array(api):

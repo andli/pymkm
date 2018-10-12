@@ -56,9 +56,12 @@ class PyMKM:
             self.config = config
 
     def __handle_response(self, response):
-        self.requests_count = response.headers['X-Request-Limit-Count']
-        self.requests_max = response.headers['X-Request-Limit-Max']
-        
+        try:
+            self.requests_count = response.headers['X-Request-Limit-Count']
+            self.requests_max = response.headers['X-Request-Limit-Max']
+        except AttributeError as err:
+            logging.debug(">> Attribute not found in header: {}".format(err))
+
         handled_codes = (
             requests.codes.ok,
             requests.codes.no_content,  # TODO: handle 204 better
