@@ -77,6 +77,14 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
             ['andli826', 'SE', 'NM', 2, 1.82]
         ]
         self.assertEqual(self.helper.calculate_lowest(table, 4), 1.21)
+    def test_round_up_to_quarter(self):
+        self.assertEqual(self.helper.round_up_to_quarter(0.99), 1)
+        self.assertEqual(self.helper.round_up_to_quarter(0), 0)
+        self.assertEqual(self.helper.round_up_to_quarter(0.1), 0.25)
+    def test_round_down_to_quarter(self):
+        self.assertEqual(self.helper.round_down_to_quarter(0.99), 0.75)
+        self.assertEqual(self.helper.round_down_to_quarter(1.01), 1)
+        self.assertEqual(self.helper.round_down_to_quarter(0.1), 0)
 
 if __name__ == '__main__':
     unittest.main()

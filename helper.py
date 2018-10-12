@@ -8,7 +8,7 @@ __version__ = "0.9.0"
 __license__ = "MIT"
 
 import sys
-import statistics
+import math, statistics
 
 
 class PyMKM_Helper:
@@ -35,3 +35,11 @@ class PyMKM_Helper:
         for row in table:
             flat_array.extend([row[col_no_price]])
         return min(flat_array)
+
+    @staticmethod
+    def round_up_to_quarter(price):
+        return math.ceil(price * 4) / 4
+
+    @staticmethod
+    def round_down_to_quarter(price):
+        return math.floor(price * 4) / 4
