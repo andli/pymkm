@@ -3,4 +3,5 @@ __pycache__/
 config.json
 data.json
 .coverage
+/htmlcov
 *.pyc
