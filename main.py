@@ -59,13 +59,14 @@ def main():
         else:
             print("Not a valid choice, try again.")
 
+
 def __print_menu(menu_items):
     menu_top = "╭" + 3 * "─" + " MENU " + 50 * "─" + "╮"
     print(menu_top)
     index = 1
     for item in menu_items:
         print("│ {}: {}{}│".format(str(index), menu_items[index - 1], (len(menu_top) -
-              len(menu_items[index - 1]) - 6) * " "))
+                                                                       len(menu_items[index - 1]) - 6) * " "))
         index += 1
     print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
     print("╰" + (len(menu_top) - 2) * "─" + "╯")
@@ -118,14 +119,15 @@ def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    #stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+    stock_list = [x for x in stock_list if x['idProduct'] == 18204]
     # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
-    #stock_list = [x for x in stock_list if x['isFoil']]
+    # stock_list = [x for x in stock_list if x['isFoil']]
     # 301546 expensive
 
     table_data = []
     uploadable_json = []
     total_price_diff = 0
+    new_total_value = 0
     index = 0
 
     bar = progressbar.ProgressBar(max_value=len(stock_list))
@@ -136,6 +138,7 @@ def update_stock_prices_to_trend(api):
         else:  # FOIL
             new_price = __get_foil_price(api, article['idProduct'])
         price_diff = new_price - article['price']
+        new_total_value += new_price
         total_price_diff += price_diff
         table_data.append(
             [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
@@ -149,11 +152,15 @@ def update_stock_prices_to_trend(api):
     bar.finish()
 
     if len(uploadable_json) > 0:
-        print('')  # table breaks because of progress bar rendering
-        tp.table(sorted(table_data, key=lambda x: x[3], reverse=True)[:10], [
-            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=24)
-        print('Total price difference: {}'.format(
-            str(round(total_price_diff, 2))))
+        print('Best diffs:')  # table breaks because of progress bar rendering
+        tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
+            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+        print('Worst diffs:')
+        tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
+            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+        print('Total price difference: {} (new sum: {})'.format(
+            str(round(total_price_diff, 2)), str(round(new_total_value))
+        ))
 
         if __prompt("Do you want to update these prices?") == True:
             # Update articles on MKM
@@ -228,7 +235,8 @@ def __get_foil_price(api, product_id):
 
     median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
     lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
-    median_guided = PyMKM_Helper.round_up_to_quarter(lowest_price + (median_price - lowest_price) / 4)
+    median_guided = PyMKM_Helper.round_up_to_quarter(
+        lowest_price + (median_price - lowest_price) / 4)
 
     if len(local_table_data) > 0:
         # Undercut if there is local competition
