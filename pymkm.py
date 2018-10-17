@@ -45,13 +45,7 @@ class PyMKM:
     def __init__(self, config=None):
         if (config == None):
             logging.debug(">> Loading config file")
-            try:
-                self.config = json.load(open('config.json'))
-            except Exception as error:
-                print(
-                    "You must copy config_template.json to config.json and populate the fields.")
-                print(error)
-                sys.exit(0)
+            self.config = json.load(open('config.json'))
         else:
             self.config = config
 

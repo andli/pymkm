@@ -4,11 +4,12 @@ Python unittest
 import json
 import random
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch, mock_open
 import requests
 from requests_oauthlib import OAuth1Session
 from pymkm import PyMKM
 from helper import PyMKM_Helper
+
 
 class TestPyMkmApiCalls(unittest.TestCase):
 
@@ -17,7 +18,9 @@ class TestPyMkmApiCalls(unittest.TestCase):
             self.json_data = json_data
             self.status_code = status_code
             self.content = content
-            self.headers = {'X-Request-Limit-Count': 1234, 'X-Request-Limit-Max': 5000} #TODO: write a test for these
+            # TODO: write a test for these
+            self.headers = {'X-Request-Limit-Count': 1234,
+                            'X-Request-Limit-Max': 5000}
 
         def json(self):
             return self.json_data
@@ -38,6 +41,15 @@ class TestPyMkmApiCalls(unittest.TestCase):
 
         self.api = PyMKM(config)
 
+    def test_file_not_found2(self):
+        open_name = '%s.open' % __name__
+        with patch("builtins.open", mock_open(read_data="data")) as mocked_open:
+            mocked_open.side_effect = FileNotFoundError
+            
+            with self.assertRaises(FileNotFoundError):
+                api = PyMKM()
+            #mocked_open.return_value = StringIO('foo')
+
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
         mockMkmService.get = MagicMock(
@@ -51,10 +63,12 @@ class TestPyMkmApiCalls(unittest.TestCase):
             return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mockMkmService), "test")
 
+
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
     def setUp(self):
         self.helper = PyMKM_Helper()
+
     def test_calculate_average(self):
         table = [
             ['Yxskaft', 'SE', 'NM', 1, 1.21],
@@ -62,6 +76,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
             ['andli826', 'SE', 'NM', 2, 1.82]
         ]
         self.assertEqual(self.helper.calculate_average(table, 3, 4), 1.46)
+
     def test_calculate_median(self):
         table = [
             ['Yxskaft', 'SE', 'NM', 1, 1.21],
@@ -70,6 +85,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         ]
         self.assertEqual(self.helper.calculate_median(table, 3, 4), 1.3)
         self.assertEqual(self.helper.calculate_average(table, 3, 4), 1.46)
+
     def test_calculate_lowest(self):
         table = [
             ['Yxskaft', 'SE', 'NM', 1, 1.21],
@@ -77,14 +93,17 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
             ['andli826', 'SE', 'NM', 2, 1.82]
         ]
         self.assertEqual(self.helper.calculate_lowest(table, 4), 1.21)
+
     def test_round_up_to_quarter(self):
         self.assertEqual(self.helper.round_up_to_quarter(0.99), 1)
         self.assertEqual(self.helper.round_up_to_quarter(0), 0)
         self.assertEqual(self.helper.round_up_to_quarter(0.1), 0.25)
+
     def test_round_down_to_quarter(self):
         self.assertEqual(self.helper.round_down_to_quarter(0.99), 0.75)
         self.assertEqual(self.helper.round_down_to_quarter(1.01), 1)
         self.assertEqual(self.helper.round_down_to_quarter(0.1), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "0.9.0"
 __license__ = "MIT"
 
+import sys
 from pymkm import PyMKM
 from pymkm import api_wrapper
 from helper import PyMKM_Helper
@@ -19,7 +20,13 @@ from distutils.util import strtobool
 
 
 def main():
-    api = PyMKM()
+    try:
+        api = PyMKM()
+    except FileNotFoundError:
+        print("You must copy config_template.json to config.json and populate the fields.")
+        sys.exit(0)
+    except Exception as error:
+        print(error)
 
     loop = True
     while loop:
