@@ -126,7 +126,7 @@ def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     stock_list = __get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
     # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
     # stock_list = [x for x in stock_list if x['isFoil']]
     # 301546 expensive
