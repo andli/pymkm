@@ -128,6 +128,7 @@ def update_stock_prices_to_trend(api):
     # HACK: filter out a foil product
     # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
     # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
     # stock_list = [x for x in stock_list if x['isFoil']]
     # 301546 expensive
 
@@ -228,6 +229,8 @@ def __get_foil_price(api, product_id):
                 article['count'],
                 article['price']
             ])
+    
+    #tp.table(local_table_data)
 
     table_data = []
     for article in foil_articles:
@@ -239,13 +242,15 @@ def __get_foil_price(api, product_id):
                 article['count'],
                 article['price']
             ])
+    
+    #tp.table(table_data)
 
     median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
     lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
     median_guided = PyMKM_Helper.round_up_to_quarter(
         lowest_price + (median_price - lowest_price) / 4)
 
-    if len(local_table_data) > 0:
+    if len(local_table_data) > 1:
         # Undercut if there is local competition
         lowest_in_country = PyMKM_Helper.round_down_to_quarter(
             PyMKM_Helper.calculate_lowest(local_table_data, 4))
