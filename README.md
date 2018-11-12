@@ -31,3 +31,4 @@ These calls are implemented so far. They are not fully tested with different edg
 * `get_stock`
 * `set_stock`
 * `get_articles`
+* `find_product`
