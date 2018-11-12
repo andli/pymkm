@@ -13,6 +13,7 @@ from pymkm import PyMKM
 from pymkm import api_wrapper
 from helper import PyMKM_Helper
 import json
+import pprint
 import tableprint as tp
 import progressbar
 import math
@@ -31,9 +32,10 @@ def main():
     loop = True
     while loop:
         menu_items = [
-            "Show top 10 expensive items in stock",
+            "Show top 20 expensive items in stock",
             "Update stock prices",
-            "Show prices for Coiling Oracle promo",
+            "Search for product",
+            "Show prices for Thunderbreak Regent GD foil",
             "Show account info"
         ]
         __print_menu(menu_items)
@@ -42,7 +44,7 @@ def main():
 
         if choice == "1":
             try:
-                show_top_10_expensive_articles_in_stock(api=api)
+                show_top_expensive_articles_in_stock(20, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "2":
@@ -50,13 +52,18 @@ def main():
                 update_stock_prices_to_trend(api=api)
             except ConnectionError as err:
                 print(err)
-                print(err)
         elif choice == "3":
+            search_string = __prompt_string('Search string')
             try:
-                show_prices_for_product(18204, api=api)
+                search_for_product(search_string, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "4":
+            try:
+                show_prices_for_product(273118, api=api)
+            except ConnectionError as err:
+                print(err)
+        elif choice == "5":
             try:
                 show_account_info(api=api)
             except ConnectionError as err:
@@ -81,7 +88,22 @@ def __print_menu(menu_items):
 
 @api_wrapper
 def show_account_info(api):
-    print(api.get_account())
+    pp = pprint.PrettyPrinter()
+    pp.pprint(api.get_account())
+
+@api_wrapper
+def search_for_product(search_string, api):
+    try:
+        product = api.find_product(search_string, **{
+            'exact ': 'true',
+            'idGame': 1,
+            'idLanguage': 1
+            #TODO: Add Partial Content support
+        })['product'][0]
+        print(product)
+        show_prices_for_product(product['idProduct'], api=api)
+    except Exception as err:
+        print(err)
 
 
 @api_wrapper
@@ -181,7 +203,7 @@ def update_stock_prices_to_trend(api):
 
 
 @api_wrapper
-def show_top_10_expensive_articles_in_stock(api):
+def show_top_expensive_articles_in_stock(num_articles, api):
     stock_list = __get_stock_as_array(api=api)
     table_data = []
 
@@ -189,8 +211,8 @@ def show_top_10_expensive_articles_in_stock(api):
         table_data.append(
             [str(article['idProduct']), article['product']['enName'], article['price']])
     if len(stock_list) > 0:
-        print('Top 10 most expensive articles in stock:')
-        tp.table(sorted(table_data, key=lambda x: x[2], reverse=True)[:10], [
+        print('Top {} most expensive articles in stock:'.format(str(num_articles)))
+        tp.table(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles], [
             'Product ID', 'Name', 'Price'], width=36)
     return None
 
@@ -229,8 +251,8 @@ def __get_foil_price(api, product_id):
                 article['count'],
                 article['price']
             ])
-    
-    #tp.table(local_table_data)
+
+    # tp.table(local_table_data)
 
     table_data = []
     for article in foil_articles:
@@ -242,8 +264,8 @@ def __get_foil_price(api, product_id):
                 article['count'],
                 article['price']
             ])
-    
-    #tp.table(table_data)
+
+    # tp.table(table_data)
 
     median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
     lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
@@ -278,6 +300,12 @@ def __prompt(query):
         print("Please answer with y/n")
         return __prompt(query)
     return ret
+
+
+def __prompt_string(query):
+    print('{}: '.format(query))
+    val = input()
+    return val
 
 
 if __name__ == "__main__":

@@ -33,6 +33,13 @@ class api_wrapper(object):
                     api.requests_count, api.requests_max))
         logging.debug(">> Exited {}".format(self.function.__name__))
 
+class NoResultsError(Exception):
+    def __init__(self, message, errors=None):
+        if (message == None):
+            message = 'No results found.'
+        super().__init__(message)
+
+        self.errors = errors
 
 class PyMKM:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -58,12 +65,13 @@ class PyMKM:
 
         handled_codes = (
             requests.codes.ok,
-            requests.codes.no_content,  # TODO: handle 204 better
             requests.codes.partial_content,
         )
         if (response.status_code in handled_codes):
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
+        elif (response.status_code == requests.codes.no_content):
+            raise NoResultsError('Empty results.')
         else:
             raise requests.exceptions.ConnectionError(response)
 
@@ -245,8 +253,7 @@ class PyMKM:
         r = mkm_oauth.get(url, params=params)
 
         max_items = 0 
-        if (r.status_code == requests.codes.partial_content 
-        or r.status_code == requests.codes.no_content):
+        if (r.status_code == requests.codes.partial_content):
             max_items = self.__get_max_items_from_header(r)
             logging.debug('> Content-Range header: ' + r.headers['Content-Range'])
             logging.debug('> # articles in response: ' + str(len(r.json()['article'])))  
@@ -254,7 +261,29 @@ class PyMKM:
                 return r.json()['article']
             else:
                 return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
+        elif (r.status_code == requests.codes.no_content):
+            raise NoResultsError('No products found.')
         elif (r.status_code == requests.codes.ok):
             return r.json()['article']
         else:
             raise ConnectionError(r)
+
+    def find_product(self, search, api=None, **kwargs):
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Find_Products
+
+        url = '{}/products/find'.format(self.base_url)
+        mkm_oauth = self.__setup_service(url, api)
+
+        # for key, value in kwargs.items():
+        #    print("{} = {}".format(key, value))
+
+        logging.debug(">> Finding product for search string: " + str(search))
+
+        params = kwargs
+        if 'search' not in kwargs:
+            params['search'] = search
+
+        r = mkm_oauth.get(url, params=params)
+
+        if (self.__handle_response(r)):
+            return r.json()
