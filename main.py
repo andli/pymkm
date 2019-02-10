@@ -177,21 +177,22 @@ def update_stock_prices_to_trend(api):
             else:  # FOIL
                 new_price = __get_foil_price(api, article['idProduct'])
             price_diff = new_price - article['price']
-            new_total_value += new_price
-            total_price_diff += price_diff
-            table_data.append(
-                [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
-            uploadable_json.append({
-                "idArticle": article['idArticle'],
-                "price": new_price,
-                "count": article['count']
-            })
+            if price_diff > 0:
+                new_total_value += new_price
+                total_price_diff += price_diff
+                table_data.append(
+                    [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
+                uploadable_json.append({
+                    "idArticle": article['idArticle'],
+                    "price": new_price,
+                    "count": article['count']
+                })
             index += 1
             bar.update(index)
         bar.finish()
 
         _display_price_changes_table(table_data, total_price_diff, new_total_value)
-        
+
         with open(PRICE_CHANGES_FILE, 'w') as outfile:
             json.dump(uploadable_json, outfile)
 
@@ -208,15 +209,16 @@ def update_stock_prices_to_trend(api):
         print('No prices to update.')
 
 def _display_price_changes_table(table_data, total_price_diff, new_total_value):
-    print('Best diffs:')  # table breaks because of progress bar rendering
-    tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
-        'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-    print('Worst diffs:')
-    tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
-        'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-    print('Total price difference: {} (new sum: {})'.format(
-        str(round(total_price_diff, 2)), str(round(new_total_value))
-    ))
+    if len(table_data) > 0:
+        print('Best diffs:')  # table breaks because of progress bar rendering
+        tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
+            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+        print('Worst diffs:')
+        tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
+            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+        print('Total price difference: {} (new sum: {})'.format(
+            str(round(total_price_diff, 2)), str(round(new_total_value))
+        ))
 
 
 @api_wrapper
