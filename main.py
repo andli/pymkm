@@ -9,6 +9,7 @@ __version__ = "0.9.0"
 __license__ = "MIT"
 
 import sys
+import os.path
 from pymkm import PyMKM
 from pymkm import api_wrapper
 from helper import PyMKM_Helper
@@ -19,6 +20,7 @@ import progressbar
 import math
 from distutils.util import strtobool
 
+PRICE_CHANGES_FILE = 'price_changes.json'
 
 def main():
     try:
@@ -146,60 +148,75 @@ def __print_product_top_list(table_data, sort_column, rows):
 @api_wrapper
 def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
-    stock_list = __get_stock_as_array(api=api)
-    # HACK: filter out a foil product
-    # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
-    # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
-    # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
-    # stock_list = [x for x in stock_list if x['isFoil']]
-    # 301546 expensive
+    if os.path.isfile(PRICE_CHANGES_FILE):
+        if __prompt("Found existing changes. Upload [Y] or discard [N]?") == True:
+            with open(PRICE_CHANGES_FILE, 'r') as changes: 
+                uploadable_json = json.load(changes)
+        
+    else:
 
-    table_data = []
-    uploadable_json = []
-    total_price_diff = 0
-    new_total_value = 0
-    index = 0
+        stock_list = __get_stock_as_array(api=api)
+        # HACK: filter out a foil product
+        # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+        # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
+        # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
+        # stock_list = [x for x in stock_list if x['isFoil']]
+        # 301546 expensive
 
-    bar = progressbar.ProgressBar(max_value=len(stock_list))
-    for article in stock_list:
-        r = api.get_product(article['idProduct'])
-        if not article['isFoil']:
-            new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
-        else:  # FOIL
-            new_price = __get_foil_price(api, article['idProduct'])
-        price_diff = new_price - article['price']
-        new_total_value += new_price
-        total_price_diff += price_diff
-        table_data.append(
-            [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
-        uploadable_json.append({
-            "idArticle": article['idArticle'],
-            "price": new_price,
-            "count": article['count']
-        })
-        index += 1
-        bar.update(index)
-    bar.finish()
+        table_data = []
+        uploadable_json = []
+        total_price_diff = 0
+        new_total_value = 0
+        index = 0
+
+        bar = progressbar.ProgressBar(max_value=len(stock_list))
+        for article in stock_list:
+            r = api.get_product(article['idProduct'])
+            if not article['isFoil']:
+                new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
+            else:  # FOIL
+                new_price = __get_foil_price(api, article['idProduct'])
+            price_diff = new_price - article['price']
+            new_total_value += new_price
+            total_price_diff += price_diff
+            table_data.append(
+                [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
+            uploadable_json.append({
+                "idArticle": article['idArticle'],
+                "price": new_price,
+                "count": article['count']
+            })
+            index += 1
+            bar.update(index)
+        bar.finish()
+
+        _display_price_changes_table(table_data, total_price_diff, new_total_value)
+        
+        with open(PRICE_CHANGES_FILE, 'w') as outfile:
+            json.dump(uploadable_json, outfile)
 
     if len(uploadable_json) > 0:
-        print('Best diffs:')  # table breaks because of progress bar rendering
-        tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
-            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-        print('Worst diffs:')
-        tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
-            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-        print('Total price difference: {} (new sum: {})'.format(
-            str(round(total_price_diff, 2)), str(round(new_total_value))
-        ))
 
         if __prompt("Do you want to update these prices?") == True:
             # Update articles on MKM
             api.set_stock(uploadable_json)
             print('Prices updated.')
+            os.remove(PRICE_CHANGES_FILE)
         else:
             print('Prices not updated.')
     else:
         print('No prices to update.')
+
+def _display_price_changes_table(table_data, total_price_diff, new_total_value):
+    print('Best diffs:')  # table breaks because of progress bar rendering
+    tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
+        'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+    print('Worst diffs:')
+    tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
+        'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
+    print('Total price difference: {} (new sum: {})'.format(
+        str(round(total_price_diff, 2)), str(round(new_total_value))
+    ))
 
 
 @api_wrapper

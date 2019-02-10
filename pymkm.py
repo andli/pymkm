@@ -105,6 +105,13 @@ class PyMKM:
         except KeyError as err:
             logging.debug(">>> Header error finding content-range")
         return max_items
+    
+    @staticmethod
+    def __chunks(l, n):
+        # For item i in a range that is a length of l,
+        for i in range(0, len(l), n):
+            # Create an index range for l of n items:
+            yield l[i:i+n]
 
     def get_games(self, api=None):
         url = '{}/games'.format(self.base_url)
@@ -227,12 +234,14 @@ class PyMKM:
         url = '{}/stock'.format(self.base_url)
 
         mkm_oauth = self.__setup_service(url, api)
-        xml_payload = self.__json_to_xml(payload)
 
         logging.debug(">> Updating stock")
-        r = mkm_oauth.put(url, data=xml_payload)
+        chunked_list = list(self.__chunks(payload, 100))
+        for chunk in chunked_list:
+            xml_payload = self.__json_to_xml(chunk)
+            r = mkm_oauth.put(url, data=xml_payload)
 
-        if (self.__handle_response(r)):
+        if (self.__handle_response(r)): #TODO: Only considers the last response.
             return r.json
 
     def get_articles(self, product_id, start=0, api=None, **kwargs):
