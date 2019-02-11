@@ -148,8 +148,9 @@ def __print_product_top_list(table_data, sort_column, rows):
 @api_wrapper
 def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
+    uploadable_json = []
     if os.path.isfile(PRICE_CHANGES_FILE):
-        if __prompt("Found existing changes. Upload [Y] or discard [N]?") == True:
+        if __prompt("Found existing changes. Upload [y] or discard [n]?") == True:
             with open(PRICE_CHANGES_FILE, 'r') as changes: 
                 uploadable_json = json.load(changes)
         
@@ -164,7 +165,6 @@ def update_stock_prices_to_trend(api):
         # 301546 expensive
 
         table_data = []
-        uploadable_json = []
         total_price_diff = 0
         new_total_value = 0
         index = 0
