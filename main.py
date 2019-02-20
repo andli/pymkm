@@ -15,7 +15,7 @@ from pymkm import api_wrapper
 from helper import PyMKM_Helper
 import json
 import pprint
-import tableprint as tp
+import tabulate as tb
 import progressbar
 import math
 from distutils.util import strtobool
@@ -134,9 +134,10 @@ def show_prices_for_product(product_id, api):  # 294758 works
 
 
 def __print_product_top_list(table_data, sort_column, rows):
-    print('Top {} cheapest articles for chosen product'.format(rows))
-    tp.table(sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
-             ['Username', 'Country', 'Condition', 'Count', 'Price'], width=20)
+    print('Top {} cheapest articles for chosen product\n'.format(rows))
+    print(tb.tabulate(sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
+             headers=['Username', 'Country', 'Condition', 'Count', 'Price'],
+             tablefmt="simple"))
     print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
         str(PyMKM_Helper.calculate_average(table_data, 3, 4)),
         str(PyMKM_Helper.calculate_median(table_data, 3, 4)),
@@ -211,24 +212,22 @@ def _calculate_new_prices_for_stock(api):
 
 def _display_price_changes_table(changes_json):
     if len(changes_json) > 0:
-        print('Best diffs:')  # table breaks because of progress bar rendering
+        print('\nBest diffs:\n')  # table breaks because of progress bar rendering
         sorted_best = sorted(changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
         _draw_price_changes_table(i for i in sorted_best if i['price_diff'] > 0)
-        print('Worst diffs:')
+        print('\nWorst diffs:\n')
         sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
         _draw_price_changes_table(i for i in sorted_worst if i['price_diff'] < 0)
         
-        #print('Total price difference: {} (new sum: {})'.format(
-        #    str(round(total_price_diff, 2)), str(round(new_total_value))
-        #))
+        print('\nTotal price difference: {}\n'.format(str(round(sum(item['price_diff'] for item in changes_json), 2))))
 
 
 def _draw_price_changes_table(sorted_best):
-    tp.table(
+    print(tb.tabulate(
         [[item['name'], item['foil'], item['old_price'], item['price'], item['price_diff']] for item in sorted_best], 
-        ['Name', 'Foil?', 'Old price', 'New price', 'Diff'] ,
-        width=28
-    )
+        headers=['Name', 'Foil?', 'Old price', 'New price', 'Diff'],
+        tablefmt="simple"
+    ))
 
 @api_wrapper
 def show_top_expensive_articles_in_stock(num_articles, api):
@@ -239,9 +238,11 @@ def show_top_expensive_articles_in_stock(num_articles, api):
         table_data.append(
             [str(article['idProduct']), article['product']['enName'], article['price']])
     if len(stock_list) > 0:
-        print('Top {} most expensive articles in stock:'.format(str(num_articles)))
-        tp.table(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles], [
-            'Product ID', 'Name', 'Price'], width=36)
+        print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
+        print(tb.tabulate(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles], 
+            headers=['Product ID', 'Name', 'Price'], 
+            tablefmt="simple")
+            )
     return None
 
 
@@ -280,8 +281,6 @@ def __get_foil_price(api, product_id):
                 article['price']
             ])
 
-    # tp.table(local_table_data)
-
     table_data = []
     for article in foil_articles:
         if article:
@@ -292,8 +291,6 @@ def __get_foil_price(api, product_id):
                 article['count'],
                 article['price']
             ])
-
-    # tp.table(table_data)
 
     median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
     lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
