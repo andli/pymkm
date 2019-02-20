@@ -156,47 +156,13 @@ def update_stock_prices_to_trend(api):
         
     else:
 
-        stock_list = __get_stock_as_array(api=api)
-        # HACK: filter out a foil product
-        # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
-        # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
-        # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
-        # stock_list = [x for x in stock_list if x['isFoil']]
-        # 301546 expensive
-
-        table_data = []
-        total_price_diff = 0
-        new_total_value = 0
-        index = 0
-
-        bar = progressbar.ProgressBar(max_value=len(stock_list))
-        for article in stock_list:
-            r = api.get_product(article['idProduct'])
-            if not article['isFoil']:
-                new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
-            else:  # FOIL
-                new_price = __get_foil_price(api, article['idProduct'])
-            price_diff = new_price - article['price']
-            if price_diff > 0:
-                new_total_value += new_price
-                total_price_diff += price_diff
-                table_data.append(
-                    [article['product']['enName'], article['isFoil'], article['price'], new_price, price_diff])
-                uploadable_json.append({
-                    "idArticle": article['idArticle'],
-                    "price": new_price,
-                    "count": article['count']
-                })
-            index += 1
-            bar.update(index)
-        bar.finish()
-
-        _display_price_changes_table(table_data, total_price_diff, new_total_value)
-
+        uploadable_json = _calculate_new_prices_for_stock(api)
         with open(PRICE_CHANGES_FILE, 'w') as outfile:
             json.dump(uploadable_json, outfile)
 
     if len(uploadable_json) > 0:
+
+        _display_price_changes_table(uploadable_json)
 
         if __prompt("Do you want to update these prices?") == True:
             # Update articles on MKM
@@ -204,22 +170,65 @@ def update_stock_prices_to_trend(api):
             print('Prices updated.')
             os.remove(PRICE_CHANGES_FILE)
         else:
-            print('Prices not updated.')
+            print('Prices not updated. Changes saved.')
     else:
         print('No prices to update.')
 
-def _display_price_changes_table(table_data, total_price_diff, new_total_value):
-    if len(table_data) > 0:
-        print('Best diffs:')  # table breaks because of progress bar rendering
-        tp.table(sorted(table_data, key=lambda x: x[4], reverse=True)[:10], [
-            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-        print('Worst diffs:')
-        tp.table(sorted(table_data, key=lambda x: x[4])[:10], [
-            'Name', 'Foil?', 'Old price', 'New price', 'Diff (sorted)'], width=32)
-        print('Total price difference: {} (new sum: {})'.format(
-            str(round(total_price_diff, 2)), str(round(new_total_value))
-        ))
+def _calculate_new_prices_for_stock(api):
+    stock_list = __get_stock_as_array(api=api)
+    # HACK: filter out a foil product
+    # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
+    # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
+    # stock_list = [x for x in stock_list if x['isFoil']]
+    # 301546 expensive
 
+    result_json = []
+    index = 0
+
+    bar = progressbar.ProgressBar(max_value=len(stock_list))
+    for article in stock_list:
+        r = api.get_product(article['idProduct'])
+        if not article['isFoil']:
+            new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
+        else:  # FOIL
+            new_price = __get_foil_price(api, article['idProduct'])
+        price_diff = new_price - article['price']
+        if price_diff != 0:
+            result_json.append({
+                "name": article['product']['enName'],
+                "foil": article['isFoil'],
+                "old_price": article['price'],
+                "price": new_price,
+                "price_diff": price_diff,
+                "idArticle": article['idArticle'],
+                "count": article['count']
+            })
+        index += 1
+        bar.update(index)
+    bar.finish()
+    return result_json
+
+def _display_price_changes_table(changes_json):
+    if len(changes_json) > 0:
+        print('Best diffs:')  # table breaks because of progress bar rendering
+        sorted_best = sorted(changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
+        _draw_price_changes_table(i for i in sorted_best if i['price_diff'] > 0)
+        print('Worst diffs:')
+        sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
+        _draw_price_changes_table(i for i in sorted_worst if i['price_diff'] < 0)
+        
+        #print('Total price difference: {} (new sum: {})'.format(
+        #    str(round(total_price_diff, 2)), str(round(new_total_value))
+        #))
+
+
+def _draw_price_changes_table(sorted_best):
+    tp.table(
+        [[item['name'], item['foil'], item['old_price'], item['price'], item['price_diff']] for item in sorted_best], 
+        ['Name', 'Foil?', 'Old price', 'New price', 'Diff'] ,
+        width=28
+    )
 
 @api_wrapper
 def show_top_expensive_articles_in_stock(num_articles, api):
