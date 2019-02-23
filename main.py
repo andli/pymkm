@@ -249,7 +249,7 @@ def show_top_expensive_articles_in_stock(num_articles, api):
 def __get_foil_price(api, product_id):
     # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
     # 1) See filter parameters below.
-    # 2) Set price to lowest + (median - lowest / 2), rounded to closest quarter Euro.
+    # 2) Set price to lowest + (median - lowest / 4), rounded to closest quarter Euro.
     # 3) Undercut price in own country if not contradicting 2)
     # 4) Never go below 0.25 for foils
 
