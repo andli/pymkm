@@ -12,6 +12,7 @@ import logging
 import re
 import requests
 import json
+import urllib.parse
 from requests_oauthlib import OAuth1Session
 from requests import ConnectionError
 
@@ -296,3 +297,20 @@ class PyMKM:
 
         if (self.__handle_response(r)):
             return r.json()
+
+    def find_stock_article(self, name, game_id, api=None):
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Find_Articles
+
+        url = '{}/stock/articles/{}/{}'.format(self.base_url, urllib.parse.quote(name), game_id)
+        mkm_oauth = self.__setup_service(url, api)
+
+        logging.debug(">> Finding articles in stock: " + str(name))
+
+        r = mkm_oauth.get(url)
+
+        if (r.status_code == requests.codes.no_content):
+            raise NoResultsError('No articles found.')
+        elif (r.status_code == requests.codes.ok):
+            return r.json()['article']
+        else:
+            raise ConnectionError(r)

@@ -22,6 +22,7 @@ from distutils.util import strtobool
 
 PRICE_CHANGES_FILE = 'price_changes.json'
 
+
 def main():
     try:
         api = PyMKM()
@@ -34,9 +35,10 @@ def main():
     loop = True
     while loop:
         menu_items = [
-            "Show top 20 expensive items in stock",
             "Update stock prices",
+            "Update price for specific card",
             "Search for product",
+            "Show top 20 expensive items in stock",
             "Show prices for Thunderbreak Regent GD foil",
             "Show account info"
         ]
@@ -46,12 +48,13 @@ def main():
 
         if choice == "1":
             try:
-                show_top_expensive_articles_in_stock(20, api=api)
+                update_stock_prices_to_trend(api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "2":
+            search_string = __prompt_string('Search string')
             try:
-                update_stock_prices_to_trend(api=api)
+                update_product_to_trend(search_string, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "3":
@@ -62,10 +65,16 @@ def main():
                 print(err)
         elif choice == "4":
             try:
+                show_top_expensive_articles_in_stock(20, api=api)
+            except ConnectionError as err:
+                print(err)
+           
+        elif choice == "5":
+            try:
                 show_prices_for_product(273118, api=api)
             except ConnectionError as err:
                 print(err)
-        elif choice == "5":
+        elif choice == "6":
             try:
                 show_account_info(api=api)
             except ConnectionError as err:
@@ -100,7 +109,7 @@ def search_for_product(search_string, api):
             'exact ': 'true',
             'idGame': 1,
             'idLanguage': 1
-            #TODO: Add Partial Content support
+            # TODO: Add Partial Content support
         })['product'][0]
         print(product)
         show_prices_for_product(product['idProduct'], api=api)
@@ -147,6 +156,30 @@ def __print_product_top_list(table_data, sort_column, rows):
 
 
 @api_wrapper
+def update_product_to_trend(search_string, api):
+    ''' This function updates one product in the user's stock to TREND. '''
+
+    try:
+        product = api.find_stock_article(search_string, 1)[0]
+    except Exception as err:
+        print(err)
+
+    r = _update_price_for_single_article(product, api)
+
+    if r:
+        _draw_price_changes_table([r])
+
+        if __prompt("Do you want to update these prices?") == True:
+            # Update articles on MKM
+            api.set_stock([r])
+            print('Price updated.')
+        else:
+            print('Prices not updated.')
+    else:
+        print('No prices to update.')
+
+
+@api_wrapper
 def update_stock_prices_to_trend(api):
     ''' This function updates all prices in the user's stock to TREND. '''
     uploadable_json = []
@@ -189,26 +222,31 @@ def _calculate_new_prices_for_stock(api):
 
     bar = progressbar.ProgressBar(max_value=len(stock_list))
     for article in stock_list:
-        r = api.get_product(article['idProduct'])
-        if not article['isFoil']:
-            new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
-        else:  # FOIL
-            new_price = __get_foil_price(api, article['idProduct'])
-        price_diff = new_price - article['price']
-        if price_diff != 0:
-            result_json.append({
-                "name": article['product']['enName'],
-                "foil": article['isFoil'],
-                "old_price": article['price'],
-                "price": new_price,
-                "price_diff": price_diff,
-                "idArticle": article['idArticle'],
-                "count": article['count']
-            })
+        updated_article = _update_price_for_single_article(article, api)
+        if updated_article:
+            result_json.append(updated_article)
         index += 1
         bar.update(index)
     bar.finish()
     return result_json
+
+def _update_price_for_single_article(article, api):
+    if not article['isFoil']:
+        r = api.get_product(article['idProduct'])
+        new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
+    else:  # FOIL
+        new_price = __get_foil_price(api, article['idProduct'])
+    price_diff = new_price - article['price']
+    if price_diff != 0:
+        return {
+            "name": article['product']['enName'],
+            "foil": article['isFoil'],
+            "old_price": article['price'],
+            "price": new_price,
+            "price_diff": price_diff,
+            "idArticle": article['idArticle'],
+            "count": article['count']
+        }
 
 def _display_price_changes_table(changes_json):
     if len(changes_json) > 0:
@@ -253,7 +291,7 @@ def __get_foil_price(api, product_id):
     # 3) Undercut price in own country if not contradicting 2)
     # 4) Never go below 0.25 for foils
 
-    account_country = api.get_account()['account']['country']
+    account = api.get_account()['account']
     articles = api.get_articles(product_id, **{
         'isFoil': 'true',
         'isAltered': 'false',
@@ -267,7 +305,7 @@ def __get_foil_price(api, product_id):
                      for art in articles]
     local_articles = []
     for article in foil_articles:
-        if article['seller']['address']['country'] == account_country:
+        if article['seller']['address']['country'] == account['country'] and article['seller']['username'] != account['username']:
             local_articles.append(article)
 
     local_table_data = []
@@ -297,7 +335,7 @@ def __get_foil_price(api, product_id):
     median_guided = PyMKM_Helper.round_up_to_quarter(
         lowest_price + (median_price - lowest_price) / 4)
 
-    if len(local_table_data) > 1:
+    if len(local_table_data) > 0:
         # Undercut if there is local competition
         lowest_in_country = PyMKM_Helper.round_down_to_quarter(
             PyMKM_Helper.calculate_lowest(local_table_data, 4))
