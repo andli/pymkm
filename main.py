@@ -198,6 +198,9 @@ def update_stock_prices_to_trend(api):
         if __prompt("Found existing changes. Upload [y] or discard [n]?") == True:
             with open(PRICE_CHANGES_FILE, 'r') as changes:
                 uploadable_json = json.load(changes)
+        else:
+            os.remove(PRICE_CHANGES_FILE)
+            update_stock_prices_to_trend(api)
 
     else:
 

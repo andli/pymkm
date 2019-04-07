@@ -12,6 +12,12 @@ The app also keeps track of how many API requests your have left each day.
 
 ![Screengrab](https://raw.githubusercontent.com/andli/pymkm/master/screengrab.png)
 
+### New feature: competition view
+
+This new feature allows you to get a better view of how you should price individual cards depending on your local market and also the whole market:
+
+![Competition](https://raw.githubusercontent.com/andli/pymkm/master/competition.png)
+
 ## 🔨 how?
 1. Install requirements using `pip install -r requirements.txt`
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
