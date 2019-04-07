@@ -51,14 +51,14 @@ def main():
             except ConnectionError as err:
                 print(err)
         elif choice == "2":
-            search_string = __prompt_string('Search string')
+            search_string = __prompt_string('Search card name')
             try:
                 update_product_to_trend(search_string, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "3":
             is_foil = False
-            search_string = __prompt_string('Search string')
+            search_string = __prompt_string('Search card name')
             if __prompt("Foil?") == True:
                 is_foil = True
             try:
@@ -126,6 +126,15 @@ def _select_from_list_of_products(products):
     choice = int(input("Choose card: "))
     return products[choice - 1]
 
+def _select_from_list_of_articles(articles):
+    index = 1
+    for article in articles:
+        product = article['product']
+        print('{}: {} [{}] {}'.format(index, product['enName'], product['expansion'], product['rarity']))
+        index += 1
+    choice = int(input("Choose card: "))
+    return articles[choice - 1]
+
 
 def show_competition_for_product(product_id, product_name, is_foil, api):
     print("Found product: {}".format(product_name))
@@ -184,11 +193,12 @@ def update_product_to_trend(search_string, api):
     ''' This function updates one product in the user's stock to TREND. '''
 
     try:
-        product = api.find_stock_article(search_string, 1)[0]
+        articles = api.find_stock_article(search_string, 1)
     except Exception as err:
         print(err)
 
-    r = _update_price_for_single_article(product, api)
+    article = _select_from_list_of_articles(articles)
+    r = _update_price_for_single_article(article, api)
 
     if r:
         _draw_price_changes_table([r])
