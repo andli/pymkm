@@ -72,7 +72,7 @@ class PyMKM:
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif (response.status_code == requests.codes.no_content):
-            raise NoResultsError('Empty results.')
+            raise NoResultsError('No results found.')
         else:
             raise requests.exceptions.ConnectionError(response)
 

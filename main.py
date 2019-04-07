@@ -37,9 +37,8 @@ def main():
         menu_items = [
             "Update stock prices",
             "Update price for specific card",
-            "Search for product",
+            "List article competition",
             "Show top 20 expensive items in stock",
-            "Show prices for Thunderbreak Regent GD foil",
             "Show account info"
         ]
         __print_menu(menu_items)
@@ -58,9 +57,12 @@ def main():
             except ConnectionError as err:
                 print(err)
         elif choice == "3":
+            is_foil = False
             search_string = __prompt_string('Search string')
+            if __prompt("Foil?") == True:
+                is_foil = True
             try:
-                search_for_product(search_string, api=api)
+                search_for_product(search_string, is_foil, api=api)
             except ConnectionError as err:
                 print(err)
         elif choice == "4":
@@ -68,13 +70,7 @@ def main():
                 show_top_expensive_articles_in_stock(20, api=api)
             except ConnectionError as err:
                 print(err)
-           
         elif choice == "5":
-            try:
-                show_prices_for_product(273118, api=api)
-            except ConnectionError as err:
-                print(err)
-        elif choice == "6":
             try:
                 show_account_info(api=api)
             except ConnectionError as err:
@@ -102,8 +98,9 @@ def show_account_info(api):
     pp = pprint.PrettyPrinter()
     pp.pprint(api.get_account())
 
+
 @api_wrapper
-def search_for_product(search_string, api):
+def search_for_product(search_string, is_foil, api):
     try:
         product = api.find_product(search_string, **{
             'exact ': 'true',
@@ -111,43 +108,57 @@ def search_for_product(search_string, api):
             'idLanguage': 1
             # TODO: Add Partial Content support
         })['product'][0]
-        print(product)
-        show_prices_for_product(product['idProduct'], api=api)
+
+        show_competition_for_product(product['idProduct'], product['enName'], is_foil, api=api)
     except Exception as err:
         print(err)
 
 
-@api_wrapper
-def show_prices_for_product(product_id, api):  # 294758 works
+def show_competition_for_product(product_id, product_name, is_foil, api):
+    print("Found product: {}".format(product_name))
+    account = api.get_account()['account']
+    country_code = account['country']
     articles = api.get_articles(product_id, **{
-        'isFoil': 'true',
+        'isFoil': str(is_foil).lower(),
         'isAltered': 'false',
         'isSigned': 'false',
-        'minCondition': 'GD',
-        'country': api.get_account()['account']['country'],
+        'minCondition': 'EX',
+        'country': country_code,
         'idLanguage': 1
     })
     table_data = []
+    table_data_local = []
     for article in articles:
-        table_data.append([
-            article['seller']['username'],
+        username = article['seller']['username']
+        if article['seller']['username'] == account['username']:
+            username = '-> ' + username
+        item = [
+            username,
             article['seller']['address']['country'],
             article['condition'],
             article['count'],
             article['price']
-        ])
-    if len(table_data) > 0:
-        __print_product_top_list(table_data, 4, 20)
+        ]
+        if article['seller']['address']['country'] == country_code:
+            table_data_local.append(item)
+        table_data.append(item)
+    if table_data_local:
+        __print_product_top_list("Local competition:", table_data_local, 4, 20)
+    if table_data:
+        __print_product_top_list("Top 20 cheapest:", table_data, 4, 20)
     else:
         print('No prices found.')
 
 
-def __print_product_top_list(table_data, sort_column, rows):
-    print('Top {} cheapest articles for chosen product\n'.format(rows))
+def __print_product_top_list(title_string, table_data, sort_column, rows):
+    print(70*'-')
+    print('{} \n'.format(title_string))
     print(tb.tabulate(sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
-             headers=['Username', 'Country', 'Condition', 'Count', 'Price'],
-             tablefmt="simple"))
-    print('Total average price: {}, Total median price: {}, Total # of articles: {}'.format(
+                      headers=['Username', 'Country',
+                               'Condition', 'Count', 'Price'],
+                      tablefmt="simple"))
+    print(70*'-')
+    print('Total average price: {}, Total median price: {}, Total # of articles: {}\n'.format(
         str(PyMKM_Helper.calculate_average(table_data, 3, 4)),
         str(PyMKM_Helper.calculate_median(table_data, 3, 4)),
         str(len(table_data))
@@ -185,9 +196,9 @@ def update_stock_prices_to_trend(api):
     uploadable_json = []
     if os.path.isfile(PRICE_CHANGES_FILE):
         if __prompt("Found existing changes. Upload [y] or discard [n]?") == True:
-            with open(PRICE_CHANGES_FILE, 'r') as changes: 
+            with open(PRICE_CHANGES_FILE, 'r') as changes:
                 uploadable_json = json.load(changes)
-        
+
     else:
 
         uploadable_json = _calculate_new_prices_for_stock(api)
@@ -207,6 +218,7 @@ def update_stock_prices_to_trend(api):
             print('Prices not updated. Changes saved.')
     else:
         print('No prices to update.')
+
 
 def _calculate_new_prices_for_stock(api):
     stock_list = __get_stock_as_array(api=api)
@@ -230,6 +242,7 @@ def _calculate_new_prices_for_stock(api):
     bar.finish()
     return result_json
 
+
 def _update_price_for_single_article(article, api):
     if not article['isFoil']:
         r = api.get_product(article['idProduct'])
@@ -248,24 +261,32 @@ def _update_price_for_single_article(article, api):
             "count": article['count']
         }
 
+
 def _display_price_changes_table(changes_json):
     if len(changes_json) > 0:
-        print('\nBest diffs:\n')  # table breaks because of progress bar rendering
-        sorted_best = sorted(changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
-        _draw_price_changes_table(i for i in sorted_best if i['price_diff'] > 0)
+        # table breaks because of progress bar rendering
+        print('\nBest diffs:\n')
+        sorted_best = sorted(
+            changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
+        _draw_price_changes_table(
+            i for i in sorted_best if i['price_diff'] > 0)
         print('\nWorst diffs:\n')
         sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
-        _draw_price_changes_table(i for i in sorted_worst if i['price_diff'] < 0)
-        
-        print('\nTotal price difference: {}\n'.format(str(round(sum(item['price_diff'] for item in changes_json), 2))))
+        _draw_price_changes_table(
+            i for i in sorted_worst if i['price_diff'] < 0)
+
+        print('\nTotal price difference: {}\n'.format(
+            str(round(sum(item['price_diff'] for item in changes_json), 2))))
 
 
 def _draw_price_changes_table(sorted_best):
     print(tb.tabulate(
-        [[item['name'], item['foil'], item['old_price'], item['price'], item['price_diff']] for item in sorted_best], 
+        [[item['name'], item['foil'], item['old_price'], item['price'],
+            item['price_diff']] for item in sorted_best],
         headers=['Name', 'Foil?', 'Old price', 'New price', 'Diff'],
         tablefmt="simple"
     ))
+
 
 @api_wrapper
 def show_top_expensive_articles_in_stock(num_articles, api):
@@ -277,10 +298,10 @@ def show_top_expensive_articles_in_stock(num_articles, api):
             [str(article['idProduct']), article['product']['enName'], article['price']])
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
-        print(tb.tabulate(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles], 
-            headers=['Product ID', 'Name', 'Price'], 
-            tablefmt="simple")
-            )
+        print(tb.tabulate(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles],
+                          headers=['Product ID', 'Name', 'Price'],
+                          tablefmt="simple")
+              )
     return None
 
 
