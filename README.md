@@ -25,12 +25,12 @@ This new feature allows you to get a better view of how you should price individ
 1. Profit.
 
 ## 📈 price calculation
-The prices for non-foils are the "trend" prices supplied by Cardmarket.
+The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
 Cardmarket does not however supply trend prices for foils, so my algorithm is this:
 
 _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
 
-1. Filter out foils, not altered, not signed, minimum Good condition.
+1. Filter out foils, English, not altered, not signed, minimum Good condition.
 1. Set price to lowest + (median - lowest / 4), rounded to closest quarter Euro.
 1. Undercut price in seller's own country by 0.25 if not contradicting 2)
 1. Never go below 0.25 for foils

@@ -102,16 +102,29 @@ def show_account_info(api):
 @api_wrapper
 def search_for_product(search_string, is_foil, api):
     try:
-        product = api.find_product(search_string, **{
-            'exact ': 'true',
+        products = api.find_product(search_string, **{
+            #'exact ': 'true',
             'idGame': 1,
-            'idLanguage': 1
+            'idLanguage': 1,
             # TODO: Add Partial Content support
-        })['product'][0]
+        })['product']
+
+        if len(products) > 1:
+            product = _select_from_list_of_products([i for i in products if i['categoryName'] == 'Magic Single'])
+        else:
+            product = products[0]
 
         show_competition_for_product(product['idProduct'], product['enName'], is_foil, api=api)
     except Exception as err:
         print(err)
+
+def _select_from_list_of_products(products):
+    index = 1
+    for product in products:
+        print('{}: {} [{}] {}'.format(index, product['enName'], product['expansionName'], product['rarity']))
+        index += 1
+    choice = int(input("Choose card: "))
+    return products[choice - 1]
 
 
 def show_competition_for_product(product_id, product_name, is_foil, api):

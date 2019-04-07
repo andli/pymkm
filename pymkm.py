@@ -272,7 +272,7 @@ class PyMKM:
             else:
                 return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
         elif (r.status_code == requests.codes.no_content):
-            raise NoResultsError('No products found.')
+            raise NoResultsError('No products found in stock.')
         elif (r.status_code == requests.codes.ok):
             return r.json()['article']
         else:
