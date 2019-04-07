@@ -284,7 +284,7 @@ def _display_price_changes_table(changes_json):
 
 def _draw_price_changes_table(sorted_best):
     print(tb.tabulate(
-        [[item['name'], item['foil'], item['old_price'], item['price'],
+        [[item['name'], u'\u2713' if item['foil'] else '', item['old_price'], item['price'],
             item['price_diff']] for item in sorted_best],
         headers=['Name', 'Foil?', 'Old price', 'New price', 'Diff'],
         tablefmt="simple"
