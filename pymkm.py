@@ -244,6 +244,21 @@ class PyMKM:
 
         if (self.__handle_response(r)): #TODO: Only considers the last response.
             return r.json
+    
+    def delete_stock(self, payload=None, api=None):
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        url = '{}/stock'.format(self.base_url)
+
+        mkm_oauth = self.__setup_service(url, api)
+
+        logging.debug(">> Deleting stock")
+        chunked_list = list(self.__chunks(payload, 100))
+        for chunk in chunked_list:
+            xml_payload = self.__json_to_xml(chunk)
+            r = mkm_oauth.delete(url, data=xml_payload)
+
+        if (self.__handle_response(r)): #TODO: Only considers the last response.
+            return r.json
 
     def get_articles(self, product_id, start=0, api=None, **kwargs):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Articles

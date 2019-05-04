@@ -39,7 +39,8 @@ def main():
             "Update price for specific card",
             "List article competition",
             "Show top 20 expensive items in stock",
-            "Show account info"
+            "Show account info",
+            "Clear entire stock"
         ]
         __print_menu(menu_items)
 
@@ -75,6 +76,11 @@ def main():
                 show_account_info(api=api)
             except ConnectionError as err:
                 print(err)
+        elif choice == "6":
+            try:
+                clear_entire_stock(api=api)
+            except ConnectionError as err:
+                print(err)
         elif choice == "0":
             loop = False
         else:
@@ -92,6 +98,18 @@ def __print_menu(menu_items):
     print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
     print("╰" + (len(menu_top) - 2) * "─" + "╯")
 
+def clear_entire_stock(api):
+    stock_list = __get_stock_as_array(api=api)
+    if __prompt("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
+        
+        #for article in stock_list:
+            #article['count'] = 0
+        delete_list = [{'count': x['count'], 'idArticle': x['idArticle']} for x in stock_list]
+
+        api.delete_stock(delete_list)
+        print('Stock cleared.')
+    else:
+        print('Aborted.')
 
 @api_wrapper
 def show_account_info(api):
