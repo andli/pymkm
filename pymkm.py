@@ -24,15 +24,17 @@ class api_wrapper(object):
 
     def __call__(self, *arg, **kwargs):
         logging.debug(">> Entering {}".format(self.function.__name__))
-        #print(arg)
-        #print(kwargs)
-        self.function(*arg, **kwargs)
+        # print(arg)
+        # print(kwargs)
+        return_value = self.function(*arg, **kwargs)
         if 'api' in kwargs:
             api = kwargs['api']
             if (int(api.requests_max) > 0):
                 print('>> Cardmarket.com requests used today: {}/{}'.format(
                     api.requests_count, api.requests_max))
         logging.debug(">> Exited {}".format(self.function.__name__))
+        return return_value
+
 
 class NoResultsError(Exception):
     def __init__(self, message, errors=None):
@@ -42,11 +44,14 @@ class NoResultsError(Exception):
 
         self.errors = errors
 
+
 class PyMKM:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
     conditions = ['MT', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO']
+    languages = ['English', 'French', 'German', 'Spanish', 'Italian', 'S-Chinese', 'Japanese',
+                 'Portugese', 'Russian', 'Korean', 'T-Chinese', 'Dutch', 'Polish', 'Czech', 'Hungarian']
     requests_max = 0
     requests_count = 0
 
@@ -102,11 +107,12 @@ class PyMKM:
     def __get_max_items_from_header(self, response):
         max_items = 0
         try:
-            max_items = int(re.search('\/(\d+)', response.headers['Content-Range']).group(1))
+            max_items = int(
+                re.search('\/(\d+)', response.headers['Content-Range']).group(1))
         except KeyError as err:
             logging.debug(">>> Header error finding content-range")
         return max_items
-    
+
     @staticmethod
     def __chunks(l, n):
         # For item i in a range that is a length of l,
@@ -230,6 +236,22 @@ class PyMKM:
         if (self.__handle_response(r)):
             return r.json()
 
+    def add_stock(self, payload=None, api=None):
+        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        url = '{}/stock'.format(self.base_url)
+
+        mkm_oauth = self.__setup_service(url, api)
+
+        logging.debug(">> Adding stock")
+        chunked_list = list(self.__chunks(payload, 100))
+        for chunk in chunked_list:
+            xml_payload = self.__json_to_xml(chunk)
+            r = mkm_oauth.post(url, data=xml_payload)
+
+        # TODO: Only considers the last response.
+        if (self.__handle_response(r)):
+            return r.json
+
     def set_stock(self, payload=None, api=None):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
@@ -242,9 +264,10 @@ class PyMKM:
             xml_payload = self.__json_to_xml(chunk)
             r = mkm_oauth.put(url, data=xml_payload)
 
-        if (self.__handle_response(r)): #TODO: Only considers the last response.
+        # TODO: Only considers the last response.
+        if (self.__handle_response(r)):
             return r.json
-    
+
     def delete_stock(self, payload=None, api=None):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
@@ -257,7 +280,8 @@ class PyMKM:
             xml_payload = self.__json_to_xml(chunk)
             r = mkm_oauth.delete(url, data=xml_payload)
 
-        if (self.__handle_response(r)): #TODO: Only considers the last response.
+        # TODO: Only considers the last response.
+        if (self.__handle_response(r)):
             return r.json
 
     def get_articles(self, product_id, start=0, api=None, **kwargs):
@@ -277,11 +301,13 @@ class PyMKM:
 
         r = mkm_oauth.get(url, params=params)
 
-        max_items = 0 
+        max_items = 0
         if (r.status_code == requests.codes.partial_content):
             max_items = self.__get_max_items_from_header(r)
-            logging.debug('> Content-Range header: ' + r.headers['Content-Range'])
-            logging.debug('> # articles in response: ' + str(len(r.json()['article'])))  
+            logging.debug('> Content-Range header: ' +
+                          r.headers['Content-Range'])
+            logging.debug('> # articles in response: ' +
+                          str(len(r.json()['article'])))
             if (start + INCREMENT >= max_items and self.__handle_response(r)):
                 return r.json()['article']
             else:
@@ -316,7 +342,8 @@ class PyMKM:
     def find_stock_article(self, name, game_id, api=None):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Find_Articles
 
-        url = '{}/stock/articles/{}/{}'.format(self.base_url, urllib.parse.quote(name), game_id)
+        url = '{}/stock/articles/{}/{}'.format(
+            self.base_url, urllib.parse.quote(name), game_id)
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Finding articles in stock: " + str(name))

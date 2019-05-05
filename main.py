@@ -14,6 +14,7 @@ from pymkm import PyMKM
 from pymkm import api_wrapper
 from helper import PyMKM_Helper
 import json
+import csv
 import pprint
 import tabulate as tb
 import progressbar
@@ -40,7 +41,8 @@ def main():
             "List article competition",
             "Show top 20 expensive items in stock",
             "Show account info",
-            "Clear entire stock"
+            "Clear entire stock",
+            "Import stock from .\list.csv"
         ]
         __print_menu(menu_items)
 
@@ -81,6 +83,12 @@ def main():
                 clear_entire_stock(api=api)
             except ConnectionError as err:
                 print(err)
+                print(err)
+        elif choice == "7":
+            try:
+                import_from_csv(api=api)
+            except ConnectionError as err:
+                print(err)
         elif choice == "0":
             loop = False
         else:
@@ -98,18 +106,71 @@ def __print_menu(menu_items):
     print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
     print("╰" + (len(menu_top) - 2) * "─" + "╯")
 
+
+def import_from_csv(api):
+    print("Note the required format: Card, Set name, Quantity, Foil, Language (with header row).")
+    print("Cards are added in condition NM.")
+    problem_cards = []
+    with open('list.csv', newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        index = 0
+        bar = progressbar.ProgressBar(max_value=sum(1 for row in csv_reader))
+        csvfile.seek(0)
+        for row in csv_reader:
+            if index > 0:
+                (name, set_name, count, foil, language, *other) = row
+                if (all(v is not '' for v in [name, set_name, count])):   
+                    possible_products = api.find_product(name)['product']
+                    product_match = [x for x in possible_products if x['expansionName']
+                                    == set_name and x['categoryName'] == "Magic Single"]
+                    if len(product_match) == 0:
+                        problem_cards.append(row)
+                    elif len(product_match) == 1:
+                        foil = (True if foil == 'Foil' else False)
+                        price = _get_price_for_product(
+                            product_match[0]['idProduct'], foil, api)
+                        card = {
+                            'idProduct': product_match[0]['idProduct'],
+                            'idLanguage': (1 if language == '' else api.languages.index(language) + 1),
+                            'count': count,
+                            'price': str(price),
+                            'condition': 'NM',
+                            'isFoil': ('true' if foil else 'false')
+                        }
+                        #api.add_stock([card])
+                    else:
+                        problem_cards.append(row)
+                    
+            index += 1
+            bar.update(index)
+        bar.finish()
+    if len(problem_cards) > 0:
+        try:
+            with open('failed_imports.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                csv_writer.writerows(problem_cards)
+            print('Wrote failed imports to failed_imports.csv')
+            print('Most failures are due to mismatching set names or multiple versions of cards.')
+        except Exception as err:
+            print(err.value)
+        
+
+
+@api_wrapper
 def clear_entire_stock(api):
     stock_list = __get_stock_as_array(api=api)
     if __prompt("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
-        
-        #for article in stock_list:
+
+        # for article in stock_list:
             #article['count'] = 0
-        delete_list = [{'count': x['count'], 'idArticle': x['idArticle']} for x in stock_list]
+        delete_list = [{'count': x['count'], 'idArticle': x['idArticle']}
+                       for x in stock_list]
 
         api.delete_stock(delete_list)
         print('Stock cleared.')
     else:
         print('Aborted.')
+
 
 @api_wrapper
 def show_account_info(api):
@@ -121,34 +182,40 @@ def show_account_info(api):
 def search_for_product(search_string, is_foil, api):
     try:
         products = api.find_product(search_string, **{
-            #'exact ': 'true',
+            # 'exact ': 'true',
             'idGame': 1,
             'idLanguage': 1,
             # TODO: Add Partial Content support
         })['product']
 
         if len(products) > 1:
-            product = _select_from_list_of_products([i for i in products if i['categoryName'] == 'Magic Single'])
+            product = _select_from_list_of_products(
+                [i for i in products if i['categoryName'] == 'Magic Single'])
         else:
             product = products[0]
 
-        show_competition_for_product(product['idProduct'], product['enName'], is_foil, api=api)
+        show_competition_for_product(
+            product['idProduct'], product['enName'], is_foil, api=api)
     except Exception as err:
         print(err)
+
 
 def _select_from_list_of_products(products):
     index = 1
     for product in products:
-        print('{}: {} [{}] {}'.format(index, product['enName'], product['expansionName'], product['rarity']))
+        print('{}: {} [{}] {}'.format(index, product['enName'],
+                                      product['expansionName'], product['rarity']))
         index += 1
     choice = int(input("Choose card: "))
     return products[choice - 1]
+
 
 def _select_from_list_of_articles(articles):
     index = 1
     for article in articles:
         product = article['product']
-        print('{}: {} [{}] {}'.format(index, product['enName'], product['expansion'], product['rarity']))
+        print('{}: {} [{}] {}'.format(index, product['enName'],
+                                      product['expansion'], product['rarity']))
         index += 1
     choice = int(input("Choose card: "))
     return articles[choice - 1]
@@ -216,7 +283,7 @@ def update_product_to_trend(search_string, api):
         print(err)
 
     article = _select_from_list_of_articles(articles)
-    r = _update_price_for_single_article(article, api)
+    r = _get_price_for_single_article(article, api)
 
     if r:
         _draw_price_changes_table([r])
@@ -278,7 +345,7 @@ def _calculate_new_prices_for_stock(api):
 
     bar = progressbar.ProgressBar(max_value=len(stock_list))
     for article in stock_list:
-        updated_article = _update_price_for_single_article(article, api)
+        updated_article = _get_price_for_single_article(article, api)
         if updated_article:
             result_json.append(updated_article)
         index += 1
@@ -287,12 +354,8 @@ def _calculate_new_prices_for_stock(api):
     return result_json
 
 
-def _update_price_for_single_article(article, api):
-    if not article['isFoil']:
-        r = api.get_product(article['idProduct'])
-        new_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
-    else:  # FOIL
-        new_price = __get_foil_price(api, article['idProduct'])
+def _get_price_for_single_article(article, api):
+    new_price = _get_price_for_product(article, article['isFoil'], api)
     price_diff = new_price - article['price']
     if price_diff != 0:
         return {
@@ -304,6 +367,20 @@ def _update_price_for_single_article(article, api):
             "idArticle": article['idArticle'],
             "count": article['count']
         }
+
+
+@api_wrapper
+def _get_price_for_product(product_id, is_foil, api):
+    if not is_foil:
+        r = api.get_product(product_id)
+        found_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
+    else:
+        found_price = __get_foil_price(api, product_id)
+
+    if found_price == None:
+        raise ValueError('No price found!')
+    else:
+        return found_price
 
 
 def _display_price_changes_table(changes_json):
@@ -339,11 +416,11 @@ def show_top_expensive_articles_in_stock(num_articles, api):
 
     for article in stock_list:
         table_data.append(
-            [str(article['idProduct']), article['product']['enName'], article['price']])
+            [article['product']['enName'], article['price']])
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
-        print(tb.tabulate(sorted(table_data, key=lambda x: x[2], reverse=True)[:num_articles],
-                          headers=['Product ID', 'Name', 'Price'],
+        print(tb.tabulate(sorted(table_data, key=lambda x: x[1], reverse=True)[:num_articles],
+                          headers=['Name', 'Price'],
                           tablefmt="simple")
               )
     return None
