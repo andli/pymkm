@@ -127,11 +127,12 @@ def import_from_csv(api):
                         problem_cards.append(row)
                     elif len(product_match) == 1:
                         foil = (True if foil == 'Foil' else False)
+                        langauge_id = (1 if language == '' else api.languages.index(language) + 1)
                         price = _get_price_for_product(
-                            product_match[0]['idProduct'], foil, api)
+                            product_match[0]['idProduct'], foil, langauge_id, api)
                         card = {
                             'idProduct': product_match[0]['idProduct'],
-                            'idLanguage': (1 if language == '' else api.languages.index(language) + 1),
+                            'idLanguage': langauge_id,
                             'count': count,
                             'price': str(price),
                             'condition': 'NM',
@@ -355,7 +356,7 @@ def _calculate_new_prices_for_stock(api):
 
 
 def _get_price_for_single_article(article, api):
-    new_price = _get_price_for_product(article, article['isFoil'], api)
+    new_price = _get_price_for_product(article['idProduct'], article['isFoil'], api, article['language']['idLanguage'])
     price_diff = new_price - article['price']
     if price_diff != 0:
         return {
@@ -370,12 +371,12 @@ def _get_price_for_single_article(article, api):
 
 
 @api_wrapper
-def _get_price_for_product(product_id, is_foil, api):
+def _get_price_for_product(product_id, is_foil, api, language_id=1):
     if not is_foil:
         r = api.get_product(product_id)
         found_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
     else:
-        found_price = __get_foil_price(api, product_id)
+        found_price = __get_foil_price(api, product_id, language_id)
 
     if found_price == None:
         raise ValueError('No price found!')
@@ -426,7 +427,7 @@ def show_top_expensive_articles_in_stock(num_articles, api):
     return None
 
 
-def __get_foil_price(api, product_id):
+def __get_foil_price(api, product_id, language_id):
     # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
     # 1) See filter parameters below.
     # 2) Set price to lowest + (median - lowest / 4), rounded to closest quarter Euro.
@@ -439,7 +440,7 @@ def __get_foil_price(api, product_id):
         'isAltered': 'false',
         'isSigned': 'false',
         'minCondition': 'GD',
-        'idLanguage': 1  # English
+        'idLanguage': language_id
     })
 
     keys = ['idArticle', 'count', 'price', 'condition', 'seller']
@@ -491,7 +492,7 @@ def __get_stock_as_array(api):
     d = api.get_stock()['article']
 
     keys = ['idArticle', 'idProduct',
-            'product', 'count', 'price', 'isFoil']
+            'product', 'count', 'price', 'isFoil', 'language'] #TODO: [language][languageId]
     stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
     return stock_list
 
