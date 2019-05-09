@@ -286,7 +286,10 @@ def update_product_to_trend(search_string, api):
     except Exception as err:
         print(err)
 
-    article = _select_from_list_of_articles(articles)
+    if len(articles) > 1:
+        article = _select_from_list_of_articles(articles)
+    else:
+        article = articles[0]
     r = _get_price_for_single_article(article, api)
 
     if r:
