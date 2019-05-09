@@ -119,15 +119,16 @@ def import_from_csv(api):
         for row in csv_reader:
             if index > 0:
                 (name, set_name, count, foil, language, *other) = row
-                if (all(v is not '' for v in [name, set_name, count])):   
+                if (all(v is not '' for v in [name, set_name, count])):
                     possible_products = api.find_product(name)['product']
                     product_match = [x for x in possible_products if x['expansionName']
-                                    == set_name and x['categoryName'] == "Magic Single"]
+                                     == set_name and x['categoryName'] == "Magic Single"]
                     if len(product_match) == 0:
                         problem_cards.append(row)
                     elif len(product_match) == 1:
                         foil = (True if foil == 'Foil' else False)
-                        langauge_id = (1 if language == '' else api.languages.index(language) + 1)
+                        langauge_id = (
+                            1 if language == '' else api.languages.index(language) + 1)
                         price = _get_price_for_product(
                             product_match[0]['idProduct'], foil, langauge_id, api)
                         card = {
@@ -138,10 +139,10 @@ def import_from_csv(api):
                             'condition': 'NM',
                             'isFoil': ('true' if foil else 'false')
                         }
-                        #api.add_stock([card])
+                        # api.add_stock([card])
                     else:
                         problem_cards.append(row)
-                    
+
             index += 1
             bar.update(index)
         bar.finish()
@@ -151,10 +152,10 @@ def import_from_csv(api):
                 csv_writer = csv.writer(csvfile)
                 csv_writer.writerows(problem_cards)
             print('Wrote failed imports to failed_imports.csv')
-            print('Most failures are due to mismatching set names or multiple versions of cards.')
+            print(
+                'Most failures are due to mismatching set names or multiple versions of cards.')
         except Exception as err:
             print(err.value)
-        
 
 
 @api_wrapper
@@ -189,8 +190,10 @@ def search_for_product(search_string, is_foil, api):
             # TODO: Add Partial Content support
         })['product']
 
-        stock_list_products = [x['idProduct'] for x in get_stock_as_array(api=api)]
-        products = [x for x in products if x['idProduct'] in stock_list_products]
+        stock_list_products = [x['idProduct']
+                               for x in get_stock_as_array(api=api)]
+        products = [x for x in products if x['idProduct']
+                    in stock_list_products]
 
         if len(products) > 1:
             product = _select_from_list_of_products(
@@ -290,6 +293,8 @@ def update_product_to_trend(search_string, api):
         article = _select_from_list_of_articles(articles)
     else:
         article = articles[0]
+        print('Found: {} [{}].'.format(article['product']
+                                       ['enName'], article['product']['expansion']))
     r = _get_price_for_single_article(article, api)
 
     if r:
@@ -362,7 +367,8 @@ def _calculate_new_prices_for_stock(api):
 
 
 def _get_price_for_single_article(article, api):
-    new_price = _get_price_for_product(article['idProduct'], article['isFoil'], api, article['language']['idLanguage'])
+    new_price = _get_price_for_product(
+        article['idProduct'], article['isFoil'], api, article['language']['idLanguage'])
     price_diff = new_price - article['price']
     if price_diff != 0:
         return {
@@ -423,11 +429,11 @@ def show_top_expensive_articles_in_stock(num_articles, api):
 
     for article in stock_list:
         table_data.append(
-            [article['product']['enName'], article['price']])
+            [article['product']['enName'], u'\u2713' if article['isFoil'] else '', article['language']['languageName'] if article['language'] != 1 else '', article['price']])
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
-        print(tb.tabulate(sorted(table_data, key=lambda x: x[1], reverse=True)[:num_articles],
-                          headers=['Name', 'Price'],
+        print(tb.tabulate(sorted(table_data, key=lambda x: x[3], reverse=True)[:num_articles],
+                          headers=['Name', 'Foil?', 'Language', 'Price'],
                           tablefmt="simple")
               )
     return None
@@ -498,7 +504,7 @@ def get_stock_as_array(api):
     d = api.get_stock()['article']
 
     keys = ['idArticle', 'idProduct',
-            'product', 'count', 'price', 'isFoil', 'language'] #TODO: [language][languageId]
+            'product', 'count', 'price', 'isFoil', 'language']  # TODO: [language][languageId]
     stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
     return stock_list
 
