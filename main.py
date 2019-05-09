@@ -159,7 +159,7 @@ def import_from_csv(api):
 
 @api_wrapper
 def clear_entire_stock(api):
-    stock_list = __get_stock_as_array(api=api)
+    stock_list = get_stock_as_array(api=api)
     if __prompt("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
 
         # for article in stock_list:
@@ -188,6 +188,9 @@ def search_for_product(search_string, is_foil, api):
             'idLanguage': 1,
             # TODO: Add Partial Content support
         })['product']
+
+        stock_list_products = [x['idProduct'] for x in get_stock_as_array(api=api)]
+        products = [x for x in products if x['idProduct'] in stock_list_products]
 
         if len(products) > 1:
             product = _select_from_list_of_products(
@@ -333,7 +336,7 @@ def update_stock_prices_to_trend(api):
 
 
 def _calculate_new_prices_for_stock(api):
-    stock_list = __get_stock_as_array(api=api)
+    stock_list = get_stock_as_array(api=api)
     # HACK: filter out a foil product
     # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
     # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
@@ -412,7 +415,7 @@ def _draw_price_changes_table(sorted_best):
 
 @api_wrapper
 def show_top_expensive_articles_in_stock(num_articles, api):
-    stock_list = __get_stock_as_array(api=api)
+    stock_list = get_stock_as_array(api=api)
     table_data = []
 
     for article in stock_list:
@@ -488,7 +491,7 @@ def __get_foil_price(api, product_id, language_id):
         return PyMKM_Helper.round_up_to_quarter(median_guided * 1.2)
 
 
-def __get_stock_as_array(api):
+def get_stock_as_array(api):
     d = api.get_stock()['article']
 
     keys = ['idArticle', 'idProduct',

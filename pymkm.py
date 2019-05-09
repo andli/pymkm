@@ -290,9 +290,6 @@ class PyMKM:
         url = '{}/articles/{}'.format(self.base_url, product_id)
         mkm_oauth = self.__setup_service(url, api)
 
-        # for key, value in kwargs.items():
-        #    print("{} = {}".format(key, value))
-
         logging.debug(">> Getting articles on product: " + str(product_id))
         params = kwargs
 
@@ -324,9 +321,6 @@ class PyMKM:
 
         url = '{}/products/find'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, api)
-
-        # for key, value in kwargs.items():
-        #    print("{} = {}".format(key, value))
 
         logging.debug(">> Finding product for search string: " + str(search))
 
