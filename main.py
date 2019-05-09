@@ -37,11 +37,11 @@ def main():
     while loop:
         menu_items = [
             "Update stock prices",
-            "Update price for specific card",
-            "List article competition",
+            "Update price for a card",
+            "List competition for a card",
             "Show top 20 expensive items in stock",
             "Show account info",
-            "Clear entire stock",
+            "Clear entire stock (WARNING)",
             "Import stock from .\list.csv"
         ]
         __print_menu(menu_items)
@@ -429,11 +429,11 @@ def show_top_expensive_articles_in_stock(num_articles, api):
 
     for article in stock_list:
         table_data.append(
-            [article['product']['enName'], u'\u2713' if article['isFoil'] else '', article['language']['languageName'] if article['language'] != 1 else '', article['price']])
+            [article['product']['enName'], article['product']['expansion'], u'\u2713' if article['isFoil'] else '', article['language']['languageName'] if article['language'] != 1 else '', article['price']])
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
-        print(tb.tabulate(sorted(table_data, key=lambda x: x[3], reverse=True)[:num_articles],
-                          headers=['Name', 'Foil?', 'Language', 'Price'],
+        print(tb.tabulate(sorted(table_data, key=lambda x: x[4], reverse=True)[:num_articles],
+                          headers=['Name', 'Expansion', 'Foil?', 'Language', 'Price'],
                           tablefmt="simple")
               )
     return None
