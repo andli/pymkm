@@ -346,13 +346,10 @@ def update_stock_prices_to_trend(api):
 def _calculate_new_prices_for_stock(api):
     stock_list = get_stock_as_array(api=api)
     # HACK: filter out a foil product
-    # stock_list = [x for x in stock_list if x['idProduct'] == 18204]
-    # stock_list = [x for x in stock_list if x['idProduct'] == 261922]
-    # stock_list = [x for x in stock_list if x['idProduct'] == 273118] # Thunderbreak Regent GD foil
     # stock_list = [x for x in stock_list if x['isFoil']]
-    # 301546 expensive
 
     result_json = []
+    total_price = 0
     index = 0
 
     bar = progressbar.ProgressBar(max_value=len(stock_list))
@@ -360,9 +357,14 @@ def _calculate_new_prices_for_stock(api):
         updated_article = _get_price_for_single_article(article, api)
         if updated_article:
             result_json.append(updated_article)
+            total_price += updated_article.get('price')
+        else:
+            total_price += article.get('price')
         index += 1
         bar.update(index)
     bar.finish()
+
+    print('Total stock value: {}'.format(str(total_price)))
     return result_json
 
 
