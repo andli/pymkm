@@ -30,7 +30,7 @@ class api_wrapper(object):
         if 'api' in kwargs:
             api = kwargs['api']
             if (int(api.requests_max) > 0):
-                print('>> Cardmarket.com requests used today: {}/{}'.format(
+                print('\n>> Cardmarket.com requests used today: {}/{}\n'.format(
                     api.requests_count, api.requests_max))
         logging.debug(">> Exited {}".format(self.function.__name__))
         return return_value

@@ -428,16 +428,19 @@ def _draw_price_changes_table(sorted_best):
 def show_top_expensive_articles_in_stock(num_articles, api):
     stock_list = get_stock_as_array(api=api)
     table_data = []
+    total_price = 0
 
     for article in stock_list:
         table_data.append(
             [article['product']['enName'], article['product']['expansion'], u'\u2713' if article['isFoil'] else '', article['language']['languageName'] if article['language'] != 1 else '', article['price']])
+        total_price += article.get('price')
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
         print(tb.tabulate(sorted(table_data, key=lambda x: x[4], reverse=True)[:num_articles],
                           headers=['Name', 'Expansion', 'Foil?', 'Language', 'Price'],
                           tablefmt="simple")
               )
+        print('\nTotal stock value: {}'.format(str(total_price)))
     return None
 
 
