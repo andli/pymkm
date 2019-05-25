@@ -125,19 +125,28 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting all games")
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
+
+    def mkm_request(self, mkm_oauth, url):
+        try:
+            r = mkm_oauth.get(url)
+            self.__handle_response(r)
+        except requests.exceptions.ConnectionError as err:
+            logging.debug(err.msg)
+        
+        return r
 
     def get_expansions(self, game_id, api=None):
         url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting all expansions for game id " + str(game_id))
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def get_cards_in_expansion(self, expansion_id, api=None):
@@ -147,9 +156,9 @@ class PyMKM:
 
         logging.debug(
             ">> Getting all cards for expansion id: " + str(expansion_id))
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def get_product(self, product_id, api=None):
@@ -157,9 +166,9 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting data for product id " + str(product_id))
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def get_account(self, api=None):
@@ -167,9 +176,9 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting account details")
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def get_articles_in_shoppingcarts(self, api=None):
@@ -177,9 +186,9 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting articles in other users' shopping carts")
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, api=None):
@@ -216,7 +225,7 @@ class PyMKM:
         mkm_oauth = self.__setup_service(url, api)
 
         logging.debug(">> Getting stock")
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
         if (start is not None):
             max_items = self.__get_max_items_from_header(r)
@@ -233,7 +242,7 @@ class PyMKM:
                 # print('# articles in response: ' + str(len(r.json()['article'])))
                 return r.json()['article'] + self.get_stock(start+100)
 
-        if (self.__handle_response(r)):
+        if (r):
             return r.json()
 
     def add_stock(self, payload=None, api=None):
@@ -342,7 +351,7 @@ class PyMKM:
 
         logging.debug(">> Finding articles in stock: " + str(name))
 
-        r = mkm_oauth.get(url)
+        r = self.mkm_request(mkm_oauth, url)
 
         if (r.status_code == requests.codes.no_content):
             raise NoResultsError('No articles found.')
