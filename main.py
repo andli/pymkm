@@ -434,9 +434,15 @@ def show_top_expensive_articles_in_stock(num_articles, api):
     total_price = 0
 
     for article in stock_list:
+        name = article['product']['enName']
+        expansion = article.get('product').get('expansion')
+        foil = article.get('isFoil')
+        language_code = article.get('language')
+        language_name = language_code.get('languageName')
+        price = article.get('price')
         table_data.append(
-            [article['product']['enName'], article['product']['expansion'], u'\u2713' if article['isFoil'] else '', article['language']['languageName'] if article['language'] != 1 else '', article['price']])
-        total_price += article.get('price')
+            [name, expansion, u'\u2713' if foil else '', language_name if language_code != 1 else '', price])
+        total_price += price
     if len(stock_list) > 0:
         print('Top {} most expensive articles in stock:\n'.format(str(num_articles)))
         print(tb.tabulate(sorted(table_data, key=lambda x: x[4], reverse=True)[:num_articles],
