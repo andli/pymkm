@@ -139,7 +139,7 @@ def import_from_csv(api):
                             'condition': 'NM',
                             'isFoil': ('true' if foil else 'false')
                         }
-                        # api.add_stock([card])
+                        api.add_stock([card])
                     else:
                         problem_cards.append(row)
 
