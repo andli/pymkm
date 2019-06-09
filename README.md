@@ -30,13 +30,13 @@ This feature allows you to get a better view of how you should price individual 
 
 ![Competition](https://raw.githubusercontent.com/andli/pymkm/master/competition.png)
 
-## 🔨 how?
+## 🔨 How?
 1. Install requirements using `pip install -r requirements.txt`
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
 1. Run `main.py`.
 1. Profit.
 
-## 📈 price calculation
+## 📈 Price calculation
 The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
 Cardmarket does not however supply trend prices for foils, so my algorithm is this:
 
@@ -47,7 +47,7 @@ _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressive
 1. Undercut price in seller's own country by 0.25 if not contradicting 2)
 1. Never go below 0.25 for foils
 
-## ✔️ supported calls
+## ✔️ Supported calls
 These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
 * `get_games`
 * `get_expansions`
