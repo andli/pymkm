@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import Mock, MagicMock, patch, mock_open
 import requests
 from requests_oauthlib import OAuth1Session
-from pymkm import PyMKM
+from pymkm import PyMkmApi
 from helper import PyMKM_Helper
 
 
@@ -39,7 +39,7 @@ class TestPyMkmApiCalls(unittest.TestCase):
             """
         )
 
-        self.api = PyMKM(config)
+        self.api = PyMkmApi(config)
 
     def test_file_not_found2(self):
         open_name = '%s.open' % __name__
@@ -47,7 +47,7 @@ class TestPyMkmApiCalls(unittest.TestCase):
             mocked_open.side_effect = FileNotFoundError
             
             with self.assertRaises(FileNotFoundError):
-                api = PyMKM()
+                api = PyMkmApi()
             #mocked_open.return_value = StringIO('foo')
 
     def test_getAccount(self):

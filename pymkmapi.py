@@ -17,23 +17,20 @@ from requests_oauthlib import OAuth1Session
 from requests import ConnectionError
 
 
-class api_wrapper(object):
+def api_wrapper(func):
 
-    def __init__(self, function):
-        self.function = function
+    def wrapper(*arg, **kwargs):
+        logging.debug(f">> Entering {func.__name__}")
 
-    def __call__(self, *arg, **kwargs):
-        logging.debug(">> Entering {}".format(self.function.__name__))
-        # print(arg)
-        # print(kwargs)
-        return_value = self.function(*arg, **kwargs)
+        return_value = func(*arg, **kwargs)
         if 'api' in kwargs:
             api = kwargs['api']
             if (int(api.requests_max) > 0):
                 print('\n>> Cardmarket.com requests used today: {}/{}\n'.format(
                     api.requests_count, api.requests_max))
-        logging.debug(">> Exited {}".format(self.function.__name__))
+        logging.debug(">> Exited {}".format(func.__name__))
         return return_value
+    return wrapper
 
 
 class NoResultsError(Exception):
@@ -45,7 +42,7 @@ class NoResultsError(Exception):
         self.errors = errors
 
 
-class PyMKM:
+class PyMkmApi:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
     config = None
     base_url = 'https://api.cardmarket.com/ws/v2.0/output.json'
@@ -58,7 +55,11 @@ class PyMKM:
     def __init__(self, config=None):
         if (config == None):
             logging.debug(">> Loading config file")
-            self.config = json.load(open('config.json'))
+            try:
+                self.config = json.load(open('config.json'))
+            except FileNotFoundError:
+                logging.error("You must copy config_template.json to config.json and populate the fields.")
+                sys.exit(0)
         else:
             self.config = config
 
