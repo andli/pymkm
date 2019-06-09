@@ -17,7 +17,7 @@ The app also keeps track of how many API requests your have left each day.
 ## 📄 CSV importing
 If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.
 
-Drop your list of cards into a file called `list.csv` in the root directory. The file has to follow this format (including the header row):
+Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo). The file has to follow this format (including the header row):
 ```
 Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French
