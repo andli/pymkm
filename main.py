@@ -515,11 +515,11 @@ def __get_foil_price(api, product_id, language_id):
 
 
 def get_stock_as_array(api):
-    d = api.get_stock()['article']
+    d = api.get_stock()
 
     keys = ['idArticle', 'idProduct', 'product', 'count', 
             'price', 'isFoil', 'isSigned', 'language']  # TODO: [language][languageId]
-    stock_list = [{x: y for x, y in art.items() if x in keys} for art in d]
+    stock_list = [{x: y for x, y in article.items() if x in keys} for article in d]
     return stock_list
 
 

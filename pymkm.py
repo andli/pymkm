@@ -66,12 +66,13 @@ class PyMKM:
         try:
             self.requests_count = response.headers['X-Request-Limit-Count']
             self.requests_max = response.headers['X-Request-Limit-Max']
-        except AttributeError as err:
+        except (AttributeError, KeyError) as err:
             logging.debug(">> Attribute not found in header: {}".format(err))
 
         handled_codes = (
             requests.codes.ok,
             requests.codes.partial_content,
+            requests.codes.temporary_redirect,
         )
         if (response.status_code in handled_codes):
             # TODO: use requests count to handle code 429, Too Many Requests
@@ -132,7 +133,7 @@ class PyMKM:
 
     def mkm_request(self, mkm_oauth, url):
         try:
-            r = mkm_oauth.get(url)
+            r = mkm_oauth.get(url, allow_redirects=False)
             self.__handle_response(r)
         except requests.exceptions.ConnectionError as err:
             logging.debug(err)
@@ -227,9 +228,12 @@ class PyMKM:
         logging.debug(">> Getting stock")
         r = self.mkm_request(mkm_oauth, url)
 
+        if (r.status_code == requests.codes.temporary_redirect):
+            return self.get_stock(1)
+        
         if (start is not None):
             max_items = self.__get_max_items_from_header(r)
-
+    
             if (start > max_items or r.status_code == requests.codes.no_content):
                 # terminate recursion
                 """ NOTE: funny thing is, even though the API talks about it,
@@ -243,7 +247,7 @@ class PyMKM:
                 return r.json()['article'] + self.get_stock(start+100)
 
         if (r):
-            return r.json()
+            return r.json()['article']
 
     def add_stock(self, payload=None, api=None):
         # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
