@@ -127,13 +127,13 @@ def import_from_csv(api):
                         problem_cards.append(row)
                     elif len(product_match) == 1:
                         foil = (True if foil == 'Foil' else False)
-                        langauge_id = (
+                        language_id = (
                             1 if language == '' else api.languages.index(language) + 1)
                         price = _get_price_for_product(
-                            product_match[0]['idProduct'], foil, langauge_id, api)
+                            product_match[0]['idProduct'], foil, language_id=language_id, api=api)
                         card = {
                             'idProduct': product_match[0]['idProduct'],
-                            'idLanguage': langauge_id,
+                            'idLanguage': language_id,
                             'count': count,
                             'price': str(price),
                             'condition': 'NM',
@@ -373,7 +373,7 @@ def _get_price_for_single_article(article, api):
     #TODO: compare prices also for signed cards, like foils
     if not article.get('isSigned') or True: # keep prices for signed cards fixed
         new_price = _get_price_for_product(
-            article['idProduct'], article['isFoil'], api, article['language']['idLanguage'])
+            article['idProduct'], article['isFoil'], language_id=article['language']['idLanguage'], api=api)
         price_diff = new_price - article['price']
         if price_diff != 0:
             return {
@@ -388,7 +388,7 @@ def _get_price_for_single_article(article, api):
 
 
 @api_wrapper
-def _get_price_for_product(product_id, is_foil, api, language_id=1):
+def _get_price_for_product(product_id, is_foil, language_id=1, api=None):
     if not is_foil:
         r = api.get_product(product_id)
         found_price = math.ceil(r['product']['priceGuide']['TREND'] * 4) / 4
