@@ -193,7 +193,7 @@ class PyMKM:
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Account_Vacation
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Account_Vacation
         url = '{}/account/vacation'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, api)
 
@@ -219,7 +219,7 @@ class PyMKM:
             return r.json()
 
     def get_stock(self, start=None, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
         if (start):
             url = url + '/' + str(start)
@@ -250,7 +250,7 @@ class PyMKM:
             return r.json()['article']
 
     def add_stock(self, payload=None, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
 
         mkm_oauth = self.__setup_service(url, api)
@@ -266,7 +266,7 @@ class PyMKM:
             return r.json
 
     def set_stock(self, payload=None, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
 
         mkm_oauth = self.__setup_service(url, api)
@@ -282,7 +282,7 @@ class PyMKM:
             return r.json
 
     def delete_stock(self, payload=None, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Stock_Management
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
 
         mkm_oauth = self.__setup_service(url, api)
@@ -298,7 +298,7 @@ class PyMKM:
             return r.json
 
     def get_articles(self, product_id, start=0, api=None, **kwargs):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Articles
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Articles
         INCREMENT = 1000
         url = '{}/articles/{}'.format(self.base_url, product_id)
         mkm_oauth = self.__setup_service(url, api)
@@ -330,7 +330,7 @@ class PyMKM:
             raise ConnectionError(r)
 
     def find_product(self, search, api=None, **kwargs):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Find_Products
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Products
 
         url = '{}/products/find'.format(self.base_url)
         mkm_oauth = self.__setup_service(url, api)
@@ -347,7 +347,7 @@ class PyMKM:
             return r.json()
 
     def find_stock_article(self, name, game_id, api=None):
-        # https://www.mkmapi.eu/ws/documentation/API_2.0:Find_Articles
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Articles
 
         url = '{}/stock/articles/{}/{}'.format(
             self.base_url, urllib.parse.quote(name), game_id)
