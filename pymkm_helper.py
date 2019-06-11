@@ -46,17 +46,19 @@ class PyMkmHelper:
     def round_down_to_quarter(price):
         return math.floor(price * 4) / 4
 
-    def prompt_bool(query):
-        print('{} [y/n]: '.format(query))
+    @staticmethod
+    def prompt_bool(prompt_string):
+        print('{} [y/n]: '.format(prompt_string))
         val = input()
         try:
-            ret = strtobool(val)
+            return strtobool(val)
         except ValueError:
             print("Please answer with y/n")
-            return prompt(query)
-        return ret
+            return PyMkmHelper.prompt_bool(prompt_string)
+        
 
-    def prompt_string(query):
-        print('{}: '.format(query))
+    @staticmethod
+    def prompt_string(prompt_string):
+        print('{}: '.format(prompt_string))
         val = input()
         return val

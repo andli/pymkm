@@ -27,8 +27,8 @@ PRICE_CHANGES_FILE = 'price_changes.json'
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
-    def __init__(self):
-        self.api = PyMkmApi()
+    def __init__(self, config=None):
+        self.api = PyMkmApi(config=config)
 
     def start(self):
         while True:
@@ -125,7 +125,7 @@ class PyMkmApp:
 
         if len(uploadable_json) > 0:
 
-            _display_price_changes_table(uploadable_json)
+            self.display_price_changes_table(uploadable_json)
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
@@ -424,11 +424,11 @@ class PyMkmApp:
         print('\nBest diffs:\n')
         sorted_best = sorted(
             changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
-        _draw_price_changes_table(
+        self.draw_price_changes_table(
             i for i in sorted_best if i['price_diff'] > 0)
         print('\nWorst diffs:\n')
         sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
-        _draw_price_changes_table(
+        self.draw_price_changes_table(
             i for i in sorted_worst if i['price_diff'] < 0)
 
         print('\nTotal price difference: {}.'.format(

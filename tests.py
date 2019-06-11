@@ -17,19 +17,8 @@ from pymkmapi import PyMkmApi
 
 
 class TestCommon(unittest.TestCase):
-    class MockResponse:
-        def __init__(self, json_data, status_code, content):
-            self.json_data = json_data
-            self.status_code = status_code
-            self.content = content
-            # TODO: write a test for these
-            self.headers = {'X-Request-Limit-Count': 1234,
-                            'X-Request-Limit-Max': 5000}
 
-        def json(self):
-            return self.json_data
-
-    api = None
+    config = None
 
     def setUp(self):
         config = json.loads(
@@ -43,7 +32,17 @@ class TestCommon(unittest.TestCase):
             """
         )
 
-        self.api = PyMkmApi(config)
+    class MockResponse:
+        def __init__(self, json_data, status_code, content):
+            self.json_data = json_data
+            self.status_code = status_code
+            self.content = content
+            # TODO: write a test for these
+            self.headers = {'X-Request-Limit-Count': 1234,
+                            'X-Request-Limit-Max': 5000}
+
+        def json(self):
+            return self.json_data
 
 
 class TestPyMkmApp(TestCommon):
@@ -57,13 +56,25 @@ class TestPyMkmApp(TestCommon):
     #@patch('sys.stdout', new_callable=io.StringIO)
     #@patch('builtins.input', side_effect=['4', '0'])
     #def test_menu_option_4(self, mock_input, mock_stdout):
+    #    mockMkmService = Mock(spec=OAuth1Session)
+    #    mockMkmService.get = MagicMock(
+    #        return_value=self.MockResponse("test", 200, 'testing ok'))
+#
     #    app = PyMkmApp()
+    #    #app.api.
     #    app.start()
-    #    self.assertRegex(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
-    #    print(mock_stdout.getvalue())
+    #    self.assertRegex(mock_stdout.getvalue(),
+    #                     r'Top 20 most expensive articles in stock:')
 
 
 class TestPyMkmApiCalls(TestCommon):
+
+    api = None
+
+    def setUp(self):
+        super()
+
+        self.api = PyMkmApi(self.config)
 
     def test_file_not_found2(self):
         open_name = '%s.open' % __name__
@@ -71,10 +82,11 @@ class TestPyMkmApiCalls(TestCommon):
             mocked_open.side_effect = FileNotFoundError
 
             # Assert that an error is logged
-            with self.assertLogs(level='ERROR') as cm:
-                api = PyMkmApi()
-                log_record_level = cm.records[0].levelname
-                self.assertEqual(log_record_level, 'ERROR')
+            with self.assertRaises(SystemExit):
+                with self.assertLogs(level='ERROR') as cm:
+                    api = PyMkmApi()
+                    log_record_level = cm.records[0].levelname
+                    self.assertEqual(log_record_level, 'ERROR')
 
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
@@ -129,6 +141,19 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         self.assertEqual(self.helper.round_down_to_quarter(0.99), 0.75)
         self.assertEqual(self.helper.round_down_to_quarter(1.01), 1)
         self.assertEqual(self.helper.round_down_to_quarter(0.1), 0)
+    
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.input', side_effect=['y', 'n', 'asdf'])
+    def test_prompt_bool(self, mock_input, mock_stdout):
+        self.assertTrue(self.helper.prompt_bool('test_y'))
+        self.assertFalse(self.helper.prompt_bool('test_n'))
+
+        #self.helper.prompt_bool('test_error')
+        #self.assertRegex(mock_stdout.getvalue(), r'\nPlease answer with y\/n\n')
+
+    @patch('builtins.input', side_effect=['y'])
+    def test_prompt_string(self, mock_input):
+        self.assertEqual(self.helper.prompt_string('test'), 'y')
 
 
 if __name__ == '__main__':

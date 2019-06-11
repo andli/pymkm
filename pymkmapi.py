@@ -59,7 +59,7 @@ class PyMkmApi:
                 self.config = json.load(open('config.json'))
             except FileNotFoundError:
                 logging.error("You must copy config_template.json to config.json and populate the fields.")
-                #sys.exit(0)
+                sys.exit(0)
         else:
             self.config = config
 
