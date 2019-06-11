@@ -18,7 +18,7 @@ import sys
 import progressbar
 import tabulate as tb
 
-from pymkm_helper import PyMKM_Helper
+from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper
 
 PRICE_CHANGES_FILE = 'price_changes.json'
@@ -53,15 +53,15 @@ class PyMkmApp:
                 except ConnectionError as err:
                     print(err)
             elif choice == "2":
-                search_string = PyMKM_Helper.prompt_string('Search card name')
+                search_string = PyMkmHelper.prompt_string('Search card name')
                 try:
                     self.update_product_to_trend(search_string, api=self.api)
                 except ConnectionError as err:
                     print(err)
             elif choice == "3":
                 is_foil = False
-                search_string = PyMKM_Helper.prompt_string('Search card name')
-                if PyMKM_Helper.prompt_bool("Foil?") == True:
+                search_string = PyMkmHelper.prompt_string('Search card name')
+                if PyMkmHelper.prompt_bool("Foil?") == True:
                     is_foil = True
                 try:
                     self.list_competition_for_product(
@@ -110,7 +110,7 @@ class PyMkmApp:
         ''' This function updates all prices in the user's stock to TREND. '''
         uploadable_json = []
         if os.path.isfile(PRICE_CHANGES_FILE):
-            if PyMKM_Helper.prompt_bool("Found existing changes. Upload [y] or discard [n]?") == True:
+            if PyMkmHelper.prompt_bool("Found existing changes. Upload [y] or discard [n]?") == True:
                 with open(PRICE_CHANGES_FILE, 'r') as changes:
                     uploadable_json = json.load(changes)
             else:
@@ -127,7 +127,7 @@ class PyMkmApp:
 
             _display_price_changes_table(uploadable_json)
 
-            if PyMKM_Helper.prompt_bool("Do you want to update these prices?") == True:
+            if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
@@ -158,7 +158,7 @@ class PyMkmApp:
         if r:
             self.draw_price_changes_table([r])
 
-            if PyMKM_Helper.prompt_bool("Do you want to update these prices?") == True:
+            if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
                 api.set_stock([r])
                 print('Price updated.')
@@ -228,7 +228,7 @@ class PyMkmApp:
     @api_wrapper
     def clear_entire_stock(self, api):
         stock_list = self.get_stock_as_array(api=self.api)
-        if PyMKM_Helper.prompt_bool("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
+        if PyMkmHelper.prompt_bool("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
 
             # for article in stock_list:
                 # article['count'] = 0
@@ -358,8 +358,8 @@ class PyMkmApp:
                           tablefmt="simple"))
         print(70*'-')
         print('Total average price: {}, Total median price: {}, Total # of articles: {}\n'.format(
-            str(PyMKM_Helper.calculate_average(table_data, 3, 4)),
-            str(PyMKM_Helper.calculate_median(table_data, 3, 4)),
+            str(PyMkmHelper.calculate_average(table_data, 3, 4)),
+            str(PyMkmHelper.calculate_median(table_data, 3, 4)),
             str(len(table_data))
         )
         )
@@ -489,19 +489,19 @@ class PyMkmApp:
                     article['price']
                 ])
 
-        median_price = PyMKM_Helper.calculate_median(table_data, 3, 4)
-        lowest_price = PyMKM_Helper.calculate_lowest(table_data, 4)
-        median_guided = PyMKM_Helper.round_up_to_quarter(
+        median_price = PyMkmHelper.calculate_median(table_data, 3, 4)
+        lowest_price = PyMkmHelper.calculate_lowest(table_data, 4)
+        median_guided = PyMkmHelper.round_up_to_quarter(
             lowest_price + (median_price - lowest_price) / 4)
 
         if len(local_table_data) > 0:
             # Undercut if there is local competition
-            lowest_in_country = PyMKM_Helper.round_down_to_quarter(
-                PyMKM_Helper.calculate_lowest(local_table_data, 4))
+            lowest_in_country = PyMkmHelper.round_down_to_quarter(
+                PyMkmHelper.calculate_lowest(local_table_data, 4))
             return max(0.25, min(median_guided, lowest_in_country - 0.25))
         else:
             # No competition in our country, set price a bit higher.
-            return PyMKM_Helper.round_up_to_quarter(median_guided * 1.2)
+            return PyMkmHelper.round_up_to_quarter(median_guided * 1.2)
 
     def get_stock_as_array(self, api):
         d = api.get_stock()

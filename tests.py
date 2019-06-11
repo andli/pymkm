@@ -1,19 +1,22 @@
 """
 Python unittest
 """
+import io
 import json
-import random
 import logging
+import random
 import unittest
-from unittest.mock import Mock, MagicMock, patch, mock_open
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
 import requests
 from requests_oauthlib import OAuth1Session
+
+from pymkm_app import PyMkmApp
+from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi
-from pymkm_helper import PyMKM_Helper
 
 
-class TestPyMkmApiCalls(unittest.TestCase):
-
+class TestCommon(unittest.TestCase):
     class MockResponse:
         def __init__(self, json_data, status_code, content):
             self.json_data = json_data
@@ -42,11 +45,31 @@ class TestPyMkmApiCalls(unittest.TestCase):
 
         self.api = PyMkmApi(config)
 
+
+class TestPyMkmApp(TestCommon):
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.input', side_effect=['0'])
+    def test_main_menu(self, mock_input, mock_stdout):
+        app = PyMkmApp()
+        app.start()
+        self.assertRegexpMatches(mock_stdout.getvalue(), r'─ MENU ─')
+
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.input', side_effect=['4', '0'])
+    def test_menu_option_4(self, mock_input, mock_stdout):
+        app = PyMkmApp()
+        app.start()
+        self.assertRegexpMatches(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
+        print(mock_stdout.getvalue())
+
+
+class TestPyMkmApiCalls(TestCommon):
+
     def test_file_not_found2(self):
         open_name = '%s.open' % __name__
         with patch("builtins.open", mock_open(read_data="data")) as mocked_open:
             mocked_open.side_effect = FileNotFoundError
-            
+
             # Assert that an error is logged
             with self.assertLogs(level='ERROR') as cm:
                 api = PyMkmApi()
@@ -58,7 +81,7 @@ class TestPyMkmApiCalls(unittest.TestCase):
         mockMkmService.get = MagicMock(
             return_value=self.MockResponse("", 401, 'testing error'))
 
-        #with self.assertRaises(requests.exceptions.ConnectionError):
+        # with self.assertRaises(requests.exceptions.ConnectionError):
         #    self.api.get_account(mockMkmService)
 
         mockMkmService.get = MagicMock(
@@ -70,7 +93,7 @@ class TestPyMkmApiCalls(unittest.TestCase):
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
     def setUp(self):
-        self.helper = PyMKM_Helper()
+        self.helper = PyMkmHelper()
 
     def test_calculate_average(self):
         table = [

@@ -13,7 +13,7 @@ import sys
 from distutils.util import strtobool
 
 
-class PyMKM_Helper:
+class PyMkmHelper:
 
     @staticmethod
     def calculate_average(table, col_no_count, col_no_price):
