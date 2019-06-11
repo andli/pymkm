@@ -54,13 +54,13 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
-    @patch('sys.stdout', new_callable=io.StringIO)
-    @patch('builtins.input', side_effect=['4', '0'])
-    def test_menu_option_4(self, mock_input, mock_stdout):
-        app = PyMkmApp()
-        app.start()
-        self.assertRegex(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
-        print(mock_stdout.getvalue())
+    #@patch('sys.stdout', new_callable=io.StringIO)
+    #@patch('builtins.input', side_effect=['4', '0'])
+    #def test_menu_option_4(self, mock_input, mock_stdout):
+    #    app = PyMkmApp()
+    #    app.start()
+    #    self.assertRegex(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
+    #    print(mock_stdout.getvalue())
 
 
 class TestPyMkmApiCalls(TestCommon):
