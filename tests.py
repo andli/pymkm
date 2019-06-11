@@ -53,9 +53,9 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
-    #@patch('sys.stdout', new_callable=io.StringIO)
-    #@patch('builtins.input', side_effect=['4', '0'])
-    #def test_menu_option_4(self, mock_input, mock_stdout):
+    # @patch('sys.stdout', new_callable=io.StringIO)
+    # @patch('builtins.input', side_effect=['4', '0'])
+    # def test_menu_option_4(self, mock_input, mock_stdout):
     #    mockMkmService = Mock(spec=OAuth1Session)
     #    mockMkmService.get = MagicMock(
     #        return_value=self.MockResponse("test", 200, 'testing ok'))
@@ -84,7 +84,7 @@ class TestPyMkmApiCalls(TestCommon):
             # Assert that an error is logged
             with self.assertRaises(SystemExit):
                 with self.assertLogs(level='ERROR') as cm:
-                    api = PyMkmApi()
+                    PyMkmApi()
                     log_record_level = cm.records[0].levelname
                     self.assertEqual(log_record_level, 'ERROR')
 
@@ -141,14 +141,14 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         self.assertEqual(self.helper.round_down_to_quarter(0.99), 0.75)
         self.assertEqual(self.helper.round_down_to_quarter(1.01), 1)
         self.assertEqual(self.helper.round_down_to_quarter(0.1), 0)
-    
+
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['y', 'n', 'asdf'])
     def test_prompt_bool(self, mock_input, mock_stdout):
         self.assertTrue(self.helper.prompt_bool('test_y'))
         self.assertFalse(self.helper.prompt_bool('test_n'))
 
-        #self.helper.prompt_bool('test_error')
+        # self.helper.prompt_bool('test_error')
         #self.assertRegex(mock_stdout.getvalue(), r'\nPlease answer with y\/n\n')
 
     @patch('builtins.input', side_effect=['y'])
