@@ -3,12 +3,13 @@ Python unittest
 """
 import json
 import random
+import logging
 import unittest
 from unittest.mock import Mock, MagicMock, patch, mock_open
 import requests
 from requests_oauthlib import OAuth1Session
-from pymkm import PyMkmApi
-from helper import PyMKM_Helper
+from pymkmapi import PyMkmApi
+from pymkm_helper import PyMKM_Helper
 
 
 class TestPyMkmApiCalls(unittest.TestCase):
@@ -46,9 +47,11 @@ class TestPyMkmApiCalls(unittest.TestCase):
         with patch("builtins.open", mock_open(read_data="data")) as mocked_open:
             mocked_open.side_effect = FileNotFoundError
             
-            with self.assertRaises(FileNotFoundError):
+            # Assert that an error is logged
+            with self.assertLogs(level='ERROR') as cm:
                 api = PyMkmApi()
-            #mocked_open.return_value = StringIO('foo')
+                log_record_level = cm.records[0].levelname
+                self.assertEqual(log_record_level, 'ERROR')
 
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
