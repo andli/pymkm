@@ -18,18 +18,14 @@ from pymkmapi import PyMkmApi
 
 class TestCommon(unittest.TestCase):
 
-    config = None
-
     def setUp(self):
-        config = json.loads(
-            """
-                {
-                    "app_token": "aaaaa",
-                    "app_secret": "bbbbb",
-                    "access_token": "ccccccccccc",
-                    "access_token_secret": "dddddddddd"
-                }
-            """
+        self.config = json.loads(
+            """{
+                "app_token": "aaaaa",
+                "app_secret": "bbbbb",
+                "access_token": "ccccccccccc",
+                "access_token_secret": "dddddddddd"
+            }"""
         )
 
     class MockResponse:
@@ -49,7 +45,7 @@ class TestPyMkmApp(TestCommon):
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['0'])
     def test_main_menu(self, mock_input, mock_stdout):
-        app = PyMkmApp()
+        app = PyMkmApp(self.config)
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
@@ -72,7 +68,7 @@ class TestPyMkmApiCalls(TestCommon):
     api = None
 
     def setUp(self):
-        super()
+        super(TestPyMkmApiCalls,self).setUp()
 
         self.api = PyMkmApi(self.config)
 
