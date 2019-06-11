@@ -18,14 +18,25 @@ from pymkmapi import PyMkmApi
 
 class TestCommon(unittest.TestCase):
 
+    fake_stock = [
+        {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': False, 'isSigned': True, 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
+            'enName': 'Words of Worship', 'expIcon': '39', 'expansion': 'Onslaught', 'idGame': 1, 'image': './img/items/1/ONS/1692.jpg', 'locName': 'Words of Worship', 'nr': '61', 'rarity': 'Rare'}},
+        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': False, 'isSigned': True, 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
+            'enName': 'Mulch', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
+        {'count': 1, 'idArticle': 407911824, 'idProduct': 242440, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {'enName': 'Everflowing Chalice',
+                                                                                                                                                                                          'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
+    ]
+
     def setUp(self):
         self.config = json.loads(
-            """{
+            """
+            {
                 "app_token": "aaaaa",
                 "app_secret": "bbbbb",
                 "access_token": "ccccccccccc",
                 "access_token_secret": "dddddddddd"
-            }"""
+            }
+            """
         )
 
     class MockResponse:
@@ -49,18 +60,15 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
-    # @patch('sys.stdout', new_callable=io.StringIO)
-    # @patch('builtins.input', side_effect=['4', '0'])
-    # def test_menu_option_4(self, mock_input, mock_stdout):
-    #    mockMkmService = Mock(spec=OAuth1Session)
-    #    mockMkmService.get = MagicMock(
-    #        return_value=self.MockResponse("test", 200, 'testing ok'))
-#
-    #    app = PyMkmApp()
-    #    #app.api.
-    #    app.start()
-    #    self.assertRegex(mock_stdout.getvalue(),
-    #                     r'Top 20 most expensive articles in stock:')
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.input', side_effect=['4', '0'])
+    def test_menu_option_4(self, mock_input, mock_stdout, *args):
+
+        app = PyMkmApp(self.config)
+        app.start()
+        self.assertRegex(mock_stdout.getvalue(),
+                     r'Top 20 most expensive articles in stock:')
 
 
 class TestPyMkmApiCalls(TestCommon):
@@ -68,7 +76,7 @@ class TestPyMkmApiCalls(TestCommon):
     api = None
 
     def setUp(self):
-        super(TestPyMkmApiCalls,self).setUp()
+        super(TestPyMkmApiCalls, self).setUp()
 
         self.api = PyMkmApi(self.config)
 
