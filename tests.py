@@ -52,14 +52,14 @@ class TestPyMkmApp(TestCommon):
     def test_main_menu(self, mock_input, mock_stdout):
         app = PyMkmApp()
         app.start()
-        self.assertRegexpMatches(mock_stdout.getvalue(), r'─ MENU ─')
+        self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['4', '0'])
     def test_menu_option_4(self, mock_input, mock_stdout):
         app = PyMkmApp()
         app.start()
-        self.assertRegexpMatches(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
+        self.assertRegex(mock_stdout.getvalue(), r'Top 20 most expensive articles in stock:')
         print(mock_stdout.getvalue())
 
 
