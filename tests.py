@@ -72,6 +72,23 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
+    @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
+    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
+    @patch('builtins.input', side_effect=['1', 'y', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('os.remove', return_value=True)
+    @patch('builtins.open', new_callable=mock_open)
+    def test_menu_option_1(self, mock_open, mock_stdout, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited update_stock_prices_to_trend')
+
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['4', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
