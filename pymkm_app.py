@@ -47,52 +47,43 @@ class PyMkmApp:
 
             # TODO: Refactor out ConnectionErrors
 
-            if choice == "1":
-                try:
+            try:
+                if choice == "1":
                     self.update_stock_prices_to_trend(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "2":
-                search_string = PyMkmHelper.prompt_string('Search card name')
-                try:
+
+                elif choice == "2":
+                    search_string = PyMkmHelper.prompt_string(
+                        'Search card name')
                     self.update_product_to_trend(search_string, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "3":
-                is_foil = False
-                search_string = PyMkmHelper.prompt_string('Search card name')
-                if PyMkmHelper.prompt_bool("Foil?") == True:
-                    is_foil = True
-                try:
+
+                elif choice == "3":
+                    is_foil = False
+                    search_string = PyMkmHelper.prompt_string(
+                        'Search card name')
+                    if PyMkmHelper.prompt_bool("Foil?") == True:
+                        is_foil = True
+
                     self.list_competition_for_product(
                         search_string, is_foil, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "4":
-                try:
+
+                elif choice == "4":
                     self.show_top_expensive_articles_in_stock(20, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "5":
-                try:
+
+                elif choice == "5":
                     self.show_account_info(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "6":
-                try:
+
+                elif choice == "6":
                     self.clear_entire_stock(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-                    print(err)
-            elif choice == "7":
-                try:
+
+                elif choice == "7":
                     self.import_from_csv(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "0":
-                break
-            else:
-                print("Not a valid choice, try again.")
+
+                elif choice == "0":
+                    break
+                else:
+                    print("Not a valid choice, try again.")
+            except ConnectionError as err:
+                print(err)
 
     def print_menu(self, menu_items):
         menu_top = "╭" + 3 * "─" + " MENU " + 50 * "─" + "╮"
@@ -177,12 +168,12 @@ class PyMkmApp:
             # TODO: Add Partial Content support
             # TODO: Add language support
         })
-        
+
         if (result):
             products = result['product']
 
             stock_list_products = [x['idProduct']
-                                    for x in self.get_stock_as_array(api=self.api)]
+                                   for x in self.get_stock_as_array(api=self.api)]
             products = [x for x in products if x['idProduct']
                         in stock_list_products]
 
@@ -196,7 +187,6 @@ class PyMkmApp:
                 product['idProduct'], product['enName'], is_foil, api=self.api)
         else:
             print('No results found.')
-
 
     @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
