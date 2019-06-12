@@ -21,10 +21,10 @@ class TestCommon(unittest.TestCase):
     fake_stock = [
         {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': False, 'isSigned': True, 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
             'enName': 'Words of Worship', 'expIcon': '39', 'expansion': 'Onslaught', 'idGame': 1, 'image': './img/items/1/ONS/1692.jpg', 'locName': 'Words of Worship', 'nr': '61', 'rarity': 'Rare'}},
-        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': False, 'isSigned': True, 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
-            'enName': 'Mulch', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
-        {'count': 1, 'idArticle': 407911824, 'idProduct': 242440, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {'enName': 'Everflowing Chalice',
-                                                                                                                                                                                          'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
+        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': True, 'isSigned': True, 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
+            'enName': 'Mulch words', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
+        {'count': 1, 'idArticle': 407911824, 'idProduct': 242440, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
+            'enName': 'Everflowing Chalice', 'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
@@ -88,6 +88,24 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
                              r'>> Exited update_stock_prices_to_trend')
+
+    @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
+    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
+    @patch('pymkmapi.PyMkmApi.find_stock_article', return_value=TestCommon.fake_stock)
+    @patch('builtins.input', side_effect=['2', 'words', '1', 'y', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('os.remove', return_value=True)
+    @patch('builtins.open', new_callable=mock_open)
+    def test_menu_option_2(self, mock_open, mock_stdout, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited update_product_to_trend')
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['4', '0'])
