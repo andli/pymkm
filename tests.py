@@ -23,18 +23,42 @@ class TestCommon(unittest.TestCase):
             'enName': 'Words of Worship', 'expIcon': '39', 'expansion': 'Onslaught', 'idGame': 1, 'image': './img/items/1/ONS/1692.jpg', 'locName': 'Words of Worship', 'nr': '61', 'rarity': 'Rare'}},
         {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': True, 'isSigned': True, 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
             'enName': 'Mulch words', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
-        {'count': 1, 'idArticle': 407911824, 'idProduct': 242440, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
+        {'count': 1, 'idArticle': 407911824, 'idProduct': 1079, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
             'enName': 'Everflowing Chalice', 'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
+
     fake_csv_find_result = {'product': [{
         'categoryName': 'Magic Single',
         'enName': 'Dragon Breath',
         'expansionName': 'Scourge',
         'idProduct': 1079,
     }]}
+
+    fake_articles_result = [
+        {'comments': '', 'condition': 'EX', 'count': 1, 'idArticle': 371427479,
+         'idProduct': 1692, 'inShoppingCart': False, 'isAltered': False,
+         'isFoil': False, 'isPlayset': False, 'isSigned': False,
+         'language': {'idLanguage': 1, 'languageName': 'English'},
+         'price': 0.2,
+         'seller': {'address': {'country': 1}, 'avgShippingTime': 1, 'email': '',
+                    'idUser': 34018,
+                    'isCommercial': 0, 'isSeller': True, 'legalInformation': '',
+                    'lossPercentage': '0 - 2%', 'username': 'test'}},
+        {'comments': '', 'condition': 'EX', 'count': 1, 'idArticle': 406723464,
+         'idProduct': 1692, 'inShoppingCart': False, 'isAltered': False,
+         'isFoil': False, 'isPlayset': False, 'isSigned': False,
+         'language': {'idLanguage': 1, 'languageName': 'English'},
+            'price': 0.2,
+            'seller': {'address': {'country': 1}, 'avgShippingTime': 0, 'email': '',
+                       'idUser': 655460,
+                       'isCommercial': 0, 'isSeller': True, 'legalInformation': '',
+                       'lossPercentage': '0 - 2%', 'username': 'test'}}
+    ]
+
+    fake_account_data = {'account': {'username': 'test', 'country': 'test'}}
 
     def setUp(self):
         self.config = json.loads(
@@ -106,6 +130,21 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
                              r'>> Exited update_product_to_trend')
+
+    @patch('pymkmapi.PyMkmApi.get_articles', return_value=TestCommon.fake_articles_result)
+    @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_csv_find_result)
+    @patch('builtins.input', side_effect=['3', 'words', 'n', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_menu_option_3(self, mock_stdout, *args):
+
+        app = PyMkmApp(self.config)
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited list_competition_for_product')
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['4', '0'])
