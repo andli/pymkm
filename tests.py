@@ -27,6 +27,15 @@ class TestCommon(unittest.TestCase):
                                                                                                                                                                                           'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
+    fake_list_csv = """Card,Set Name,Quantity,Foil,Language
+Dragon Breath,Scourge,1,Foil,French"""
+    fake_csv_find_result = {'product': [{
+        'categoryName': 'Magic Single',
+        'enName': 'Dragon Breath',
+        'expansionName': 'Scourge',
+        'idProduct': 1079,
+    }]}
+
     def setUp(self):
         self.config = json.loads(
             """
@@ -53,6 +62,9 @@ class TestCommon(unittest.TestCase):
 
 
 class TestPyMkmApp(TestCommon):
+
+    ok_response = TestCommon.MockResponse("test", 200, 'testing ok')
+
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['0'])
     def test_main_menu(self, mock_input, mock_stdout):
@@ -61,14 +73,30 @@ class TestPyMkmApp(TestCommon):
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
-    @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['4', '0'])
-    def test_menu_option_4(self, mock_input, mock_stdout, *args):
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_menu_option_4(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
         app.start()
         self.assertRegex(mock_stdout.getvalue(),
-                     r'Top 20 most expensive articles in stock:')
+                         r'Top 20 most expensive articles in stock:')
+
+    @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
+    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
+    @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_csv_find_result)
+    @patch('builtins.input', side_effect=['7', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
+    def test_menu_option_7(self, mock_open, mock_stdout, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited import_from_csv')
 
 
 class TestPyMkmApiCalls(TestCommon):
@@ -153,7 +181,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         self.assertFalse(self.helper.prompt_bool('test_n'))
 
         # self.helper.prompt_bool('test_error')
-        #self.assertRegex(mock_stdout.getvalue(), r'\nPlease answer with y\/n\n')
+        # self.assertRegex(mock_stdout.getvalue(), r'\nPlease answer with y\/n\n')
 
     @patch('builtins.input', side_effect=['y'])
     def test_prompt_string(self, mock_input):

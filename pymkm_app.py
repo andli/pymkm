@@ -251,14 +251,14 @@ class PyMkmApp:
         print("Cards are added in condition NM.")
         problem_cards = []
         with open('list.csv', newline='') as csvfile:
-            csv_reader = csv.reader(csvfile)
+            csv_reader = csvfile.readlines()
             index = 0
             bar = progressbar.ProgressBar(
-                max_value=sum(1 for row in csv_reader))
+                max_value=(sum(1 for row in csv_reader)) - 1)
             csvfile.seek(0)
             for row in csv_reader:
                 if index > 0:
-                    (name, set_name, count, foil, language, *other) = row
+                    (name, set_name, count, foil, language, *other) = row.split(',')
                     if (all(v is not '' for v in [name, set_name, count])):
                         possible_products = api.find_product(name)['product']
                         product_match = [x for x in possible_products if x['expansionName']
@@ -283,8 +283,8 @@ class PyMkmApp:
                         else:
                             problem_cards.append(row)
 
-                index += 1
                 bar.update(index)
+                index += 1
             bar.finish()
         if len(problem_cards) > 0:
             try:
