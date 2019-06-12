@@ -170,27 +170,32 @@ class PyMkmApp:
     @api_wrapper
     def list_competition_for_product(self, search_string, is_foil, api):
 
-        products = api.find_product(search_string, **{
+        result = api.find_product(search_string, **{
             # 'exact ': 'true',
             'idGame': 1,
             'idLanguage': 1,
             # TODO: Add Partial Content support
             # TODO: Add language support
-        })['product']
+        })
+        
+        if (result):
+            products = result['product']
 
-        stock_list_products = [x['idProduct']
-                                for x in self.get_stock_as_array(api=self.api)]
-        products = [x for x in products if x['idProduct']
-                    in stock_list_products]
+            stock_list_products = [x['idProduct']
+                                    for x in self.get_stock_as_array(api=self.api)]
+            products = [x for x in products if x['idProduct']
+                        in stock_list_products]
 
-        if len(products) > 1:
-            product = self.select_from_list_of_products(
-                [i for i in products if i['categoryName'] == 'Magic Single'])
+            if len(products) > 1:
+                product = self.select_from_list_of_products(
+                    [i for i in products if i['categoryName'] == 'Magic Single'])
+            else:
+                product = products[0]
+
+            self.show_competition_for_product(
+                product['idProduct'], product['enName'], is_foil, api=self.api)
         else:
-            product = products[0]
-
-        self.show_competition_for_product(
-            product['idProduct'], product['enName'], is_foil, api=self.api)
+            print('No results found.')
 
 
     @api_wrapper

@@ -58,7 +58,8 @@ class PyMkmApi:
             try:
                 self.config = json.load(open('config.json'))
             except FileNotFoundError:
-                logging.error("You must copy config_template.json to config.json and populate the fields.")
+                logging.error(
+                    "You must copy config_template.json to config.json and populate the fields.")
                 sys.exit(0)
         else:
             self.config = config
@@ -80,6 +81,8 @@ class PyMkmApi:
             return True
         elif (response.status_code == requests.codes.no_content):
             raise NoResultsError('No results found.')
+        elif (response.status_code == requests.codes.not_found):
+            return False
         else:
             raise requests.exceptions.ConnectionError(response)
 
@@ -141,7 +144,7 @@ class PyMkmApi:
             self.__handle_response(r)
         except requests.exceptions.ConnectionError as err:
             logging.debug(err)
-        
+
         return r
 
     def get_expansions(self, game_id, provided_oauth=None):
@@ -234,10 +237,10 @@ class PyMkmApi:
 
         if (r.status_code == requests.codes.temporary_redirect):
             return self.get_stock(1)
-        
+
         if (start is not None):
             max_items = self.__get_max_items_from_header(r)
-    
+
             if (start > max_items or r.status_code == requests.codes.no_content):
                 # terminate recursion
                 """ NOTE: funny thing is, even though the API talks about it,
