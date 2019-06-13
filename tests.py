@@ -27,6 +27,33 @@ class TestCommon(unittest.TestCase):
             'enName': 'Everflowing Chalice', 'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
+    fake_product = {'product':
+                    {'categoryName': 'Magic Single',
+                     'countArticles': 876,
+                     'countFoils': 46,
+                     'countReprints': 1,
+                     'idProduct': 1692,
+                     'enName': 'Words of Worship',
+                     'expansion': {
+                         'enName': 'Onslaught',
+                         'expansionIcon': 39,
+                         'idExpansion': 41
+                     },
+                     'gameName': 'Magic the Gathering',
+                     'idGame': '1',
+                     'idMetaproduct': 6716,
+                     'priceGuide': {
+                         'AVG': 0.67,
+                         'LOW': 0.05,
+                         'LOWEX': 0.05,
+                         'LOWFOIL': 2.49,
+                         'SELL': 0.47,
+                         'TREND': 0.64,
+                         'TRENDFOIL': 6.37
+                     }
+                     }
+                    }
+
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
@@ -96,8 +123,9 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
 
-    @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
-    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
+    @patch('pymkm_app.PyMkmApi.get_product', return_value=TestCommon.fake_product)
+    @patch('pymkmapi.PyMkmApi.get_articles', return_value=TestCommon.fake_articles_result)
+    @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
     @patch('builtins.input', side_effect=['1', 'y', '0'])
