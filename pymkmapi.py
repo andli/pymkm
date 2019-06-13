@@ -146,7 +146,7 @@ class PyMkmApi:
             r = mkm_oauth.get(url, allow_redirects=False)
             self.__handle_response(r)
         except requests.exceptions.ConnectionError as err:
-            logging.debug(err)
+            logging.error(err)
 
         return r
 

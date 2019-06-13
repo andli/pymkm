@@ -235,10 +235,11 @@ class TestPyMkmApiCalls(TestCommon):
     def test_getAccount(self):
         mockMkmService = Mock(spec=OAuth1Session)
         mockMkmService.get = MagicMock(
-            return_value=self.MockResponse("", 401, 'testing error'))
+            return_value=self.MockResponse("", 401, 'Unauthorized'))
 
-        # with self.assertRaises(requests.exceptions.ConnectionError):
-        #    self.api.get_account(mockMkmService)
+        with self.assertLogs(level='ERROR') as cm:
+            self.api.get_account(mockMkmService)
+            self.assertGreater(len(cm.records), 0)
 
         mockMkmService.get = MagicMock(
             return_value=self.MockResponse("test", 200, 'testing ok'))
