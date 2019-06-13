@@ -19,11 +19,11 @@ from pymkmapi import PyMkmApi
 class TestCommon(unittest.TestCase):
 
     fake_stock = [
-        {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': False, 'isSigned': True, 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
+        {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': 'false', 'isSigned': 'true', 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
             'enName': 'Words of Worship', 'expIcon': '39', 'expansion': 'Onslaught', 'idGame': 1, 'image': './img/items/1/ONS/1692.jpg', 'locName': 'Words of Worship', 'nr': '61', 'rarity': 'Rare'}},
-        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': True, 'isSigned': True, 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
+        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': 'true', 'isSigned': 'true', 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
             'enName': 'Mulch words', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
-        {'count': 1, 'idArticle': 407911824, 'idProduct': 1079, 'isFoil': False, 'isSigned': False, 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
+        {'count': 1, 'idArticle': 407911824, 'idProduct': 1079, 'isFoil': 'false', 'isSigned': 'false', 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
             'enName': 'Everflowing Chalice', 'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
@@ -75,23 +75,23 @@ Dragon Breath,Scourge,1,Foil,French"""
     ]}
 
     fake_articles_result = [
-        {'comments': '', 'condition': 'EX', 'count': 1, 'idArticle': 371427479,
-         'idProduct': 1692, 'inShoppingCart': False, 'isAltered': False,
-         'isFoil': False, 'isPlayset': False, 'isSigned': False,
+        {'comments': 'x', 'condition': 'EX', 'count': 1, 'idArticle': 371427479,
+         'idProduct': 1692, 'inShoppingCart': 'false', 'isAltered': 'false',
+         'isFoil': 'false', 'isPlayset': 'false', 'isSigned': 'false',
          'language': {'idLanguage': 1, 'languageName': 'English'},
          'price': 0.2,
-         'seller': {'address': {'country': 1}, 'avgShippingTime': 1, 'email': '',
+         'seller': {'address': {'country': 1}, 'avgShippingTime': 1, 'email': 'x',
                     'idUser': 34018,
-                    'isCommercial': 0, 'isSeller': True, 'legalInformation': '',
+                    'isCommercial': 0, 'isSeller': 'true', 'legalInformation': 'x',
                     'lossPercentage': '0 - 2%', 'username': 'test'}},
-        {'comments': '', 'condition': 'EX', 'count': 1, 'idArticle': 406723464,
-         'idProduct': 1692, 'inShoppingCart': False, 'isAltered': False,
-         'isFoil': False, 'isPlayset': False, 'isSigned': False,
+        {'comments': 'x', 'condition': 'EX', 'count': 1, 'idArticle': 406723464,
+         'idProduct': 1692, 'inShoppingCart': 'false', 'isAltered': 'false',
+         'isFoil': 'false', 'isPlayset': 'false', 'isSigned': 'false',
          'language': {'idLanguage': 1, 'languageName': 'English'},
             'price': 0.2,
-            'seller': {'address': {'country': 1}, 'avgShippingTime': 0, 'email': '',
+            'seller': {'address': {'country': 1}, 'avgShippingTime': 0, 'email': 'x',
                        'idUser': 655460,
-                       'isCommercial': 0, 'isSeller': True, 'legalInformation': '',
+                       'isCommercial': 0, 'isSeller': 'true', 'legalInformation': 'x',
                        'lossPercentage': '0 - 2%', 'username': 'test'}}
     ]
 
@@ -232,7 +232,7 @@ class TestPyMkmApiCalls(TestCommon):
                     log_record_level = cm.records[0].levelname
                     self.assertEqual(log_record_level, 'ERROR')
 
-    def test_getAccount(self):
+    def test_get_account(self):
         mockMkmService = Mock(spec=OAuth1Session)
         mockMkmService.get = MagicMock(
             return_value=self.MockResponse("", 401, 'Unauthorized'))
@@ -245,6 +245,14 @@ class TestPyMkmApiCalls(TestCommon):
             return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mockMkmService), "test")
         mockMkmService.get.assert_called()
+    
+    def test_get_stock(self):
+        articles_response = "{{'article': {}}}".format(TestCommon.fake_articles_result).replace("'",'"')
+        articles_response_json = json.loads(articles_response)
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
+        self.assertEqual(self.api.get_stock(None, mockMkmService)[0]['comments'], "x")
 
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
