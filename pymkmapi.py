@@ -81,6 +81,9 @@ class PyMkmApi:
             return True
         elif (response.status_code == requests.codes.no_content):
             raise NoResultsError('No results found.')
+        elif (response.status_code == requests.codes.bad_request):
+            print(json.loads(response.text)['mkm_error_description'])
+            return False
         elif (response.status_code == requests.codes.not_found):
             return False
         else:
