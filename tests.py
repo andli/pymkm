@@ -57,12 +57,22 @@ class TestCommon(unittest.TestCase):
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
-    fake_csv_find_result = {'product': [{
+    fake_csv_find_result = {'product': [
+        {
         'categoryName': 'Magic Single',
         'enName': 'Dragon Breath',
         'expansionName': 'Scourge',
         'idProduct': 1079,
-    }]}
+        'rarity': 'Common'
+    },
+        {
+        'categoryName': 'Magic Single',
+        'enName': 'Dragon Breath2',
+        'expansionName': 'Scourge',
+        'idProduct': 9145,
+        'rarity': 'Rare'
+    }
+    ]}
 
     fake_articles_result = [
         {'comments': '', 'condition': 'EX', 'count': 1, 'idArticle': 371427479,
@@ -163,7 +173,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_csv_find_result)
-    @patch('builtins.input', side_effect=['3', 'words', 'n', '0'])
+    @patch('builtins.input', side_effect=['3', 'words', 'n', '1', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_menu_option_3(self, mock_stdout, *args):
 
