@@ -199,6 +199,29 @@ class TestPyMkmApp(TestCommon):
         self.assertRegex(mock_stdout.getvalue(),
                          r'Top 20 most expensive articles in stock:')
 
+    @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
+    @patch('builtins.input', side_effect=['5', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_menu_option_5(self, mock_stdout, *args):
+
+        app = PyMkmApp(self.config)
+        app.start()
+        print(mock_stdout.getvalue())
+        self.assertRegex(mock_stdout.getvalue(),
+                         r"{'account':")
+
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
+    @patch('builtins.input', side_effect=['6', 'y', '0'])
+    def test_menu_option_6(self, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                            r'>> Exited clear_entire_stock')
+
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
@@ -215,17 +238,7 @@ class TestPyMkmApp(TestCommon):
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
     
-    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
-    @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
-    @patch('builtins.input', side_effect=['6', 'y', '0'])
-    def test_menu_option_6(self, *args):
-        app = PyMkmApp(self.config)
 
-        with self.assertLogs(level='DEBUG') as cm:
-            app.start()
-            log_record = cm.records[1]
-            self.assertRegex(log_record.message,
-                            r'>> Exited clear_entire_stock')
 
 
 class TestPyMkmApiCalls(TestCommon):
