@@ -98,7 +98,8 @@ Dragon Breath,Scourge,1,Foil,French"""
     fake_account_data = {'account': {
         'username': 'test',
         'country': 'test',
-        'onVacation': 'true'},
+        'onVacation': 'true',
+        'idDisplayLanguage': 1},
         'message': 'Successfully set the account on vacation.'}
 
     def setUp(self):
@@ -351,6 +352,15 @@ class TestPyMkmApiCalls(TestCommon):
         result = self.api.set_vacation_status(vacation_status, mock_oauth)
         self.assertEqual(result['message'], 'Successfully set the account on vacation.')
         self.assertEqual(result['account']['onVacation'], str(vacation_status).lower())
+
+    def test_set_display_language(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.put = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_account_data, 200, 'testing ok'))
+        display_language = 1
+
+        result = self.api.set_display_language(display_language, mock_oauth)
+        self.assertEqual(result['account']['idDisplayLanguage'], str(display_language).lower())
 
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
