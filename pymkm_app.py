@@ -45,8 +45,6 @@ class PyMkmApp:
 
             choice = input("Action number: ")
 
-            # TODO: Refactor out ConnectionErrors
-
             try:
                 if choice == "1":
                     self.update_stock_prices_to_trend(api=self.api)

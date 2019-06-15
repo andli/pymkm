@@ -28,30 +28,30 @@ class TestCommon(unittest.TestCase):
     ]
 
     fake_product = {'product':
-                    {'categoryName': 'Magic Single',
-                     'countArticles': 876,
-                     'countFoils': 46,
-                     'countReprints': 1,
-                     'idProduct': 1692,
-                     'enName': 'Words of Worship',
-                     'expansion': {
-                         'enName': 'Onslaught',
-                         'expansionIcon': 39,
-                         'idExpansion': 41
-                     },
-                     'gameName': 'Magic the Gathering',
-                     'idGame': '1',
-                     'idMetaproduct': 6716,
-                     'priceGuide': {
-                         'AVG': 0.67,
-                         'LOW': 0.05,
-                         'LOWEX': 0.05,
-                         'LOWFOIL': 2.49,
-                         'SELL': 0.47,
-                         'TREND': 0.64,
-                         'TRENDFOIL': 6.37
-                     }
-                     }
+                    [{'categoryName': 'Magic Single',
+                      'countArticles': 876,
+                      'countFoils': 46,
+                      'countReprints': 1,
+                      'idProduct': 1692,
+                      'enName': 'Words of Worship',
+                      'expansion': {
+                          'enName': 'Onslaught',
+                          'expansionIcon': 39,
+                          'idExpansion': 41
+                      },
+                        'gameName': 'Magic the Gathering',
+                        'idGame': '1',
+                      'idMetaproduct': 6716,
+                      'priceGuide': {
+                          'AVG': 0.67,
+                          'LOW': 0.05,
+                          'LOWEX': 0.05,
+                          'LOWFOIL': 2.49,
+                          'SELL': 0.47,
+                          'TREND': 0.64,
+                          'TRENDFOIL': 6.37
+                      }
+                      }]
                     }
 
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
@@ -59,19 +59,19 @@ Dragon Breath,Scourge,1,Foil,French"""
 
     fake_csv_find_result = {'product': [
         {
-        'categoryName': 'Magic Single',
-        'enName': 'Dragon Breath',
-        'expansionName': 'Scourge',
-        'idProduct': 1079,
-        'rarity': 'Common'
-    },
+            'categoryName': 'Magic Single',
+            'enName': 'Dragon Breath',
+            'expansionName': 'Scourge',
+            'idProduct': 1079,
+            'rarity': 'Common'
+        },
         {
-        'categoryName': 'Magic Single',
-        'enName': 'Dragon Breath2',
-        'expansionName': 'Scourge',
-        'idProduct': 9145,
-        'rarity': 'Rare'
-    }
+            'categoryName': 'Magic Single',
+            'enName': 'Dragon Breath2',
+            'expansionName': 'Scourge',
+            'idProduct': 9145,
+            'rarity': 'Rare'
+        }
     ]}
 
     fake_articles_result = [
@@ -141,8 +141,9 @@ class TestPyMkmApp(TestCommon):
     @patch('builtins.input', side_effect=['1', 'y', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('os.remove', return_value=True)
-    @patch('builtins.open', new_callable=mock_open)
-    def test_menu_option_1(self, mock_open, mock_stdout, *args):
+    @patch('builtins.open', new_callable=mock_open, create=True)
+    @patch('builtins.open', side_effect=FileNotFoundError())
+    def test_menu_option_1(self, mock_open, mock_stdout, *args): 
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -245,15 +246,39 @@ class TestPyMkmApiCalls(TestCommon):
             return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mockMkmService), "test")
         mockMkmService.get.assert_called()
-    
+
     def test_get_stock(self):
-        articles_response = "{{'article': {}}}".format(TestCommon.fake_articles_result).replace("'",'"')
+        articles_response = "{{'article': {}}}".format(
+            TestCommon.fake_articles_result).replace("'", '"')
         articles_response_json = json.loads(articles_response)
         mockMkmService = Mock(spec=OAuth1Session)
         mockMkmService.get = MagicMock(
             return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
-        self.assertEqual(self.api.get_stock(None, mockMkmService)[0]['comments'], "x")
+        self.assertEqual(self.api.get_stock(
+            None, mockMkmService)[0]['comments'], "x")
+        
+    def test_get_games(self):
+        test_json = json.loads('{"test": "test"}')
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, 'testing ok'))
+        self.assertEqual(self.api.get_games(mockMkmService), test_json)
 
+    def test_get_expansions(self):
+        test_json = json.loads('{"test": "test"}')
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, 'testing ok'))
+        game_id = 1
+        self.assertEqual(self.api.get_expansions(game_id, mockMkmService), test_json)
+    
+    def test_get_cards_in_expansion(self):
+        test_json = json.loads('{"test": "test"}')
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, 'testing ok'))
+        expansion_id = 1
+        self.assertEqual(self.api.get_cards_in_expansion(expansion_id, mockMkmService), test_json)
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
