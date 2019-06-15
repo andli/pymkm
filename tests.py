@@ -95,7 +95,11 @@ Dragon Breath,Scourge,1,Foil,French"""
                        'lossPercentage': '0 - 2%', 'username': 'test'}}
     ]
 
-    fake_account_data = {'account': {'username': 'test', 'country': 'test'}}
+    fake_account_data = {'account': {
+        'username': 'test',
+        'country': 'test',
+        'onVacation': 'true'},
+        'message': 'Successfully set the account on vacation.'}
 
     def setUp(self):
         self.config = json.loads(
@@ -143,7 +147,7 @@ class TestPyMkmApp(TestCommon):
     @patch('os.remove', return_value=True)
     @patch('builtins.open', new_callable=mock_open, create=True)
     @patch('builtins.open', side_effect=FileNotFoundError())
-    def test_menu_option_1(self, mock_open, mock_stdout, *args): 
+    def test_menu_option_1(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -234,80 +238,94 @@ class TestPyMkmApiCalls(TestCommon):
                     self.assertEqual(log_record_level, 'ERROR')
 
     def test_get_account(self):
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse("", 401, 'Unauthorized'))
 
         with self.assertLogs(level='ERROR') as cm:
-            self.api.get_account(mockMkmService)
+            self.api.get_account(mock_oauth)
             self.assertGreater(len(cm.records), 0)
 
-        mockMkmService.get = MagicMock(
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse("test", 200, 'testing ok'))
-        self.assertEqual(self.api.get_account(mockMkmService), "test")
-        mockMkmService.get.assert_called()
+        self.assertEqual(self.api.get_account(mock_oauth), "test")
+        mock_oauth.get.assert_called()
 
     def test_get_stock(self):
         articles_response = "{{'article': {}}}".format(
             TestCommon.fake_articles_result).replace("'", '"')
         articles_response_json = json.loads(articles_response)
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
         self.assertEqual(self.api.get_stock(
-            None, mockMkmService)[0]['comments'], "x")
-        
+            None, mock_oauth)[0]['comments'], "x")
+
     def test_get_games(self):
         test_json = json.loads('{"test": "test"}')
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
-        self.assertEqual(self.api.get_games(mockMkmService), test_json)
+        self.assertEqual(self.api.get_games(mock_oauth), test_json)
 
     def test_get_expansions(self):
         test_json = json.loads('{"test": "test"}')
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
         game_id = 1
-        self.assertEqual(self.api.get_expansions(game_id, mockMkmService), test_json)
-    
+        self.assertEqual(self.api.get_expansions(
+            game_id, mock_oauth), test_json)
+
     def test_get_cards_in_expansion(self):
         test_json = json.loads('{"test": "test"}')
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
         expansion_id = 1
-        self.assertEqual(self.api.get_cards_in_expansion(expansion_id, mockMkmService), test_json)
-    
+        self.assertEqual(self.api.get_cards_in_expansion(
+            expansion_id, mock_oauth), test_json)
+
     def test_get_product(self):
         test_json = json.loads('{"test": "test"}')
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
         product_id = 1
-        self.assertEqual(self.api.get_product(product_id, mockMkmService), test_json)
-    
+        self.assertEqual(self.api.get_product(
+            product_id, mock_oauth), test_json)
+
     def test_get_articles_in_shoppingcarts(self):
         test_json = json.loads('{"test": "test"}')
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
 
-        self.assertEqual(self.api.get_articles_in_shoppingcarts(mockMkmService), test_json)
+        self.assertEqual(self.api.get_articles_in_shoppingcarts(
+            mock_oauth), test_json)
 
     def test_get_articles(self):
         articles_response = "{{'article': {}}}".format(
             TestCommon.fake_articles_result).replace("'", '"')
         articles_response_json = json.loads(articles_response)
 
-        mockMkmService = Mock(spec=OAuth1Session)
-        mockMkmService.get = MagicMock(
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
             return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
         product_id = 1
-        
-        result = self.api.get_articles(product_id, 0, mockMkmService)
+
+        result = self.api.get_articles(product_id, 0, mock_oauth)
         self.assertEqual(result[0]['comments'], "x")
+
+    def test_set_vacation_status(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.put = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_account_data, 200, 'testing ok'))
+        vacation_status = True
+
+        result = self.api.set_vacation_status(vacation_status, mock_oauth)
+        self.assertEqual(result['message'], 'Successfully set the account on vacation.')
+        self.assertEqual(result['account']['onVacation'], str(vacation_status).lower())
 
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
