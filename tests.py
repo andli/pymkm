@@ -214,6 +214,18 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
+    
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
+    @patch('builtins.input', side_effect=['6', 'y', '0'])
+    def test_menu_option_6(self, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                            r'>> Exited clear_entire_stock')
 
 
 class TestPyMkmApiCalls(TestCommon):
