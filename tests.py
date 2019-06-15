@@ -279,6 +279,22 @@ class TestPyMkmApiCalls(TestCommon):
             return_value=self.MockResponse(test_json, 200, 'testing ok'))
         expansion_id = 1
         self.assertEqual(self.api.get_cards_in_expansion(expansion_id, mockMkmService), test_json)
+    
+    def test_get_product(self):
+        test_json = json.loads('{"test": "test"}')
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, 'testing ok'))
+        product_id = 1
+        self.assertEqual(self.api.get_product(product_id, mockMkmService), test_json)
+    
+    def test_get_articles_in_shoppingcarts(self):
+        test_json = json.loads('{"test": "test"}')
+        mockMkmService = Mock(spec=OAuth1Session)
+        mockMkmService.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, 'testing ok'))
+
+        self.assertEqual(self.api.get_articles_in_shoppingcarts(mockMkmService), test_json)
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
