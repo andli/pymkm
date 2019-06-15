@@ -99,7 +99,7 @@ Dragon Breath,Scourge,1,Foil,French"""
         'username': 'test',
         'country': 'test',
         'onVacation': 'true',
-        'idDisplayLanguage': 1},
+        'idDisplayLanguage': '1'},
         'message': 'Successfully set the account on vacation.'}
 
     def setUp(self):
