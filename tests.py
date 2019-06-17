@@ -57,7 +57,7 @@ class TestCommon(unittest.TestCase):
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
-    fake_csv_find_result = {'product': [
+    fake_find_product_result_2 = {'product': [
         {
             'categoryName': 'Magic Single',
             'enName': 'Dragon Breath',
@@ -71,6 +71,16 @@ Dragon Breath,Scourge,1,Foil,French"""
             'expansionName': 'Scourge',
             'idProduct': 9145,
             'rarity': 'Rare'
+        }
+    ]}
+
+    fake_find_product_result_1 = {'product': [
+        {
+            'categoryName': 'Magic Single',
+            'enName': 'Dragon Breath',
+            'expansionName': 'Scourge',
+            'idProduct': 1079,
+            'rarity': 'Common'
         }
     ]}
 
@@ -181,7 +191,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.get_articles', return_value=TestCommon.fake_articles_result)
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
-    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_csv_find_result)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
     @patch('builtins.input', side_effect=['3', 'words', 'n', '1', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_menu_option_3(self, mock_stdout, *args):
@@ -229,11 +239,27 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
-    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_csv_find_result)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
     @patch('builtins.input', side_effect=['7', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
     def test_menu_option_7(self, mock_open, mock_stdout, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited import_from_csv')
+    
+    @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
+    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
+    @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_1)
+    @patch('builtins.input', side_effect=['7', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
+    def test_menu_option_7_1_match(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
