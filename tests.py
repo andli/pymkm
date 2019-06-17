@@ -373,7 +373,29 @@ class TestPyMkmApiCalls(TestCommon):
         self.assertEqual(result['account']['idDisplayLanguage'], str(
             display_language).lower())
 
+    def test_add_stock(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.post = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_stock, 200, 'testing ok'))
 
+        result = self.api.add_stock(TestCommon.fake_stock, mock_oauth)
+        self.assertEqual(len(result), 3)
+
+    def test_set_stock(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.put = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_stock, 200, 'testing ok'))
+
+        result = self.api.set_stock(TestCommon.fake_stock, mock_oauth)
+        self.assertEqual(len(result), 3)
+
+    def test_delete_stock(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.delete = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_stock, 200, 'testing ok'))
+
+        result = self.api.delete_stock(TestCommon.fake_stock, mock_oauth)
+        self.assertEqual(len(result), 3)
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
     def setUp(self):

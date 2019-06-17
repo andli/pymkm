@@ -273,7 +273,7 @@ class PyMkmApi:
 
         # TODO: Only considers the last response.
         if (self.__handle_response(r)):
-            return r.json
+            return r.json()
 
     def set_stock(self, payload=None, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
@@ -289,7 +289,7 @@ class PyMkmApi:
 
         # TODO: Only considers the last response.
         if (self.__handle_response(r)):
-            return r.json
+            return r.json()
 
     def delete_stock(self, payload=None, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
@@ -305,7 +305,7 @@ class PyMkmApi:
 
         # TODO: Only considers the last response.
         if (self.__handle_response(r)):
-            return r.json
+            return r.json()
 
     def get_articles(self, product_id, start=0, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Articles
