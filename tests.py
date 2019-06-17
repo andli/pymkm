@@ -120,8 +120,11 @@ Dragon Breath,Scourge,1,Foil,French"""
             self.status_code = status_code
             self.content = content
             # TODO: write a test for these
-            self.headers = {'X-Request-Limit-Count': 1234,
-                            'X-Request-Limit-Max': 5000}
+            self.headers = {
+                'X-Request-Limit-Count': 1234,
+                'X-Request-Limit-Max': 5000,
+                'Content-Range': '/100'
+            }
 
         def json(self):
             return self.json_data
@@ -221,7 +224,7 @@ class TestPyMkmApp(TestCommon):
             app.start()
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
-                            r'>> Exited clear_entire_stock')
+                             r'>> Exited clear_entire_stock')
 
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
@@ -238,8 +241,6 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
-    
-
 
 
 class TestPyMkmApiCalls(TestCommon):
@@ -343,6 +344,13 @@ class TestPyMkmApiCalls(TestCommon):
         result = self.api.get_articles(product_id, 0, mock_oauth)
         self.assertEqual(result[0]['comments'], "x")
 
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(articles_response_json, 206, 'partial content'))
+        product_id = 1
+
+        result = self.api.get_articles(product_id, 0, mock_oauth)
+        self.assertEqual(result[0]['comments'], "x")
+
     def test_set_vacation_status(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.put = MagicMock(
@@ -350,8 +358,10 @@ class TestPyMkmApiCalls(TestCommon):
         vacation_status = True
 
         result = self.api.set_vacation_status(vacation_status, mock_oauth)
-        self.assertEqual(result['message'], 'Successfully set the account on vacation.')
-        self.assertEqual(result['account']['onVacation'], str(vacation_status).lower())
+        self.assertEqual(result['message'],
+                         'Successfully set the account on vacation.')
+        self.assertEqual(result['account']['onVacation'],
+                         str(vacation_status).lower())
 
     def test_set_display_language(self):
         mock_oauth = Mock(spec=OAuth1Session)
@@ -360,7 +370,8 @@ class TestPyMkmApiCalls(TestCommon):
         display_language = 1
 
         result = self.api.set_display_language(display_language, mock_oauth)
-        self.assertEqual(result['account']['idDisplayLanguage'], str(display_language).lower())
+        self.assertEqual(result['account']['idDisplayLanguage'], str(
+            display_language).lower())
 
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
@@ -409,7 +420,8 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         self.assertTrue(self.helper.prompt_bool('test_y'))
         self.assertFalse(self.helper.prompt_bool('test_n'))
         self.helper.prompt_bool('test_error')
-        self.assertRegex(mock_stdout.getvalue(), r'\nPlease answer with y\/n\n')
+        self.assertRegex(mock_stdout.getvalue(),
+                         r'\nPlease answer with y\/n\n')
 
     @patch('builtins.input', side_effect=['y'])
     def test_prompt_string(self, mock_input):
