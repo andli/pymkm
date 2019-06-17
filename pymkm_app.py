@@ -147,6 +147,10 @@ class PyMkmApp:
         if r:
             self.draw_price_changes_table([r])
 
+            print('\nTotal price difference: {}.'.format(
+                str(round(sum(item['price_diff'] * item['count'] for item in [r]), 2))
+            ))
+
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
                 api.set_stock([r])
@@ -425,16 +429,23 @@ class PyMkmApp:
             i for i in sorted_worst if i['price_diff'] < 0)
 
         print('\nTotal price difference: {}.'.format(
-            str(round(sum(item['price_diff'] for item in changes_json), 2))
+            str(round(sum(item['price_diff'] * item['count'] for item in sorted_best), 2))
         ))
 
     def draw_price_changes_table(self, sorted_best):
         print(tb.tabulate(
-            [[item['name'], u'\u2713' if item['foil'] else '', item['old_price'], item['price'],
-                item['price_diff']] for item in sorted_best],
-            headers=['Name', 'Foil?', 'Old price', 'New price', 'Diff'],
+            [
+                [item['count'],
+                 item['name'],
+                 u'\u2713' if item['foil'] else '',
+                    item['old_price'],
+                    item['price'],
+                 item['price_diff']] for item in sorted_best],
+            headers=['Count', 'Name', 'Foil?',
+                     'Old price', 'New price', 'Diff'],
             tablefmt="simple"
         ))
+
 
     def get_foil_price(self, api, product_id, language_id):
         # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
