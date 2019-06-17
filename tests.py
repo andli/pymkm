@@ -321,6 +321,26 @@ class TestPyMkmApiCalls(TestCommon):
         product_id = 1
         self.assertEqual(self.api.get_product(
             product_id, mock_oauth), test_json)
+    
+    def test_find_product(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(TestCommon.fake_product, 200, 'testing ok'))
+        search_string = 'test'
+        result = self.api.find_product(search_string, mock_oauth)
+        self.assertEqual(result, TestCommon.fake_product)
+    
+    def test_find_stock_article(self):
+        articles_response = "{{'article': {}}}".format(
+            TestCommon.fake_articles_result).replace("'", '"')
+        articles_response_json = json.loads(articles_response)
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
+        name = 'test'
+        game_id = 1
+        result = self.api.find_stock_article(name, game_id, mock_oauth)
+        self.assertEqual(result[0]['comments'], "x")
 
     def test_get_articles_in_shoppingcarts(self):
         test_json = json.loads('{"test": "test"}')
