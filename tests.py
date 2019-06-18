@@ -149,7 +149,7 @@ class TestPyMkmApp(TestCommon):
     def test_main_menu(self, mock_input, mock_stdout):
         app = PyMkmApp(self.config)
         app.start()
-        self.assertRegex(mock_stdout.getvalue(), r'─ MENU ─')
+        self.assertRegex(mock_stdout.getvalue(), r'─ PyMKM')
 
     @patch('pymkm_app.PyMkmApi.get_product', return_value=TestCommon.fake_product)
     @patch('pymkmapi.PyMkmApi.get_articles', return_value=TestCommon.fake_articles_result)
