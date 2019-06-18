@@ -41,7 +41,7 @@ class PyMkmApp:
                 "Clear entire stock (WARNING)",
                 "Import stock from .\list.csv"
             ]
-            self.print_menu(menu_items)
+            self.print_menu(menu_items, f"PyMKM {__version__}")
 
             choice = input("Action number: ")
 
@@ -83,13 +83,20 @@ class PyMkmApp:
             except ConnectionError as err:
                 print(err)
 
-    def print_menu(self, menu_items):
-        menu_top = "╭" + 3 * "─" + " MENU " + 50 * "─" + "╮"
+    def print_menu(self, menu_items, title):
+        padding = 6
+        menu_width = padding + max(len(item) for item in menu_items)
+        menu_top_left = 3 * "─"
+        menu_top_right = (menu_width - len(title) - 1) * "─" + "╮"
+        menu_top = f"╭{menu_top_left} {title} {menu_top_right}"
         print(menu_top)
         index = 1
         for item in menu_items:
-            print("│ {}: {}{}│".format(str(index), menu_items[index - 1], (len(menu_top) -
-                                                                           len(menu_items[index - 1]) - 6) * " "))
+            print("│ {}: {}{}│".format(
+                str(index),
+                menu_items[index - 1],
+                (menu_width - len(menu_items[index - 1])) * " "
+            ))
             index += 1
         print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
         print("╰" + (len(menu_top) - 2) * "─" + "╯")
@@ -148,7 +155,8 @@ class PyMkmApp:
             self.draw_price_changes_table([r])
 
             print('\nTotal price difference: {}.'.format(
-                str(round(sum(item['price_diff'] * item['count'] for item in [r]), 2))
+                str(round(sum(item['price_diff'] * item['count']
+                              for item in [r]), 2))
             ))
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
@@ -429,7 +437,8 @@ class PyMkmApp:
             i for i in sorted_worst if i['price_diff'] < 0)
 
         print('\nTotal price difference: {}.'.format(
-            str(round(sum(item['price_diff'] * item['count'] for item in sorted_best), 2))
+            str(round(sum(item['price_diff'] * item['count']
+                          for item in sorted_best), 2))
         ))
 
     def draw_price_changes_table(self, sorted_best):
@@ -445,7 +454,6 @@ class PyMkmApp:
                      'Old price', 'New price', 'Diff'],
             tablefmt="simple"
         ))
-
 
     def get_foil_price(self, api, product_id, language_id):
         # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
