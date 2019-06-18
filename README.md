@@ -1,7 +1,8 @@
 [![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm) [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm) [![Known Vulnerabilities](https://snyk.io/test/github/andli/pymkm/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/andli/pymkm?targetFile=requirements.txt)
 
+See the [Changelog](CHANGELOG.md) for what's new.
 
-# 📙 pymkm
+# 📙 PyMKM
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
 The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest .25 €. A confirmation step allows you to check the result before uploading the new prices.

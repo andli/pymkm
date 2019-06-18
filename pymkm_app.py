@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "0.9.5"
+__version__ = "1.0.0"
 __license__ = "MIT"
 
 import csv
