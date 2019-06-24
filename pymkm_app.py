@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __license__ = "MIT"
 
 import csv
@@ -114,10 +114,7 @@ class PyMkmApp:
                 self.update_stock_prices_to_trend(api=self.api)
 
         else:
-
             uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
-            with open(PRICE_CHANGES_FILE, 'w') as outfile:
-                json.dump(uploadable_json, outfile)
 
         if len(uploadable_json) > 0:
 
@@ -127,12 +124,12 @@ class PyMkmApp:
                 # Update articles on MKM
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
-                os.remove(PRICE_CHANGES_FILE)
             else:
+                with open(PRICE_CHANGES_FILE, 'w') as outfile:
+                    json.dump(uploadable_json, outfile)
                 print('Prices not updated. Changes saved.')
         else:
             print('No prices to update.')
-            os.remove(PRICE_CHANGES_FILE)
 
     @api_wrapper
     def update_product_to_trend(self, search_string, api):
