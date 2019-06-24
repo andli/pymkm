@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2019-06-24
+### Fixed
+- Fixed a bug where the cached price changes file was not present.
+
 ## [1.0.0] - 2019-06-18
 ### Added
 - More tests, making it easier to spot bugs and errors.
