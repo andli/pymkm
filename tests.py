@@ -159,8 +159,8 @@ class TestPyMkmApp(TestCommon):
     @patch('builtins.input', side_effect=['1', 'y', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('os.remove', return_value=True)
+    @patch('os.path.isfile', return_value=False)
     @patch('builtins.open', new_callable=mock_open, create=True)
-    @patch('builtins.open', side_effect=FileNotFoundError())
     def test_menu_option_1(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 

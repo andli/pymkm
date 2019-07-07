@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __license__ = "MIT"
 
 import csv
@@ -184,14 +184,17 @@ class PyMkmApp:
             products = [x for x in products if x['idProduct']
                         in stock_list_products]
 
-            if len(products) > 1:
-                product = self.select_from_list_of_products(
-                    [i for i in products if i['categoryName'] == 'Magic Single'])
+            if len(products) == 0:
+                print('No matching cards in stock.')
             else:
-                product = products[0]
+                if len(products) > 1:
+                    product = self.select_from_list_of_products(
+                        [i for i in products if i['categoryName'] == 'Magic Single'])
+                elif len(products) == 1:
+                    product = products[0]
 
-            self.show_competition_for_product(
-                product['idProduct'], product['enName'], is_foil, api=self.api)
+                self.show_competition_for_product(
+                    product['idProduct'], product['enName'], is_foil, api=self.api)
         else:
             print('No results found.')
 
