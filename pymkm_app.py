@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "0.9.5"
+__version__ = "1.0.2"
 __license__ = "MIT"
 
 import csv
@@ -27,8 +27,8 @@ PRICE_CHANGES_FILE = 'price_changes.json'
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
-    def __init__(self):
-        self.api = PyMkmApi()
+    def __init__(self, config=None):
+        self.api = PyMkmApi(config=config)
 
     def start(self):
         while True:
@@ -41,66 +41,62 @@ class PyMkmApp:
                 "Clear entire stock (WARNING)",
                 "Import stock from .\list.csv"
             ]
-            self.print_menu(menu_items)
+            self.print_menu(menu_items, f"PyMKM {__version__}")
 
             choice = input("Action number: ")
 
-            # TODO: Refactor out ConnectionErrors
-
-            if choice == "1":
-                try:
+            try:
+                if choice == "1":
                     self.update_stock_prices_to_trend(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "2":
-                search_string = PyMkmHelper.prompt_string('Search card name')
-                try:
+
+                elif choice == "2":
+                    search_string = PyMkmHelper.prompt_string(
+                        'Search card name')
                     self.update_product_to_trend(search_string, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "3":
-                is_foil = False
-                search_string = PyMkmHelper.prompt_string('Search card name')
-                if PyMkmHelper.prompt_bool("Foil?") == True:
-                    is_foil = True
-                try:
+
+                elif choice == "3":
+                    is_foil = False
+                    search_string = PyMkmHelper.prompt_string(
+                        'Search card name')
+                    if PyMkmHelper.prompt_bool("Foil?") == True:
+                        is_foil = True
+
                     self.list_competition_for_product(
                         search_string, is_foil, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "4":
-                try:
-                    self.show_top_expensive_articles_in_stock(20, api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "5":
-                try:
-                    self.show_account_info(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "6":
-                try:
-                    self.clear_entire_stock(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-                    print(err)
-            elif choice == "7":
-                try:
-                    self.import_from_csv(api=self.api)
-                except ConnectionError as err:
-                    print(err)
-            elif choice == "0":
-                break
-            else:
-                print("Not a valid choice, try again.")
 
-    def print_menu(self, menu_items):
-        menu_top = "╭" + 3 * "─" + " MENU " + 50 * "─" + "╮"
+                elif choice == "4":
+                    self.show_top_expensive_articles_in_stock(20, api=self.api)
+
+                elif choice == "5":
+                    self.show_account_info(api=self.api)
+
+                elif choice == "6":
+                    self.clear_entire_stock(api=self.api)
+
+                elif choice == "7":
+                    self.import_from_csv(api=self.api)
+
+                elif choice == "0":
+                    break
+                else:
+                    print("Not a valid choice, try again.")
+            except ConnectionError as err:
+                print(err)
+
+    def print_menu(self, menu_items, title):
+        padding = 6
+        menu_width = padding + max(len(item) for item in menu_items)
+        menu_top_left = 3 * "─"
+        menu_top_right = (menu_width - len(title) - 1) * "─" + "╮"
+        menu_top = f"╭{menu_top_left} {title} {menu_top_right}"
         print(menu_top)
         index = 1
         for item in menu_items:
-            print("│ {}: {}{}│".format(str(index), menu_items[index - 1], (len(menu_top) -
-                                                                           len(menu_items[index - 1]) - 6) * " "))
+            print("│ {}: {}{}│".format(
+                str(index),
+                menu_items[index - 1],
+                (menu_width - len(menu_items[index - 1])) * " "
+            ))
             index += 1
         print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
         print("╰" + (len(menu_top) - 2) * "─" + "╯")
@@ -118,25 +114,22 @@ class PyMkmApp:
                 self.update_stock_prices_to_trend(api=self.api)
 
         else:
-
             uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
-            with open(PRICE_CHANGES_FILE, 'w') as outfile:
-                json.dump(uploadable_json, outfile)
 
         if len(uploadable_json) > 0:
 
-            _display_price_changes_table(uploadable_json)
+            self.display_price_changes_table(uploadable_json)
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
-                os.remove(PRICE_CHANGES_FILE)
             else:
+                with open(PRICE_CHANGES_FILE, 'w') as outfile:
+                    json.dump(uploadable_json, outfile)
                 print('Prices not updated. Changes saved.')
         else:
             print('No prices to update.')
-            os.remove(PRICE_CHANGES_FILE)
 
     @api_wrapper
     def update_product_to_trend(self, search_string, api):
@@ -158,6 +151,11 @@ class PyMkmApp:
         if r:
             self.draw_price_changes_table([r])
 
+            print('\nTotal price difference: {}.'.format(
+                str(round(sum(item['price_diff'] * item['count']
+                              for item in [r]), 2))
+            ))
+
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
                 api.set_stock([r])
@@ -170,28 +168,35 @@ class PyMkmApp:
     @api_wrapper
     def list_competition_for_product(self, search_string, is_foil, api):
 
-        products = api.find_product(search_string, **{
+        result = api.find_product(search_string, **{
             # 'exact ': 'true',
             'idGame': 1,
             'idLanguage': 1,
             # TODO: Add Partial Content support
             # TODO: Add language support
-        })['product']
+        })
 
-        stock_list_products = [x['idProduct']
-                                for x in self.get_stock_as_array(api=self.api)]
-        products = [x for x in products if x['idProduct']
-                    in stock_list_products]
+        if (result):
+            products = result['product']
 
-        if len(products) > 1:
-            product = self.select_from_list_of_products(
-                [i for i in products if i['categoryName'] == 'Magic Single'])
+            stock_list_products = [x['idProduct']
+                                   for x in self.get_stock_as_array(api=self.api)]
+            products = [x for x in products if x['idProduct']
+                        in stock_list_products]
+
+            if len(products) == 0:
+                print('No matching cards in stock.')
+            else:
+                if len(products) > 1:
+                    product = self.select_from_list_of_products(
+                        [i for i in products if i['categoryName'] == 'Magic Single'])
+                elif len(products) == 1:
+                    product = products[0]
+
+                self.show_competition_for_product(
+                    product['idProduct'], product['enName'], is_foil, api=self.api)
         else:
-            product = products[0]
-
-        self.show_competition_for_product(
-            product['idProduct'], product['enName'], is_foil, api=self.api)
-
+            print('No results found.')
 
     @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
@@ -246,14 +251,14 @@ class PyMkmApp:
         print("Cards are added in condition NM.")
         problem_cards = []
         with open('list.csv', newline='') as csvfile:
-            csv_reader = csv.reader(csvfile)
+            csv_reader = csvfile.readlines()
             index = 0
             bar = progressbar.ProgressBar(
-                max_value=sum(1 for row in csv_reader))
+                max_value=(sum(1 for row in csv_reader)) - 1)
             csvfile.seek(0)
             for row in csv_reader:
                 if index > 0:
-                    (name, set_name, count, foil, language, *other) = row
+                    (name, set_name, count, foil, language, *other) = row.split(',')
                     if (all(v is not '' for v in [name, set_name, count])):
                         possible_products = api.find_product(name)['product']
                         product_match = [x for x in possible_products if x['expansionName']
@@ -278,8 +283,8 @@ class PyMkmApp:
                         else:
                             problem_cards.append(row)
 
-                index += 1
                 bar.update(index)
+                index += 1
             bar.finish()
         if len(problem_cards) > 0:
             try:
@@ -424,22 +429,29 @@ class PyMkmApp:
         print('\nBest diffs:\n')
         sorted_best = sorted(
             changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
-        _draw_price_changes_table(
+        self.draw_price_changes_table(
             i for i in sorted_best if i['price_diff'] > 0)
         print('\nWorst diffs:\n')
         sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
-        _draw_price_changes_table(
+        self.draw_price_changes_table(
             i for i in sorted_worst if i['price_diff'] < 0)
 
         print('\nTotal price difference: {}.'.format(
-            str(round(sum(item['price_diff'] for item in changes_json), 2))
+            str(round(sum(item['price_diff'] * item['count']
+                          for item in sorted_best), 2))
         ))
 
     def draw_price_changes_table(self, sorted_best):
         print(tb.tabulate(
-            [[item['name'], u'\u2713' if item['foil'] else '', item['old_price'], item['price'],
-                item['price_diff']] for item in sorted_best],
-            headers=['Name', 'Foil?', 'Old price', 'New price', 'Diff'],
+            [
+                [item['count'],
+                 item['name'],
+                 u'\u2713' if item['foil'] else '',
+                    item['old_price'],
+                    item['price'],
+                 item['price_diff']] for item in sorted_best],
+            headers=['Count', 'Name', 'Foil?',
+                     'Old price', 'New price', 'Diff'],
             tablefmt="simple"
         ))
 
