@@ -20,6 +20,7 @@ import tabulate as tb
 
 from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper
+from micro_menu import *
 
 PRICE_CHANGES_FILE = 'price_changes.json'
 
@@ -31,75 +32,32 @@ class PyMkmApp:
         self.api = PyMkmApi(config=config)
 
     def start(self):
-        while True:
-            menu_items = [
-                "Update stock prices",
-                "Update price for a card",
-                "List competition for a card",
-                "Show top 20 expensive items in stock",
-                "Show account info",
-                "Clear entire stock (WARNING)",
-                "Import stock from .\list.csv"
-            ]
-            self.print_menu(menu_items, f"PyMKM {__version__}")
+        menu = MicroMenu(f"PyMKM {__version__}")
 
-            choice = input("Action number: ")
+        menu.add_function_item("Update stock prices",
+            self.update_stock_prices_to_trend, {'api': self.api}
+            )
+        menu.add_function_item("Update price for a card",
+            self.update_product_to_trend, {'api': self.api}
+        )
+        menu.add_function_item("List competition for a card",
+            self.list_competition_for_product, {'api': self.api}
+        )
+        menu.add_function_item("Show top 20 expensive items in stock",
+            self.show_top_expensive_articles_in_stock, {'num_articles': 20, 'api': self.api}
+        )
+        menu.add_function_item("Show account info",
+            self.show_account_info, {'api': self.api}
+        )
+        menu.add_function_item("Clear entire stock (WARNING)",
+            self.clear_entire_stock, {'api': self.api}
+        )
+        menu.add_function_item("Import stock from .\list.csv",
+            self.import_from_csv, {'api': self.api}
+        )
 
-            try:
-                if choice == "1":
-                    self.update_stock_prices_to_trend(api=self.api)
+        menu.show()
 
-                elif choice == "2":
-                    search_string = PyMkmHelper.prompt_string(
-                        'Search card name')
-                    self.update_product_to_trend(search_string, api=self.api)
-
-                elif choice == "3":
-                    is_foil = False
-                    search_string = PyMkmHelper.prompt_string(
-                        'Search card name')
-                    if PyMkmHelper.prompt_bool("Foil?") == True:
-                        is_foil = True
-
-                    self.list_competition_for_product(
-                        search_string, is_foil, api=self.api)
-
-                elif choice == "4":
-                    self.show_top_expensive_articles_in_stock(20, api=self.api)
-
-                elif choice == "5":
-                    self.show_account_info(api=self.api)
-
-                elif choice == "6":
-                    self.clear_entire_stock(api=self.api)
-
-                elif choice == "7":
-                    self.import_from_csv(api=self.api)
-
-                elif choice == "0":
-                    break
-                else:
-                    print("Not a valid choice, try again.")
-            except ConnectionError as err:
-                print(err)
-
-    def print_menu(self, menu_items, title):
-        padding = 6
-        menu_width = padding + max(len(item) for item in menu_items)
-        menu_top_left = 3 * "─"
-        menu_top_right = (menu_width - len(title) - 1) * "─" + "╮"
-        menu_top = f"╭{menu_top_left} {title} {menu_top_right}"
-        print(menu_top)
-        index = 1
-        for item in menu_items:
-            print("│ {}: {}{}│".format(
-                str(index),
-                menu_items[index - 1],
-                (menu_width - len(menu_items[index - 1])) * " "
-            ))
-            index += 1
-        print("│ 0: Exit" + (len(menu_top) - 10) * " " + "│")
-        print("╰" + (len(menu_top) - 2) * "─" + "╯")
 
     @api_wrapper
     def update_stock_prices_to_trend(self, api):
@@ -132,8 +90,9 @@ class PyMkmApp:
             print('No prices to update.')
 
     @api_wrapper
-    def update_product_to_trend(self, search_string, api):
+    def update_product_to_trend(self, api):
         ''' This function updates one product in the user's stock to TREND. '''
+        search_string = PyMkmHelper.prompt_string('Search card name')
 
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -166,7 +125,9 @@ class PyMkmApp:
             print('No prices to update.')
 
     @api_wrapper
-    def list_competition_for_product(self, search_string, is_foil, api):
+    def list_competition_for_product(self, api):
+        search_string = PyMkmHelper.prompt_string('Search card name')
+        is_foil = PyMkmHelper.prompt_bool("Foil?")
 
         result = api.find_product(search_string, **{
             # 'exact ': 'true',
