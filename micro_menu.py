@@ -9,13 +9,12 @@ __license__ = "MIT"
 
 import sys
 
-PADDING = 6
+PADDING = 10
 
 class MicroMenu:
 
-
     def __init__(self, menu_title):
-        self.PADDING = 6
+        self.PADDING = PADDING
         self.menu_title = menu_title
         self.menu_items = []
 
