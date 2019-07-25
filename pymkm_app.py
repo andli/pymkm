@@ -22,8 +22,6 @@ from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper
 from micro_menu import *
 
-PRICE_CHANGES_FILE = 'price_changes.json'
-
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -75,17 +73,8 @@ class PyMkmApp:
     @api_wrapper
     def update_stock_prices_to_trend(self, api):
         ''' This function updates all prices in the user's stock to TREND. '''
-        uploadable_json = []
-        if os.path.isfile(PRICE_CHANGES_FILE):
-            if PyMkmHelper.prompt_bool("Found existing changes. Upload [y] or discard [n]?") == True:
-                with open(PRICE_CHANGES_FILE, 'r') as changes:
-                    uploadable_json = json.load(changes)
-            else:
-                os.remove(PRICE_CHANGES_FILE)
-                self.update_stock_prices_to_trend(api=self.api)
 
-        else:
-            uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
+        uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
 
         if len(uploadable_json) > 0:
 
@@ -96,9 +85,7 @@ class PyMkmApp:
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
             else:
-                with open(PRICE_CHANGES_FILE, 'w') as outfile:
-                    json.dump(uploadable_json, outfile)
-                print('Prices not updated. Changes saved.')
+                print('Prices not updated.')
         else:
             print('No prices to update.')
 
