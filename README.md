@@ -5,7 +5,7 @@ See the [Changelog](CHANGELOG.md) for what's new.
 # 📙 PyMKM
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
-The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
+The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
 
@@ -44,7 +44,7 @@ Cardmarket does not however supply trend prices for foils, so my algorithm is th
 _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
 
 1. Filter out foils, English, not altered, not signed, minimum Good condition.
-1. Set price to lowest + (median - lowest / 4), rounded to closest quarter Euro.
+1. Set price to lowest + (median - lowest / 4), rounded to closest rouding limit.
 1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
 1. Never go below the rounding limit for foils
 
