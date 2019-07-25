@@ -3,9 +3,11 @@
   "app_secret": "",
   "access_token": "",
   "access_token_secret": "",
-  "price_floor_common": "0.25",
-  "price_floor_uncommon": "0.25",
-  "price_floor_rare": "0.25",
-  "price_floor_mythic": "0.25",
-  "custom_pricing_algorithm": "false"
+  "price_limit_by_rarity": {
+    "default": "0.25",
+    "common": "0.25",
+    "uncommon": "0.25",
+    "rare": "0.25",
+    "mythic": "0.25"
+  }
 }

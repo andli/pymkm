@@ -46,29 +46,31 @@ class PyMkmApp:
         menu = MicroMenu(f"PyMKM {__version__}")
 
         menu.add_function_item("Update stock prices",
-            self.update_stock_prices_to_trend, {'api': self.api}
-            )
+                               self.update_stock_prices_to_trend, {
+                                   'api': self.api}
+                               )
         menu.add_function_item("Update price for a card",
-            self.update_product_to_trend, {'api': self.api}
-        )
+                               self.update_product_to_trend, {'api': self.api}
+                               )
         menu.add_function_item("List competition for a card",
-            self.list_competition_for_product, {'api': self.api}
-        )
+                               self.list_competition_for_product, {
+                                   'api': self.api}
+                               )
         menu.add_function_item("Show top 20 expensive items in stock",
-            self.show_top_expensive_articles_in_stock, {'num_articles': 20, 'api': self.api}
-        )
+                               self.show_top_expensive_articles_in_stock, {
+                                   'num_articles': 20, 'api': self.api}
+                               )
         menu.add_function_item("Show account info",
-            self.show_account_info, {'api': self.api}
-        )
+                               self.show_account_info, {'api': self.api}
+                               )
         menu.add_function_item("Clear entire stock (WARNING)",
-            self.clear_entire_stock, {'api': self.api}
-        )
+                               self.clear_entire_stock, {'api': self.api}
+                               )
         menu.add_function_item("Import stock from .\list.csv",
-            self.import_from_csv, {'api': self.api}
-        )
+                               self.import_from_csv, {'api': self.api}
+                               )
 
         menu.show()
-
 
     @api_wrapper
     def update_stock_prices_to_trend(self, api):
@@ -370,7 +372,7 @@ class PyMkmApp:
         # TODO: compare prices also for signed cards, like foils
         if not article.get('isSigned') or True:  # keep prices for signed cards fixed
             new_price = self.get_price_for_product(
-                article['idProduct'], article['isFoil'], language_id=article['language']['idLanguage'], api=self.api)
+                article['idProduct'], article['product']['rarity'], article['isFoil'], language_id=article['language']['idLanguage'], api=self.api)
             price_diff = new_price - article['price']
             if price_diff != 0:
                 return {
@@ -383,56 +385,39 @@ class PyMkmApp:
                     "count": article['count']
                 }
 
-    def get_price_for_product(self, product_id, is_foil, language_id=1, api=None):
+    def get_rounding_limit_for_rarity(self, rarity):
+        rounding_limit = self.config['price_limit_by_rarity']['default']
+        try:
+            rounding_limit = float(
+                self.config['price_limit_by_rarity'][rarity.lower()])
+        except KeyError as err:
+            print(f"ERROR: Unknown rarity for {r}. Using default rounding.")
+        return rounding_limit
+
+    def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, api=None):
         if not is_foil:
             r = api.get_product(product_id)
-            found_price = PyMkmHelper.round_up_to_quarter(
+            rounding_limit = self.get_rounding_limit_for_rarity(rarity)
+            new_price_rounded = PyMkmHelper.round_up_to_limit(
+                rounding_limit,
                 r['product']['priceGuide']['TREND'])
         else:
-            found_price = self.get_foil_price(api, product_id, language_id)
+            new_price_rounded = self.get_foil_price(
+                api, product_id, rarity, language_id)
 
-        if found_price == None:
+        if new_price_rounded == None:
             raise ValueError('No price found!')
         else:
-            return found_price
+            return new_price_rounded
 
-    def display_price_changes_table(self, changes_json):
-        # table breaks because of progress bar rendering
-        print('\nBest diffs:\n')
-        sorted_best = sorted(
-            changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
-        self.draw_price_changes_table(
-            i for i in sorted_best if i['price_diff'] > 0)
-        print('\nWorst diffs:\n')
-        sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
-        self.draw_price_changes_table(
-            i for i in sorted_worst if i['price_diff'] < 0)
-
-        print('\nTotal price difference: {}.'.format(
-            str(round(sum(item['price_diff'] * item['count']
-                          for item in sorted_best), 2))
-        ))
-
-    def draw_price_changes_table(self, sorted_best):
-        print(tb.tabulate(
-            [
-                [item['count'],
-                 item['name'],
-                 u'\u2713' if item['foil'] else '',
-                    item['old_price'],
-                    item['price'],
-                 item['price_diff']] for item in sorted_best],
-            headers=['Count', 'Name', 'Foil?',
-                     'Old price', 'New price', 'Diff'],
-            tablefmt="simple"
-        ))
-
-    def get_foil_price(self, api, product_id, language_id):
+    def get_foil_price(self, api, product_id, rarity, language_id):
         # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
         # 1) See filter parameters below.
         # 2) Set price to lowest + (median - lowest / 4), rounded to closest § Euro.
         # 3) Undercut price in own country if not contradicting 2)
         # 4) Never go below 0.25 for foils
+
+        rounding_limit = self.get_rounding_limit_for_rarity(rarity)
 
         account = api.get_account()['account']
         articles = api.get_articles(product_id, **{
@@ -475,17 +460,48 @@ class PyMkmApp:
 
         median_price = PyMkmHelper.calculate_median(table_data, 3, 4)
         lowest_price = PyMkmHelper.calculate_lowest(table_data, 4)
-        median_guided = PyMkmHelper.round_up_to_limit(0.25, 
-            lowest_price + (median_price - lowest_price) / 4)
+        median_guided = PyMkmHelper.round_up_to_limit(rounding_limit,
+                                                      lowest_price + (median_price - lowest_price) / 4)
 
         if len(local_table_data) > 0:
             # Undercut if there is local competition
-            lowest_in_country = PyMkmHelper.round_down_to_limit(0.25, 
-                PyMkmHelper.calculate_lowest(local_table_data, 4))
-            return max(0.25, min(median_guided, lowest_in_country - 0.25))
+            lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
+                                                                PyMkmHelper.calculate_lowest(local_table_data, 4))
+            return max(rounding_limit, min(median_guided, lowest_in_country - rounding_limit))
         else:
             # No competition in our country, set price a bit higher.
-            return PyMkmHelper.round_up_to_limit(0.25, median_guided * 1.2)
+            return PyMkmHelper.round_up_to_limit(rounding_limit, median_guided * 1.2)
+
+    def display_price_changes_table(self, changes_json):
+        # table breaks because of progress bar rendering
+        print('\nBest diffs:\n')
+        sorted_best = sorted(
+            changes_json, key=lambda x: x['price_diff'], reverse=True)[:10]
+        self.draw_price_changes_table(
+            i for i in sorted_best if i['price_diff'] > 0)
+        print('\nWorst diffs:\n')
+        sorted_worst = sorted(changes_json, key=lambda x: x['price_diff'])[:10]
+        self.draw_price_changes_table(
+            i for i in sorted_worst if i['price_diff'] < 0)
+
+        print('\nTotal price difference: {}.'.format(
+            str(round(sum(item['price_diff'] * item['count']
+                          for item in sorted_best), 2))
+        ))
+
+    def draw_price_changes_table(self, sorted_best):
+        print(tb.tabulate(
+            [
+                [item['count'],
+                 item['name'],
+                 u'\u2713' if item['foil'] else '',
+                    item['old_price'],
+                    item['price'],
+                 item['price_diff']] for item in sorted_best],
+            headers=['Count', 'Name', 'Foil?',
+                     'Old price', 'New price', 'Diff'],
+            tablefmt="simple"
+        ))
 
     def get_stock_as_array(self, api):
         d = api.get_stock()

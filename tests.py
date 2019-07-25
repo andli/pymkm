@@ -119,7 +119,14 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "app_token": "aaaaa",
                 "app_secret": "bbbbb",
                 "access_token": "ccccccccccc",
-                "access_token_secret": "dddddddddd"
+                "access_token_secret": "dddddddddd",
+                "price_limit_by_rarity": {
+                    "default": "0.25",
+                    "common": "0.25",
+                    "uncommon": "0.25",
+                    "rare": "0.1337",
+                    "mythic": "0.25"
+                }
             }
             """
         )
