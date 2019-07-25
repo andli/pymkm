@@ -4,7 +4,7 @@ Helper functions for the PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __license__ = "MIT"
 
 import math
