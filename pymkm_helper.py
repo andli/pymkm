@@ -39,12 +39,14 @@ class PyMkmHelper:
         return min(flat_array)
 
     @staticmethod
-    def round_up_to_quarter(price):
-        return math.ceil(price * 4) / 4
+    def round_up_to_limit(limit, price):
+        inverse_limit = 1 / limit
+        return math.ceil(price * inverse_limit) / inverse_limit
 
     @staticmethod
-    def round_down_to_quarter(price):
-        return math.floor(price * 4) / 4
+    def round_down_to_limit(limit, price):
+        inverse_limit = 1 / limit
+        return math.floor(price * inverse_limit) / inverse_limit
 
     @staticmethod
     def prompt_bool(prompt_string):

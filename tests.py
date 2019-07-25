@@ -472,15 +472,25 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         ]
         self.assertEqual(self.helper.calculate_lowest(table, 4), 1.21)
 
-    def test_round_up_to_quarter(self):
-        self.assertEqual(self.helper.round_up_to_quarter(0.99), 1)
-        self.assertEqual(self.helper.round_up_to_quarter(0), 0)
-        self.assertEqual(self.helper.round_up_to_quarter(0.1), 0.25)
+    def test_round_up_to_limit(self):
+        self.assertEqual(self.helper.round_up_to_limit(0.25, 0.99), 1)
+        self.assertEqual(self.helper.round_up_to_limit(0.25, 0), 0)
+        self.assertEqual(self.helper.round_up_to_limit(0.25, 0.1), 0.25)
 
-    def test_round_down_to_quarter(self):
-        self.assertEqual(self.helper.round_down_to_quarter(0.99), 0.75)
-        self.assertEqual(self.helper.round_down_to_quarter(1.01), 1)
-        self.assertEqual(self.helper.round_down_to_quarter(0.1), 0)
+        self.assertEqual(self.helper.round_up_to_limit(0.1, 0.99), 1)
+        self.assertEqual(self.helper.round_up_to_limit(0.01, 0.011), 0.02)
+        self.assertEqual(self.helper.round_up_to_limit(0.01, 1), 1)
+        self.assertEqual(self.helper.round_up_to_limit(1, 0.1), 1)
+
+    def test_round_down_to_limit(self):
+        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.99), 0.75)
+        self.assertEqual(self.helper.round_down_to_limit(0.25, 1.01), 1)
+        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.1), 0)
+
+        self.assertEqual(self.helper.round_down_to_limit(0.1, 0.99), 0.9)
+        self.assertEqual(self.helper.round_down_to_limit(0.01, 0.011), 0.01)
+        self.assertEqual(self.helper.round_down_to_limit(0.01, 1), 1)
+        self.assertEqual(self.helper.round_down_to_limit(1, 0.1), 0)
 
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['y', 'n', 'p', 'n'])

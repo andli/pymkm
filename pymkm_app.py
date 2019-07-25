@@ -29,7 +29,18 @@ class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
     def __init__(self, config=None):
-        self.api = PyMkmApi(config=config)
+        if (config == None):
+            logging.debug(">> Loading config file")
+            try:
+                self.config = json.load(open('config.json'))
+            except FileNotFoundError:
+                logging.error(
+                    "You must copy config_template.json to config.json and populate the fields.")
+                sys.exit(0)
+        else:
+            self.config = config
+
+        self.api = PyMkmApi(config=self.config)
 
     def start(self):
         menu = MicroMenu(f"PyMKM {__version__}")
@@ -375,8 +386,8 @@ class PyMkmApp:
     def get_price_for_product(self, product_id, is_foil, language_id=1, api=None):
         if not is_foil:
             r = api.get_product(product_id)
-            found_price = math.ceil(
-                r['product']['priceGuide']['TREND'] * 4) / 4
+            found_price = PyMkmHelper.round_up_to_quarter(
+                r['product']['priceGuide']['TREND'])
         else:
             found_price = self.get_foil_price(api, product_id, language_id)
 
@@ -419,7 +430,7 @@ class PyMkmApp:
     def get_foil_price(self, api, product_id, language_id):
         # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
         # 1) See filter parameters below.
-        # 2) Set price to lowest + (median - lowest / 4), rounded to closest quarter Euro.
+        # 2) Set price to lowest + (median - lowest / 4), rounded to closest § Euro.
         # 3) Undercut price in own country if not contradicting 2)
         # 4) Never go below 0.25 for foils
 
@@ -464,17 +475,17 @@ class PyMkmApp:
 
         median_price = PyMkmHelper.calculate_median(table_data, 3, 4)
         lowest_price = PyMkmHelper.calculate_lowest(table_data, 4)
-        median_guided = PyMkmHelper.round_up_to_quarter(
+        median_guided = PyMkmHelper.round_up_to_limit(0.25, 
             lowest_price + (median_price - lowest_price) / 4)
 
         if len(local_table_data) > 0:
             # Undercut if there is local competition
-            lowest_in_country = PyMkmHelper.round_down_to_quarter(
+            lowest_in_country = PyMkmHelper.round_down_to_limit(0.25, 
                 PyMkmHelper.calculate_lowest(local_table_data, 4))
             return max(0.25, min(median_guided, lowest_in_country - 0.25))
         else:
             # No competition in our country, set price a bit higher.
-            return PyMkmHelper.round_up_to_quarter(median_guided * 1.2)
+            return PyMkmHelper.round_up_to_limit(0.25, median_guided * 1.2)
 
     def get_stock_as_array(self, api):
         d = api.get_stock()
