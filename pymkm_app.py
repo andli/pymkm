@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 __license__ = "MIT"
 
 import csv
@@ -359,7 +359,11 @@ class PyMkmApp:
         # TODO: compare prices also for signed cards, like foils
         if not article.get('isSigned') or True:  # keep prices for signed cards fixed
             new_price = self.get_price_for_product(
-                article['idProduct'], article['product']['rarity'], article['isFoil'], language_id=article['language']['idLanguage'], api=self.api)
+                article['idProduct'], 
+                article['product']['rarity'], 
+                article['isFoil'], 
+                language_id=article['language']['idLanguage'],
+                api=self.api)
             price_diff = new_price - article['price']
             if price_diff != 0:
                 return {
@@ -378,7 +382,7 @@ class PyMkmApp:
             rounding_limit = float(
                 self.config['price_limit_by_rarity'][rarity.lower()])
         except KeyError as err:
-            print(f"ERROR: Unknown rarity for {r}. Using default rounding.")
+            print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
     def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, api=None):
