@@ -9,7 +9,9 @@ The included sample app can update your stock prices to trend for non-foils, and
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
 
-**NOTE:** Use this functionality at your own risk, I take no responsibility for the resulting prices. See 'price calculation' below.
+**NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
+
+**NOTE 2:** From version 1.1.0 this app collects a tiny amount (`{'command': 'import from csv', 'version': '1.1.0'}`) of usage data. If you want to opt out from this, please change `ALLOW_REPORTING = True` to `False` in `pymkm_app.py`. The purpose is to allow me to see what people use the most and to focus on improving that.
 
 The app also keeps track of how many API requests your have left each day.
 

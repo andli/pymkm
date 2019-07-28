@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.0.5"
+__version__ = "1.1.0"
 __license__ = "MIT"
 
 import csv
@@ -17,11 +17,13 @@ import sys
 
 import progressbar
 import tabulate as tb
+import requests
 
 from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper
 from micro_menu import *
 
+ALLOW_REPORTING = True
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -39,6 +41,13 @@ class PyMkmApp:
             self.config = config
 
         self.api = PyMkmApi(config=self.config)
+    
+    def report(self, command):
+        if ALLOW_REPORTING:
+            try:
+                r = requests.post('https://andli-stats-server.herokuapp.com/pymkm', json={"command": command, "version": __version__})
+            except Exception as err:
+                pass
 
     def start(self):
         menu = MicroMenu(f"PyMKM {__version__}")
@@ -73,6 +82,7 @@ class PyMkmApp:
     @api_wrapper
     def update_stock_prices_to_trend(self, api):
         ''' This function updates all prices in the user's stock to TREND. '''
+        self.report("update stock price to trend")
 
         uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
 
@@ -92,6 +102,8 @@ class PyMkmApp:
     @api_wrapper
     def update_product_to_trend(self, api):
         ''' This function updates one product in the user's stock to TREND. '''
+        self.report("update product price to trend")
+
         search_string = PyMkmHelper.prompt_string('Search card name')
 
         try:
@@ -126,6 +138,8 @@ class PyMkmApp:
 
     @api_wrapper
     def list_competition_for_product(self, api):
+        self.report("list competition for product")
+
         search_string = PyMkmHelper.prompt_string('Search card name')
         is_foil = PyMkmHelper.prompt_bool("Foil?")
 
@@ -161,6 +175,8 @@ class PyMkmApp:
 
     @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
+        self.report("show top expensive in stock")
+
         stock_list = self.get_stock_as_array(api=self.api)
         table_data = []
         total_price = 0
@@ -188,11 +204,15 @@ class PyMkmApp:
 
     @api_wrapper
     def show_account_info(self, api):
+        self.report("show account info")
+
         pp = pprint.PrettyPrinter()
         pp.pprint(api.get_account())
 
     @api_wrapper
     def clear_entire_stock(self, api):
+        self.report("clear entire stock")
+
         stock_list = self.get_stock_as_array(api=self.api)
         if PyMkmHelper.prompt_bool("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
 
@@ -208,6 +228,8 @@ class PyMkmApp:
 
     @api_wrapper
     def import_from_csv(self, api):
+        self.report("import from csv")
+
         print("Note the required format: Card, Set name, Quantity, Foil, Language (with header row).")
         print("Cards are added in condition NM.")
         problem_cards = []

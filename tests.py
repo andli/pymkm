@@ -131,6 +131,12 @@ Dragon Breath,Scourge,1,Foil,French"""
             """
         )
 
+        self.patcher = patch('pymkm_app.PyMkmApp.report')
+        self.mock_report = self.patcher.start()
+    
+    def tearDown(self):
+        self.patcher.stop()
+
     class MockResponse:
         def __init__(self, json_data, status_code, content):
             self.json_data = json_data
