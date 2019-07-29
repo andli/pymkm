@@ -23,7 +23,7 @@ from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
-ALLOW_REPORTING = False  # HACK: reset
+ALLOW_REPORTING = True
 
 
 class PyMkmApp:
@@ -129,7 +129,8 @@ class PyMkmApp:
             article = articles[0]
             print('Found: {} [{}].'.format(article['product']
                                            ['enName'], article['product']['expansion']))
-        r = self.get_article_with_updated_price(article, undercut_local_market, api=self.api)
+        r = self.get_article_with_updated_price(
+            article, undercut_local_market, api=self.api)
 
         if r:
             self.draw_price_changes_table([r])
@@ -198,7 +199,8 @@ class PyMkmApp:
         else:
 
             if (result):
-                filtered_articles = [x for x in result if x['condition'] in ('EX, NM, M')]
+                filtered_articles = [x for x in result if x.get(
+                    'condition') in PyMkmApi.conditions[:3]]  # EX+
                 sorted_articles = sorted(
                     result, key=lambda x: x['price'], reverse=True)
                 print(
@@ -214,7 +216,7 @@ class PyMkmApp:
                         p = api.get_product(article['idProduct'])
                         name = p['product']['enName']
                         expansion = p['product']['expansion']['enName']
-                        condition = article['condition']
+                        condition = article.get('condition')
                         language = article['language']['languageName']
                         foil = article['isFoil']
                         price = float(article['price'])
@@ -240,11 +242,11 @@ class PyMkmApp:
 
                     if table_data:
                         print('Found some interesting prices:')
-                        print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=False),
-                                        headers=['Name', 'Expansion', 'Condition', 'Language','Foil?',
-                                                'Price', 'Market price', 'Market diff'],
-                                        tablefmt="simple")
-                            )
+                        print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=True),
+                                          headers=['Name', 'Expansion', 'Condition', 'Language', 'Foil?',
+                                                   'Price', 'Market price', 'Market diff'],
+                                          tablefmt="simple")
+                              )
                     else:
                         print('Found no deals. :(')
                 else:

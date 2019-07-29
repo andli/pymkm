@@ -335,7 +335,9 @@ class PyMkmApi:
             if (start + INCREMENT >= max_items and self.__handle_response(r)):
                 return r.json()['article']
             else:
-                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
+                next_start = start + INCREMENT
+                params.update({'start': next_start, 'maxResults': INCREMENT})
+                return r.json()['article'] + self.get_articles(product_id, **kwargs)
         elif (r.status_code == requests.codes.no_content):
             raise NoResultsError('No products found in stock.')
         elif (r.status_code == requests.codes.ok):
@@ -377,7 +379,7 @@ class PyMkmApi:
             return r.json()['article']
         else:
             raise ConnectionError(r)
-    
+
     def find_user_articles(self, user_id, game_id=1, start=0, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:User_Articles
         INCREMENT = 1000
@@ -402,7 +404,9 @@ class PyMkmApi:
             if (start + INCREMENT >= max_items and self.__handle_response(r)):
                 return r.json()['article']
             else:
-                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
+                next_start = start + INCREMENT
+                params.update({'start': next_start, 'maxResults': INCREMENT})
+                return r.json()['article'] + self.find_user_articles(user_id, game_id, **kwargs)
         elif (r.status_code == requests.codes.no_content):
             raise NoResultsError('No products found in stock.')
         elif (r.status_code == requests.codes.ok):
@@ -411,5 +415,3 @@ class PyMkmApi:
             raise NoResultsError(r.text)
         else:
             raise ConnectionError(r)
-
-

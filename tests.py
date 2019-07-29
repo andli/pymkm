@@ -133,7 +133,7 @@ Dragon Breath,Scourge,1,Foil,French"""
 
         self.patcher = patch('pymkm_app.PyMkmApp.report')
         self.mock_report = self.patcher.start()
-    
+
     def tearDown(self):
         self.patcher.stop()
 
@@ -262,7 +262,7 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[1]
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
-    
+
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_1)
@@ -357,7 +357,7 @@ class TestPyMkmApiCalls(TestCommon):
         product_id = 1
         self.assertEqual(self.api.get_product(
             product_id, mock_oauth), test_json)
-    
+
     def test_find_product(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
@@ -365,7 +365,7 @@ class TestPyMkmApiCalls(TestCommon):
         search_string = 'test'
         result = self.api.find_product(search_string, mock_oauth)
         self.assertEqual(result, TestCommon.fake_product)
-    
+
     def test_find_stock_article(self):
         articles_response = "{{'article': {}}}".format(
             TestCommon.fake_articles_result).replace("'", '"')
@@ -472,6 +472,8 @@ class TestPyMkmApiCalls(TestCommon):
 
         result = self.api.delete_stock(TestCommon.fake_stock, mock_oauth)
         self.assertEqual(len(result), 3)
+
+
 class TestPyMkmHelperFunctions(unittest.TestCase):
 
     def setUp(self):
