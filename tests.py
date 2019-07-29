@@ -169,7 +169,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
-    @patch('builtins.input', side_effect=['1', 'y', '0'])
+    @patch('builtins.input', side_effect=['1', 'n', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('os.remove', return_value=True)
     @patch('os.path.isfile', return_value=False)
@@ -184,11 +184,10 @@ class TestPyMkmApp(TestCommon):
                              r'>> Exited update_stock_prices_to_trend')
 
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
-    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_stock_article', return_value=TestCommon.fake_stock)
-    @patch('builtins.input', side_effect=['2', 'words', '1', 'y', '0'])
+    @patch('builtins.input', side_effect=['2', 'words', 'n', '1', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('os.remove', return_value=True)
     @patch('builtins.open', new_callable=mock_open)
@@ -217,9 +216,9 @@ class TestPyMkmApp(TestCommon):
                              r'>> Exited list_competition_for_product')
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
-    @patch('builtins.input', side_effect=['4', '0'])
+    @patch('builtins.input', side_effect=['5', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
-    def test_menu_option_4(self, mock_stdout, *args):
+    def test_menu_option_5(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
         app.start()
@@ -227,9 +226,9 @@ class TestPyMkmApp(TestCommon):
                          r'Top 20 most expensive articles in stock:')
 
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
-    @patch('builtins.input', side_effect=['5', '0'])
+    @patch('builtins.input', side_effect=['6', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
-    def test_menu_option_5(self, mock_stdout, *args):
+    def test_menu_option_6(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
         app.start()
@@ -239,8 +238,8 @@ class TestPyMkmApp(TestCommon):
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
-    @patch('builtins.input', side_effect=['6', 'y', '0'])
-    def test_menu_option_6(self, *args):
+    @patch('builtins.input', side_effect=['7', 'y', '0'])
+    def test_menu_option_7(self, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -250,13 +249,12 @@ class TestPyMkmApp(TestCommon):
                              r'>> Exited clear_entire_stock')
 
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
-    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
-    @patch('builtins.input', side_effect=['7', '0'])
+    @patch('builtins.input', side_effect=['8', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
-    def test_menu_option_7(self, mock_open, mock_stdout, *args):
+    def test_menu_option_8(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -266,13 +264,12 @@ class TestPyMkmApp(TestCommon):
                              r'>> Exited import_from_csv')
     
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
-    @patch('pymkm_app.PyMkmApp.get_foil_price', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_1)
-    @patch('builtins.input', side_effect=['7', '0'])
+    @patch('builtins.input', side_effect=['8', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
-    def test_menu_option_7_1_match(self, mock_open, mock_stdout, *args):
+    def test_menu_option_8_1_match(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -408,6 +405,26 @@ class TestPyMkmApiCalls(TestCommon):
         product_id = 1
 
         result = self.api.get_articles(product_id, 0, mock_oauth)
+        self.assertEqual(result[0]['comments'], "x")
+
+    def test_find_user_articles(self):
+        articles_response = "{{'article': {}}}".format(
+            TestCommon.fake_articles_result).replace("'", '"')
+        articles_response_json = json.loads(articles_response)
+
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(articles_response_json, 200, 'testing ok'))
+        user_id = 1
+        game_id = 1
+
+        result = self.api.find_user_articles(user_id, game_id, 0, mock_oauth)
+        self.assertEqual(result[0]['comments'], "x")
+
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(articles_response_json, 206, 'partial content'))
+
+        result = self.api.find_user_articles(user_id, game_id, 0, mock_oauth)
         self.assertEqual(result[0]['comments'], "x")
 
     def test_set_vacation_status(self):

@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __license__ = "MIT"
 
 import csv
@@ -20,10 +20,11 @@ import tabulate as tb
 import requests
 
 from pymkm_helper import PyMkmHelper
-from pymkmapi import PyMkmApi, api_wrapper
+from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
-ALLOW_REPORTING = True
+ALLOW_REPORTING = False  # HACK: reset
+
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -41,11 +42,12 @@ class PyMkmApp:
             self.config = config
 
         self.api = PyMkmApi(config=self.config)
-    
+
     def report(self, command):
         if ALLOW_REPORTING:
             try:
-                r = requests.post('https://andli-stats-server.herokuapp.com/pymkm', json={"command": command, "version": __version__})
+                r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
+                                  json={"command": command, "version": __version__})
             except Exception as err:
                 pass
 
@@ -61,6 +63,10 @@ class PyMkmApp:
                                )
         menu.add_function_item("List competition for a card",
                                self.list_competition_for_product, {
+                                   'api': self.api}
+                               )
+        menu.add_function_item("Find deals from a user",
+                               self.find_deals_from_user, {
                                    'api': self.api}
                                )
         menu.add_function_item("Show top 20 expensive items in stock",
@@ -84,7 +90,11 @@ class PyMkmApp:
         ''' This function updates all prices in the user's stock to TREND. '''
         self.report("update stock price to trend")
 
-        uploadable_json = self.calculate_new_prices_for_stock(api=self.api)
+        undercut_local_market = PyMkmHelper.prompt_bool(
+            'Try to undercut local market? (slower, more requests)')
+
+        uploadable_json = self.calculate_new_prices_for_stock(
+            undercut_local_market, api=self.api)
 
         if len(uploadable_json) > 0:
 
@@ -105,6 +115,8 @@ class PyMkmApp:
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string('Search card name')
+        undercut_local_market = PyMkmHelper.prompt_bool(
+            'Try to undercut local market? (slower, more requests)')
 
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -117,7 +129,7 @@ class PyMkmApp:
             article = articles[0]
             print('Found: {} [{}].'.format(article['product']
                                            ['enName'], article['product']['expansion']))
-        r = self.get_price_for_single_article(article, api=self.api)
+        r = self.get_article_with_updated_price(article, undercut_local_market, api=self.api)
 
         if r:
             self.draw_price_changes_table([r])
@@ -172,6 +184,73 @@ class PyMkmApp:
                     product['idProduct'], product['enName'], is_foil, api=self.api)
         else:
             print('No results found.')
+
+    @api_wrapper
+    def find_deals_from_user(self, api):
+        #self.report("list competition for product")
+
+        search_string = PyMkmHelper.prompt_string('Enter username')
+
+        try:
+            result = api.find_user_articles(search_string)
+        except NoResultsError as err:
+            print(err.mkm_msg())
+        else:
+
+            if (result):
+                filtered_articles = [x for x in result if x['condition'] in ('EX, NM, M')]
+                sorted_articles = sorted(
+                    result, key=lambda x: x['price'], reverse=True)
+                print(
+                    f"User '{search_string}' has {len(sorted_articles)} articles in stock.")
+                num_searches = int(PyMkmHelper.prompt_string(
+                    f'Searching top X expensive cards (EX+) for deals, choose X (1-{len(sorted_articles)})'))
+                if num_searches > 1 and num_searches <= len(sorted_articles):
+                    table_data = []
+
+                    index = 0
+                    bar = progressbar.ProgressBar(max_value=num_searches)
+                    for article in sorted_articles[:num_searches]:
+                        p = api.get_product(article['idProduct'])
+                        name = p['product']['enName']
+                        expansion = p['product']['expansion']['enName']
+                        condition = article['condition']
+                        language = article['language']['languageName']
+                        foil = article['isFoil']
+                        price = float(article['price'])
+                        if foil:
+                            market_price = p['product']['priceGuide']['TRENDFOIL']
+                        else:
+                            market_price = p['product']['priceGuide']['TREND']
+                        price_diff = price - market_price
+                        if price_diff < 0:
+                            table_data.append([
+                                name,
+                                expansion,
+                                condition,
+                                language,
+                                u'\u2713' if foil else '',
+                                price,
+                                market_price,
+                                price_diff
+                            ])
+                        index += 1
+                        bar.update(index)
+                    bar.finish()
+
+                    if table_data:
+                        print('Found some interesting prices:')
+                        print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=False),
+                                        headers=['Name', 'Expansion', 'Condition', 'Language','Foil?',
+                                                'Price', 'Market price', 'Market diff'],
+                                        tablefmt="simple")
+                            )
+                    else:
+                        print('Found no deals. :(')
+                else:
+                    print("Invalid number.")
+            else:
+                print('No results found.')
 
     @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
@@ -303,6 +382,17 @@ class PyMkmApp:
 
     def show_competition_for_product(self, product_id, product_name, is_foil, api):
         print("Found product: {}".format(product_name))
+        table_data_local, table_data = self.get_competition(
+            api, product_id, is_foil)
+        if table_data_local:
+            self.print_product_top_list(
+                "Local competition:", table_data_local, 4, 20)
+        if table_data:
+            self.print_product_top_list("Top 20 cheapest:", table_data, 4, 20)
+        else:
+            print('No prices found.')
+
+    def get_competition(self, api, product_id, is_foil):
         account = api.get_account()['account']
         country_code = account['country']
         articles = api.get_articles(product_id, **{
@@ -329,13 +419,7 @@ class PyMkmApp:
             if article['seller']['address']['country'] == country_code:
                 table_data_local.append(item)
             table_data.append(item)
-        if table_data_local:
-            self.print_product_top_list(
-                "Local competition:", table_data_local, 4, 20)
-        if table_data:
-            self.print_product_top_list("Top 20 cheapest:", table_data, 4, 20)
-        else:
-            print('No prices found.')
+        return table_data_local, table_data
 
     def print_product_top_list(self, title_string, table_data, sort_column, rows):
         print(70*'-')
@@ -352,7 +436,7 @@ class PyMkmApp:
         )
         )
 
-    def calculate_new_prices_for_stock(self, api):
+    def calculate_new_prices_for_stock(self, undercut_local_market, api):
         stock_list = self.get_stock_as_array(api=self.api)
         # HACK: filter out a foil product
         # stock_list = [x for x in stock_list if x['isFoil']]
@@ -363,8 +447,8 @@ class PyMkmApp:
 
         bar = progressbar.ProgressBar(max_value=len(stock_list))
         for article in stock_list:
-            updated_article = self.get_price_for_single_article(
-                article, api=self.api)
+            updated_article = self.get_article_with_updated_price(
+                article, undercut_local_market, api=self.api)
             if updated_article:
                 result_json.append(updated_article)
                 total_price += updated_article.get('price')
@@ -374,17 +458,18 @@ class PyMkmApp:
             bar.update(index)
         bar.finish()
 
-        print('Total stock value: {}'.format(str(total_price)))
+        print('Total stock value: {}'.format(str(round(total_price, 2))))
         return result_json
 
-    def get_price_for_single_article(self, article, api):
+    def get_article_with_updated_price(self, article, undercut_local_market=False, api=None):
         # TODO: compare prices also for signed cards, like foils
-        if not article.get('isSigned') or True:  # keep prices for signed cards fixed
+        if not article.get('isSigned'):  # keep prices for signed cards fixed
             new_price = self.get_price_for_product(
-                article['idProduct'], 
-                article['product']['rarity'], 
-                article['isFoil'], 
+                article['idProduct'],
+                article['product']['rarity'],
+                article['isFoil'],
                 language_id=article['language']['idLanguage'],
+                undercut_local_market=undercut_local_market,
                 api=self.api)
             price_diff = new_price - article['price']
             if price_diff != 0:
@@ -407,83 +492,38 @@ class PyMkmApp:
             print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
-    def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, api=None):
-        if not is_foil:
-            r = api.get_product(product_id)
-            rounding_limit = self.get_rounding_limit_for_rarity(rarity)
-            new_price_rounded = PyMkmHelper.round_up_to_limit(
-                rounding_limit,
-                r['product']['priceGuide']['TREND'])
-        else:
-            new_price_rounded = self.get_foil_price(
-                api, product_id, rarity, language_id)
-
-        if new_price_rounded == None:
-            raise ValueError('No price found!')
-        else:
-            return new_price_rounded
-
-    def get_foil_price(self, api, product_id, rarity, language_id):
-        # NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively.
-        # 1) See filter parameters below.
-        # 2) Set price to lowest + (median - lowest / 4), rounded to closest § Euro.
-        # 3) Undercut price in own country if not contradicting 2)
-        # 4) Never go below 0.25 for foils
-
+    def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, undercut_local_market=False, api=None):
+        r = api.get_product(product_id)
         rounding_limit = self.get_rounding_limit_for_rarity(rarity)
 
-        account = api.get_account()['account']
-        articles = api.get_articles(product_id, **{
-            'isFoil': 'true',
-            'isAltered': 'false',
-            'isSigned': 'false',
-            'minCondition': 'GD',
-            'idLanguage': language_id
-        })
-
-        keys = ['idArticle', 'count', 'price', 'condition', 'seller']
-        foil_articles = [{x: y for x, y in art.items() if x in keys}
-                         for art in articles]
-        local_articles = []
-        for article in foil_articles:
-            if article['seller']['address']['country'] == account['country'] and article['seller']['username'] != account['username']:
-                local_articles.append(article)
-
-        local_table_data = []
-        for article in local_articles:
-            if article:
-                local_table_data.append([
-                    article['seller']['username'],
-                    article['seller']['address']['country'],
-                    article['condition'],
-                    article['count'],
-                    article['price']
-                ])
-
-        table_data = []
-        for article in foil_articles:
-            if article:
-                table_data.append([
-                    article['seller']['username'],
-                    article['seller']['address']['country'],
-                    article['condition'],
-                    article['count'],
-                    article['price']
-                ])
-
-        median_price = PyMkmHelper.calculate_median(table_data, 3, 4)
-        lowest_price = PyMkmHelper.calculate_lowest(table_data, 4)
-        median_guided = PyMkmHelper.round_up_to_limit(rounding_limit,
-                                                      lowest_price + (median_price - lowest_price) / 4)
-
-        if len(local_table_data) > 0:
-            # Undercut if there is local competition
-            lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
-                                                                PyMkmHelper.calculate_lowest(local_table_data, 4))
-            return max(rounding_limit, min(median_guided, lowest_in_country - rounding_limit))
+        if not is_foil:
+            trend_price = r['product']['priceGuide']['TREND']
         else:
-            # No competition in our country, set price a bit higher.
-            return PyMkmHelper.round_up_to_limit(rounding_limit, median_guided * 1.2)
+            trend_price = r['product']['priceGuide']['TRENDFOIL']
+
+        # Set competitive price for region
+        if undercut_local_market:
+            table_data_local, table_data = self.get_competition(
+                api, product_id, is_foil)
+
+            if len(table_data_local) > 0:
+                # Undercut if there is local competition
+                lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
+                                                                    PyMkmHelper.calculate_lowest(table_data_local, 4))
+                new_price = max(rounding_limit, min(
+                    trend_price, lowest_in_country - rounding_limit))
+            else:
+                # No competition in our country, set price a bit higher.
+                new_price = PyMkmHelper.round_up_to_limit(
+                    rounding_limit, trend_price * 1.2)
+        else:
+            new_price = PyMkmHelper.round_up_to_limit(
+                rounding_limit, trend_price)
+
+        if new_price == None:
+            raise ValueError('No price found!')
+        else:
+            return new_price
 
     def display_price_changes_table(self, changes_json):
         # table breaks because of progress bar rendering

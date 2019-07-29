@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __license__ = "MIT"
 
 import sys
@@ -40,6 +40,10 @@ class NoResultsError(Exception):
         super().__init__(message)
 
         self.errors = errors
+
+    def mkm_msg(self):
+        msg = json.loads(self.args[0])
+        return msg['mkm_error_description']
 
 
 class PyMkmApi:
@@ -373,3 +377,39 @@ class PyMkmApi:
             return r.json()['article']
         else:
             raise ConnectionError(r)
+    
+    def find_user_articles(self, user_id, game_id=1, start=0, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:User_Articles
+        INCREMENT = 1000
+        url = f'{self.base_url}/users/{user_id}/articles'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting articles from user: " + str(user_id))
+        params = kwargs
+
+        if (start > 0):
+            params.update({'start': start, 'maxResults': INCREMENT})
+
+        r = mkm_oauth.get(url, params=params)
+
+        max_items = 0
+        if (r.status_code == requests.codes.partial_content):
+            max_items = self.__get_max_items_from_header(r)
+            logging.debug('> Content-Range header: ' +
+                          r.headers['Content-Range'])
+            logging.debug('> # articles in response: ' +
+                          str(len(r.json()['article'])))
+            if (start + INCREMENT >= max_items and self.__handle_response(r)):
+                return r.json()['article']
+            else:
+                return r.json()['article'] + self.get_articles(product_id, start=start+INCREMENT, **kwargs)
+        elif (r.status_code == requests.codes.no_content):
+            raise NoResultsError('No products found in stock.')
+        elif (r.status_code == requests.codes.ok):
+            return r.json()['article']
+        elif (r.status_code == requests.codes.bad_request):
+            raise NoResultsError(r.text)
+        else:
+            raise ConnectionError(r)
+
+

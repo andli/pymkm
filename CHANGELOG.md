@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Finding good deals from a specific user.
+- Using new price guide from updated API data to set foil prices.
+- Possibilty to not undercut local market.
+
+## [1.1.0]
+### Added
 - Lightweight usage reporting
 
 ## [1.0.4]

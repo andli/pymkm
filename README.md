@@ -8,12 +8,11 @@ Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/docume
 The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
+The app also keeps track of how many API requests your have left each day.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
 **NOTE 2:** From version 1.1.0 this app collects a tiny amount (`{'command': 'import from csv', 'version': '1.1.0'}`) of usage data. If you want to opt out from this, please change `ALLOW_REPORTING = True` to `False` in `pymkm_app.py`. The purpose is to allow me to see what people use the most and to focus on improving that.
-
-The app also keeps track of how many API requests your have left each day.
 
 ![Screengrab](https://raw.githubusercontent.com/andli/pymkm/master/screengrab.png)
 
@@ -67,3 +66,4 @@ These calls are implemented so far. They are not fully tested with different edg
 * `get_articles`
 * `find_product`
 * `find_stock_article`
+* `find_user_articles`
