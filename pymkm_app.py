@@ -188,7 +188,7 @@ class PyMkmApp:
 
     @api_wrapper
     def find_deals_from_user(self, api):
-        #self.report("list competition for product")
+        self.report("find deals from user")
 
         search_string = PyMkmHelper.prompt_string('Enter username')
 

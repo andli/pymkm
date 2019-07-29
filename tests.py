@@ -215,6 +215,21 @@ class TestPyMkmApp(TestCommon):
             self.assertRegex(log_record.message,
                              r'>> Exited list_competition_for_product')
 
+    @patch('pymkmapi.PyMkmApi.find_user_articles', return_value=TestCommon.fake_articles_result)
+    @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
+    @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
+    @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
+    @patch('builtins.input', side_effect=['4', 'words', '5', '0'])
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_menu_option_4(self, mock_stdout, *args):
+
+        app = PyMkmApp(self.config)
+        with self.assertLogs(level='DEBUG') as cm:
+            app.start()
+            log_record = cm.records[1]
+            self.assertRegex(log_record.message,
+                             r'>> Exited find_deals_from_user')
+
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['5', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
