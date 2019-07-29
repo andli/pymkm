@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Using new price guide from updated API data to set foil prices.
 - Possibilty to not undercut local market.
 
+## Removed
+- Old algorithm for pricing foils, since the API now provides trend prices for foils.
+
 ## [1.1.0]
 ### Added
 - Lightweight usage reporting
