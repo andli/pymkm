@@ -486,7 +486,7 @@ class PyMkmApp:
                 }
 
     def get_rounding_limit_for_rarity(self, rarity):
-        rounding_limit = self.config['price_limit_by_rarity']['default']
+        rounding_limit = float(self.config['price_limit_by_rarity']['default'])
         try:
             rounding_limit = float(
                 self.config['price_limit_by_rarity'][rarity.lower()])
