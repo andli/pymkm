@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 __license__ = "MIT"
 
 import csv
@@ -199,14 +199,16 @@ class PyMkmApp:
         else:
 
             if (result):
-                filtered_articles = [x for x in result if x.get(
-                    'condition') in PyMkmApi.conditions[:3]]  # EX+
+                filtered_articles = result #[x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
+                # price > 1
+                filtered_articles = [x for x in result if x.get('price') > 1]
+
                 sorted_articles = sorted(
-                    result, key=lambda x: x['price'], reverse=True)
+                    filtered_articles, key=lambda x: x['price'], reverse=True)
                 print(
-                    f"User '{search_string}' has {len(sorted_articles)} articles in stock.")
+                    f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria.")
                 num_searches = int(PyMkmHelper.prompt_string(
-                    f'Searching top X expensive cards (EX+) for deals, choose X (1-{len(sorted_articles)})'))
+                    f'Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})'))
                 if num_searches > 1 and num_searches <= len(sorted_articles):
                     table_data = []
 
@@ -217,14 +219,15 @@ class PyMkmApp:
                         name = p['product']['enName']
                         expansion = p['product']['expansion']['enName']
                         condition = article.get('condition')
-                        language = article['language']['languageName']
-                        foil = article['isFoil']
+                        language = article.get('language').get('languageName')
+                        foil = article.get('isFoil')
                         price = float(article['price'])
                         if foil:
                             market_price = p['product']['priceGuide']['TRENDFOIL']
                         else:
                             market_price = p['product']['priceGuide']['TREND']
                         price_diff = price - market_price
+                        percent_deal = round(-100*(price_diff / market_price))
                         if price_diff < 0:
                             table_data.append([
                                 name,
@@ -234,7 +237,8 @@ class PyMkmApp:
                                 u'\u2713' if foil else '',
                                 price,
                                 market_price,
-                                price_diff
+                                price_diff,
+                                percent_deal
                             ])
                         index += 1
                         bar.update(index)
@@ -242,9 +246,9 @@ class PyMkmApp:
 
                     if table_data:
                         print('Found some interesting prices:')
-                        print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=True),
+                        print(tb.tabulate(sorted(table_data, key=lambda x: x[8], reverse=True),
                                           headers=['Name', 'Expansion', 'Condition', 'Language', 'Foil?',
-                                                   'Price', 'Market price', 'Market diff'],
+                                                   'Price', 'Market price', 'Market diff', 'Deal %'],
                                           tablefmt="simple")
                               )
                     else:

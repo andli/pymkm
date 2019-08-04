@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3]
+### Changed
+- Improved table view for finding deals.
+
+### Fixed
+- Minor bugs related to filtering deals.
+
+## [1.2.2]
+### Fixed
+- Merged Fix for unknown rarity type conversion (#8)
+
 ## [1.2.0]
 ### Added
 - Finding good deals from a specific user!
