@@ -317,17 +317,18 @@ class TestPyMkmApiCalls(TestCommon):
 
     def test_get_account(self):
         mock_oauth = Mock(spec=OAuth1Session)
-        mock_oauth.get = MagicMock(
-            return_value=self.MockResponse("", 401, 'Unauthorized'))
-
-        with self.assertLogs(level='ERROR') as cm:
-            self.api.get_account(mock_oauth)
-            self.assertGreater(len(cm.records), 0)
-
+        
         mock_oauth.get = MagicMock(
             return_value=self.MockResponse("test", 200, 'testing ok'))
         self.assertEqual(self.api.get_account(mock_oauth), "test")
         mock_oauth.get.assert_called()
+            
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse("", 401, 'Unauthorized'))
+        with self.assertLogs(level='ERROR') as cm:
+            self.api.get_account(mock_oauth)
+            self.assertGreater(len(cm.records), 0)
+
 
     def test_get_stock(self):
         articles_response = "{{'article': {}}}".format(

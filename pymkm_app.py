@@ -477,17 +477,18 @@ class PyMkmApp:
                 language_id=article['language']['idLanguage'],
                 undercut_local_market=undercut_local_market,
                 api=self.api)
-            price_diff = new_price - article['price']
-            if price_diff != 0:
-                return {
-                    "name": article['product']['enName'],
-                    "foil": article['isFoil'],
-                    "old_price": article['price'],
-                    "price": new_price,
-                    "price_diff": price_diff,
-                    "idArticle": article['idArticle'],
-                    "count": article['count']
-                }
+            if new_price:
+                price_diff = new_price - article['price']
+                if price_diff != 0:
+                    return {
+                        "name": article['product']['enName'],
+                        "foil": article['isFoil'],
+                        "old_price": article['price'],
+                        "price": new_price,
+                        "price_diff": price_diff,
+                        "idArticle": article['idArticle'],
+                        "count": article['count']
+                    }
 
     def get_rounding_limit_for_rarity(self, rarity):
         rounding_limit = float(self.config['price_limit_by_rarity']['default'])
@@ -499,37 +500,49 @@ class PyMkmApp:
         return rounding_limit
 
     def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, undercut_local_market=False, api=None):
-        r = api.get_product(product_id)
-        rounding_limit = self.get_rounding_limit_for_rarity(rarity)
-
-        if not is_foil:
-            trend_price = r['product']['priceGuide']['TREND']
+        try:
+            response = api.get_product(product_id)
+        except Exception as err:
+            print('No response from API.')
+            sys.exit(0)
         else:
-            trend_price = r['product']['priceGuide']['TRENDFOIL']
+            rounding_limit = self.get_rounding_limit_for_rarity(rarity)
 
-        # Set competitive price for region
-        if undercut_local_market:
-            table_data_local, table_data = self.get_competition(
-                api, product_id, is_foil)
-
-            if len(table_data_local) > 0:
-                # Undercut if there is local competition
-                lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
-                                                                    PyMkmHelper.calculate_lowest(table_data_local, 4))
-                new_price = max(rounding_limit, min(
-                    trend_price, lowest_in_country - rounding_limit))
+            if response:
+                if not is_foil:
+                    trend_price = response['product']['priceGuide']['TREND']
+                else:
+                    trend_price = response['product']['priceGuide']['TRENDFOIL']
+    
+                # Set competitive price for region
+                if undercut_local_market:
+                    table_data_local, table_data = self.get_competition(
+                        api, product_id, is_foil)
+    
+                    if len(table_data_local) > 0:
+                        # Undercut if there is local competition
+                        lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
+                                                                            PyMkmHelper.calculate_lowest(table_data_local, 4))
+                        new_price = max(rounding_limit, min(
+                            trend_price, lowest_in_country - rounding_limit))
+                    else:
+                        # No competition in our country, set price a bit higher.
+                        new_price = PyMkmHelper.round_up_to_limit(
+                            rounding_limit, trend_price * 1.2)
+                else:
+                    new_price = PyMkmHelper.round_up_to_limit(
+                        rounding_limit, trend_price)
+    
+                if new_price == None:
+                    raise ValueError('No price found!')
+                else:
+                    return new_price
             else:
-                # No competition in our country, set price a bit higher.
-                new_price = PyMkmHelper.round_up_to_limit(
-                    rounding_limit, trend_price * 1.2)
-        else:
-            new_price = PyMkmHelper.round_up_to_limit(
-                rounding_limit, trend_price)
+                print('No results.')
+        
 
-        if new_price == None:
-            raise ValueError('No price found!')
-        else:
-            return new_price
+        
+
 
     def display_price_changes_table(self, changes_json):
         # table breaks because of progress bar rendering
@@ -563,10 +576,14 @@ class PyMkmApp:
         ))
 
     def get_stock_as_array(self, api):
-        d = api.get_stock()
-
-        keys = ['idArticle', 'idProduct', 'product', 'count',
-                'price', 'isFoil', 'isSigned', 'language']  # TODO: [language][languageId]
-        stock_list = [{x: y for x, y in article.items() if x in keys}
-                      for article in d]
-        return stock_list
+        try:
+            d = api.get_stock()
+        except Exception as err:
+            print('No response from API.')
+            sys.exit(0)
+        else:
+            keys = ['idArticle', 'idProduct', 'product', 'count',
+                    'price', 'isFoil', 'isSigned', 'language']  # TODO: [language][languageId]
+            stock_list = [{x: y for x, y in article.items() if x in keys}
+                        for article in d]
+            return stock_list

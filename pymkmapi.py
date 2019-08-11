@@ -152,9 +152,9 @@ class PyMkmApi:
             return r
         #except requests.exceptions.ConnectionError as err:
         except Exception as err:
-            print(f'>> Cardmarket connection error: {err}')
+            print(f'\n>> Cardmarket connection error: {err}')
             logging.error(err)
-            sys.exit(0)
+            #sys.exit(0)
 
     def get_expansions(self, game_id, provided_oauth=None):
         url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
