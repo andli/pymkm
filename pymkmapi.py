@@ -149,10 +149,12 @@ class PyMkmApi:
         try:
             r = mkm_oauth.get(url, allow_redirects=False)
             self.__handle_response(r)
-        except requests.exceptions.ConnectionError as err:
+            return r
+        #except requests.exceptions.ConnectionError as err:
+        except Exception as err:
+            print(f'>> Cardmarket connection error: {err}')
             logging.error(err)
-
-        return r
+            sys.exit(0)
 
     def get_expansions(self, game_id, provided_oauth=None):
         url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
