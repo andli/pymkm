@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1]
+### Fixed
+- Fixed a bug with the new version message
+
 ## [1.3.0]
 ### Changed
 - Better error handling for connection errors to Cardmarket.

@@ -14,6 +14,7 @@ import math
 import os.path
 import pprint
 import sys
+from pkg_resources import parse_version
 
 import progressbar
 import tabulate as tb
@@ -59,7 +60,7 @@ class PyMkmApp:
                 'https://api.github.com/repos/andli/pymkm/releases/latest').json()['tag_name']
         except Exception as err:
             pass
-        if (__version__ != latest_version):
+        if (parse_version(__version__) < parse_version(latest_version)):
             message = f"Go to Github and download version {latest_version}! It's better!"
         menu = MicroMenu(f"PyMKM {__version__}", message)
 

@@ -39,7 +39,9 @@ class MicroMenu:
 
     def print_menu(self, title, message, menu_items):
         lengths = [len(item[0]) for item in menu_items]
-        menu_width = max(self.PADDING + max(lengths), self.MIN_WIDTH, len(message))
+        menu_width = max(self.PADDING + max(lengths), self.MIN_WIDTH)
+        if message:
+            menu_width = max(menu_width, len(message))
         menu_top_right = (menu_width - len(title) - 1) * "─" + "╮"
         menu_top = f"╭─── {title} {menu_top_right}"
         print(menu_top)
