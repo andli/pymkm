@@ -52,7 +52,14 @@ class PyMkmApp:
                 pass
 
     def start(self):
-        menu = MicroMenu(f"PyMKM {__version__}")
+        message = None
+        try:
+            latest_version = requests.get('https://api.github.com/repos/andli/pymkm/releases/latest').json()['tag_name']
+        except Exception as err:
+            pass
+        if (__version__ != latest_version):
+            message = f"Go to Github and download version {latest_version}! It's better!"
+        menu = MicroMenu(f"PyMKM {__version__}", message)
 
         menu.add_function_item("Update stock prices",
                                self.update_stock_prices_to_trend, {
