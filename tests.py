@@ -157,12 +157,13 @@ class TestPyMkmApp(TestCommon):
 
     ok_response = TestCommon.MockResponse("test", 200, 'testing ok')
 
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.input', side_effect=['0'])
-    def test_main_menu(self, mock_input, mock_stdout):
+    def test_main_menu(self, mock_input, mock_stdout, *args):
         app = PyMkmApp(self.config)
         app.start()
-        self.assertRegex(mock_stdout.getvalue(), r'─ PyMKM')
+        self.assertRegex(mock_stdout.getvalue(), r'╭─── PyMKM')
 
     @patch('pymkm_app.PyMkmApi.get_product', return_value=TestCommon.fake_product)
     @patch('pymkmapi.PyMkmApi.get_articles', return_value=TestCommon.fake_articles_result)
@@ -171,9 +172,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
     @patch('builtins.input', side_effect=['1', 'n', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
-    @patch('os.remove', return_value=True)
-    @patch('os.path.isfile', return_value=False)
-    @patch('builtins.open', new_callable=mock_open, create=True)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_1(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
@@ -189,8 +188,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.find_stock_article', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['2', 'words', 'n', '1', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
-    @patch('os.remove', return_value=True)
-    @patch('builtins.open', new_callable=mock_open)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_2(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
@@ -206,6 +204,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
     @patch('builtins.input', side_effect=['3', 'words', 'n', '1', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_3(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
@@ -221,6 +220,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
     @patch('builtins.input', side_effect=['4', 'words', '5', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_4(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
@@ -232,16 +232,19 @@ class TestPyMkmApp(TestCommon):
 
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('builtins.input', side_effect=['5', '0'])
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_menu_option_5(self, mock_stdout, *args):
 
         app = PyMkmApp(self.config)
         app.start()
+        text = mock_stdout.getvalue()
         self.assertRegex(mock_stdout.getvalue(),
                          r'Top 20 most expensive articles in stock:')
 
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('builtins.input', side_effect=['6', '0'])
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_menu_option_6(self, mock_stdout, *args):
 
@@ -254,6 +257,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
     @patch('builtins.input', side_effect=['7', 'y', '0'])
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_7(self, *args):
         app = PyMkmApp(self.config)
 
@@ -269,6 +273,7 @@ class TestPyMkmApp(TestCommon):
     @patch('builtins.input', side_effect=['8', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_8(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
@@ -284,6 +289,7 @@ class TestPyMkmApp(TestCommon):
     @patch('builtins.input', side_effect=['8', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
+    @patch('requests.get', return_value={"tag_name": "1.0.0"})
     def test_menu_option_8_1_match(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
