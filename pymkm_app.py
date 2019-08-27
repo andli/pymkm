@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.2.4"
+__version__ = "1.3.0"
 __license__ = "MIT"
 
 import csv
@@ -54,7 +54,8 @@ class PyMkmApp:
     def start(self):
         message = None
         try:
-            latest_version = requests.get('https://api.github.com/repos/andli/pymkm/releases/latest').json()['tag_name']
+            latest_version = requests.get(
+                'https://api.github.com/repos/andli/pymkm/releases/latest').json()['tag_name']
         except Exception as err:
             pass
         if (__version__ != latest_version):
@@ -206,7 +207,8 @@ class PyMkmApp:
         else:
 
             if (result):
-                filtered_articles = result #[x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
+                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
+                filtered_articles = result
                 # price > 1
                 filtered_articles = [x for x in result if x.get('price') > 1]
 
@@ -338,12 +340,13 @@ class PyMkmApp:
                     (name, set_name, count, foil, language, *other) = row_array
                     if (all(v is not '' for v in [name, set_name, count])):
                         try:
-                            possible_products = api.find_product(name)['product']
+                            possible_products = api.find_product(name)[
+                                'product']
                         except Exception as err:
                             problem_cards.append(row_array)
                         else:
                             product_match = [x for x in possible_products if x['expansionName']
-                                            == set_name and x['categoryName'] == "Magic Single"]
+                                             == set_name and x['categoryName'] == "Magic Single"]
                             if len(product_match) == 0:
                                 problem_cards.append(row_array)
                             elif len(product_match) == 1:
@@ -528,12 +531,12 @@ class PyMkmApp:
                     trend_price = response['product']['priceGuide']['TREND']
                 else:
                     trend_price = response['product']['priceGuide']['TRENDFOIL']
-    
+
                 # Set competitive price for region
                 if undercut_local_market:
                     table_data_local, table_data = self.get_competition(
                         api, product_id, is_foil)
-    
+
                     if len(table_data_local) > 0:
                         # Undercut if there is local competition
                         lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
@@ -547,17 +550,13 @@ class PyMkmApp:
                 else:
                     new_price = PyMkmHelper.round_up_to_limit(
                         rounding_limit, trend_price)
-    
+
                 if new_price == None:
                     raise ValueError('No price found!')
                 else:
                     return new_price
             else:
                 print('No results.')
-        
-
-        
-
 
     def display_price_changes_table(self, changes_json):
         # table breaks because of progress bar rendering
@@ -600,5 +599,5 @@ class PyMkmApp:
             keys = ['idArticle', 'idProduct', 'product', 'count',
                     'price', 'isFoil', 'isSigned', 'language']  # TODO: [language][languageId]
             stock_list = [{x: y for x, y in article.items() if x in keys}
-                        for article in d]
+                          for article in d]
             return stock_list
