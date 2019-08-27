@@ -44,7 +44,7 @@ class PyMkmApp:
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
-        if ALLOW_REPORTING:
+        if ALLOW_REPORTING and not self.config['dev_mode']:
             try:
                 r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
                                   json={"command": command, "version": __version__})
@@ -325,31 +325,39 @@ class PyMkmApp:
                 max_value=(sum(1 for row in csv_reader)) - 1)
             csvfile.seek(0)
             for row in csv_reader:
+                row = row.rstrip()
+                row_array = row.split(',')
                 if index > 0:
-                    (name, set_name, count, foil, language, *other) = row.split(',')
+                    (name, set_name, count, foil, language, *other) = row_array
                     if (all(v is not '' for v in [name, set_name, count])):
-                        possible_products = api.find_product(name)['product']
-                        product_match = [x for x in possible_products if x['expansionName']
-                                         == set_name and x['categoryName'] == "Magic Single"]
-                        if len(product_match) == 0:
-                            problem_cards.append(row)
-                        elif len(product_match) == 1:
-                            foil = (True if foil == 'Foil' else False)
-                            language_id = (
-                                1 if language == '' else api.languages.index(language) + 1)
-                            price = self.get_price_for_product(
-                                product_match[0]['idProduct'], foil, language_id=language_id, api=self.api)
-                            card = {
-                                'idProduct': product_match[0]['idProduct'],
-                                'idLanguage': language_id,
-                                'count': count,
-                                'price': str(price),
-                                'condition': 'NM',
-                                'isFoil': ('true' if foil else 'false')
-                            }
-                            api.add_stock([card])
+                        try:
+                            possible_products = api.find_product(name)['product']
+                        except Exception as err:
+                            problem_cards.append(row_array)
                         else:
-                            problem_cards.append(row)
+                            product_match = [x for x in possible_products if x['expansionName']
+                                            == set_name and x['categoryName'] == "Magic Single"]
+                            if len(product_match) == 0:
+                                problem_cards.append(row_array)
+                            elif len(product_match) == 1:
+                                foil = (True if foil == 'Foil' else False)
+                                language_id = (
+                                    1 if language == '' else api.languages.index(language) + 1)
+                                price = self.get_price_for_product(
+                                    product_match[0]['idProduct'], product_match[0]['rarity'], foil, language_id=language_id, api=self.api)
+                                card = {
+                                    'idProduct': product_match[0]['idProduct'],
+                                    'idLanguage': language_id,
+                                    'count': count,
+                                    'price': str(price),
+                                    'condition': 'NM',
+                                    'isFoil': ('true' if foil else 'false')
+                                }
+                                api.add_stock([card])
+                            else:
+                                problem_cards.append(row_array)
+                    else:
+                        problem_cards.append(row_array)
 
                 bar.update(index)
                 index += 1
