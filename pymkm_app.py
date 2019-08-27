@@ -58,7 +58,7 @@ class PyMkmApp:
         try:
             r = requests.get(
                 'https://api.github.com/repos/andli/pymkm/releases/latest')
-            latest_version = r['tag_name']
+            latest_version = r.json()['tag_name']
         except Exception as err:
             pass
         if (parse_version(__version__) < parse_version(latest_version)):
