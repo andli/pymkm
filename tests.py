@@ -179,7 +179,7 @@ class TestPyMkmApp(TestCommon):
 
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited update_stock_prices_to_trend')
 
@@ -196,7 +196,7 @@ class TestPyMkmApp(TestCommon):
 
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited update_product_to_trend')
 
@@ -211,7 +211,7 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited list_competition_for_product')
 
@@ -226,7 +226,7 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited find_deals_from_user')
 
@@ -259,7 +259,7 @@ class TestPyMkmApp(TestCommon):
 
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited clear_entire_stock')
 
@@ -274,7 +274,7 @@ class TestPyMkmApp(TestCommon):
 
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
 
@@ -289,7 +289,7 @@ class TestPyMkmApp(TestCommon):
 
         with self.assertLogs(level='DEBUG') as cm:
             app.start()
-            log_record = cm.records[1]
+            log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message,
                              r'>> Exited import_from_csv')
 

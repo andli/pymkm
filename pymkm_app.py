@@ -53,6 +53,7 @@ class PyMkmApp:
 
     def start(self):
         message = None
+        latest_version = None
         try:
             latest_version = requests.get(
                 'https://api.github.com/repos/andli/pymkm/releases/latest').json()['tag_name']
