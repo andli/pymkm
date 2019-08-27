@@ -24,6 +24,8 @@ Drop your list of cards into a file called `list.csv` in the root directory (the
 Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French
 ```
+Remove all quotation marks and extra commas in card names.
+
 Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
 
 ## 📊 Competition view
