@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 __license__ = "MIT"
 
 import csv
@@ -227,23 +227,28 @@ class PyMkmApp:
                     index = 0
                     bar = progressbar.ProgressBar(max_value=num_searches)
                     for article in sorted_articles[:num_searches]:
-                        p = api.get_product(article['idProduct'])
-                        name = p['product']['enName']
-                        expansion = p['product']['expansion']['enName']
                         condition = article.get('condition')
                         language = article.get('language').get('languageName')
                         foil = article.get('isFoil')
                         price = float(article['price'])
+
+                        p = api.get_product(article['idProduct'])
+                        name = p['product']['enName']
+                        expansion = p['product'].get('expansion')
+                        if expansion:
+                            expansion_name = expansion.get('enName')
+                        else:
+                            expansion_name = 'N/A'
                         if foil:
                             market_price = p['product']['priceGuide']['TRENDFOIL']
                         else:
                             market_price = p['product']['priceGuide']['TREND']
                         price_diff = price - market_price
                         percent_deal = round(-100*(price_diff / market_price))
-                        if price_diff < 0:
+                        if price_diff < -1 or percent_deal >= 10:
                             table_data.append([
                                 name,
-                                expansion,
+                                expansion_name,
                                 condition,
                                 language,
                                 u'\u2713' if foil else '',
@@ -252,6 +257,7 @@ class PyMkmApp:
                                 price_diff,
                                 percent_deal
                             ])
+
                         index += 1
                         bar.update(index)
                     bar.finish()
