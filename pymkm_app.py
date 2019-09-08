@@ -69,7 +69,7 @@ class PyMkmApp:
             pass
         if (parse_version(__version__) < parse_version(latest_version)):
             message = f"Go to Github and download version {latest_version}! It's better!"
-        if (self.DEV_MODE):
+        if hasattr(self, 'DEV_MODE') and self.DEV_MODE:
             message = "dev mode"
         menu = MicroMenu(f"PyMKM {__version__}", message)
 
