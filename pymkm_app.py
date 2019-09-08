@@ -25,7 +25,7 @@ from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
 ALLOW_REPORTING = True
-DEV_MODE = False
+
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -39,17 +39,19 @@ class PyMkmApp:
                 logging.error(
                     "You must copy config_template.json to config.json and populate the fields.")
                 sys.exit(0)
+            
+            try:
+                self.DEV_MODE = self.config['dev_mode']
+            except Exception as err:
+                self.DEV_MODE = False
+                pass
         else:
             self.config = config
-            try:
-                DEV_MODE = self.config['dev_mode']
-            except Exception as err:
-                pass
 
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
-        if ALLOW_REPORTING and not DEV_MODE:
+        if ALLOW_REPORTING and not self.DEV_MODE:
             try:
                 r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
                                   json={"command": command, "version": __version__})
@@ -67,6 +69,8 @@ class PyMkmApp:
             pass
         if (parse_version(__version__) < parse_version(latest_version)):
             message = f"Go to Github and download version {latest_version}! It's better!"
+        if (self.DEV_MODE):
+            message = "dev mode"
         menu = MicroMenu(f"PyMKM {__version__}", message)
 
         menu.add_function_item("Update stock prices",
