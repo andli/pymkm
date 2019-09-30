@@ -255,11 +255,23 @@ class TestPyMkmApp(TestCommon):
         self.assertRegex(mock_stdout.getvalue(),
                          r"{'account':")
 
+    @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
+    @patch('builtins.input', side_effect=['7', '0'])
+    @patch('requests.get', return_value=fake_github_releases)
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_menu_option_7(self, mock_stdout, *args):
+
+        app = PyMkmApp(self.config)
+        app.start()
+        print(mock_stdout.getvalue())
+        self.assertRegex(mock_stdout.getvalue(),
+                         r"{'account':")
+
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.delete_stock', return_value=ok_response)
-    @patch('builtins.input', side_effect=['7', 'y', '0'])
+    @patch('builtins.input', side_effect=['8', 'y', '0'])
     @patch('requests.get', return_value=fake_github_releases)
-    def test_menu_option_7(self, *args):
+    def test_menu_option_8(self, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -271,11 +283,11 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_2)
-    @patch('builtins.input', side_effect=['8', '0'])
+    @patch('builtins.input', side_effect=['9', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
     @patch('requests.get', return_value=fake_github_releases)
-    def test_menu_option_8(self, mock_open, mock_stdout, *args):
+    def test_menu_option_9(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
@@ -287,11 +299,11 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkm_app.PyMkmApp.get_price_for_product', return_value=1)
     @patch('pymkmapi.PyMkmApi.add_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_product', return_value=TestCommon.fake_find_product_result_1)
-    @patch('builtins.input', side_effect=['8', '0'])
+    @patch('builtins.input', side_effect=['9', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('builtins.open', new_callable=mock_open, create=True, read_data=TestCommon.fake_list_csv)
     @patch('requests.get', return_value=fake_github_releases)
-    def test_menu_option_8_1_match(self, mock_open, mock_stdout, *args):
+    def test_menu_option_9_1_match(self, mock_open, mock_stdout, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level='DEBUG') as cm:
