@@ -25,7 +25,6 @@ from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
 ALLOW_REPORTING = True
-DEV_MODE = False
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -41,15 +40,17 @@ class PyMkmApp:
                 sys.exit(0)
         else:
             self.config = config
-            try:
-                DEV_MODE = self.config['dev_mode']
-            except Exception as err:
-                pass
+
+        self.DEV_MODE = False
+        try:
+            self.DEV_MODE = self.config['dev_mode']
+        except Exception as err:
+            pass
 
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
-        if ALLOW_REPORTING and not DEV_MODE:
+        if ALLOW_REPORTING and not self.DEV_MODE:
             try:
                 r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
                                   json={"command": command, "version": __version__})
