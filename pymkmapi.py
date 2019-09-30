@@ -417,3 +417,16 @@ class PyMkmApi:
             raise NoResultsError(r.text)
         else:
             raise ConnectionError(r)
+
+    def get_wantslists(self, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist
+
+        url = f'{self.base_url}/wantslist'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting all wants lists")
+
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()

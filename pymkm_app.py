@@ -89,6 +89,9 @@ class PyMkmApp:
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
                                )
+        menu.add_function_item("WIP wants",
+                               self.clear_purchased_from_wantslists, {'api': self.api}
+                               )
         menu.add_function_item("Show account info",
                                self.show_account_info, {'api': self.api}
                                )
@@ -309,6 +312,18 @@ class PyMkmApp:
                   )
             print('\nTotal stock value: {}'.format(str(total_price)))
         return None
+    
+    @api_wrapper
+    def clear_purchased_from_wantslists(self, api):
+        self.report("clear purchased from wantslists")
+
+        try:
+            result = api.get_wantslists()
+            chosen_wantslist = self.select_from_list_of_wantslists(result)
+        except Exception as err:
+            pass
+
+        print('hej')
 
     @api_wrapper
     def show_account_info(self, api):
@@ -398,6 +413,15 @@ class PyMkmApp:
                 print(err.value)
 
 # End of menu item functions ============================================
+
+    def select_from_list_of_wantslists(self, wantslists):
+        index = 1
+        filtered_wantslists = [i for i in wantslists['wantslist'] if i['game']['idGame'] == 1]
+        for wl in filtered_wantslists:
+            print(f"{index}: {wl['name']} [{wl['itemCount']}]")
+            index += 1
+        choice = int(input("Choose wantslist: "))
+        return wantslists[choice - 1]
 
     def select_from_list_of_products(self, products):
         index = 1
