@@ -316,12 +316,17 @@ class PyMkmApp:
     @api_wrapper
     def clear_purchased_from_wantslists(self, api):
         self.report("clear purchased from wantslists")
+        print("Hold on, fetching wantslists and orders...")
 
         try:
             result = api.get_wantslists()
-            chosen_wantslist = self.select_from_list_of_wantslists(result)
+            wantslists = [i for i in result['wantslist'] if i['game']['idGame'] == 1]
+            #chosen_wantslist = self.select_from_list_of_wantslists(result)
+            sent_orders = api.get_orders('buyer', 'sent')
+            received_orders = api.get_orders('buyer', 'received', start=1)
         except Exception as err:
-            pass
+            print(err)
+        
 
         print('hej')
 
@@ -441,7 +446,7 @@ class PyMkmApp:
             index += 1
         choice = int(input("Choose card: "))
         return articles[choice - 1]
-
+    
     def show_competition_for_product(self, product_id, product_name, is_foil, api):
         print("Found product: {}".format(product_name))
         table_data_local, table_data = self.get_competition(

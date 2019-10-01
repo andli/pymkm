@@ -258,7 +258,7 @@ class PyMkmApi:
                 return []
 
             if (r.status_code == requests.codes.partial_content):
-                print('> ' + r.headers['Content-Range'])
+                #print('> ' + r.headers['Content-Range'])
                 # print('# articles in response: ' + str(len(r.json()['article'])))
                 return r.json()['article'] + self.get_stock(start+100)
 
@@ -427,6 +427,38 @@ class PyMkmApi:
         logging.debug(">> Getting all wants lists")
 
         r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+    
+    def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
+
+        url = f'{self.base_url}/orders/{actor}/{state}'
+        if start:
+            url += f'/{start}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting orders")
+
+        r = mkm_oauth.get(url)
+
+        if (r.status_code == requests.codes.temporary_redirect):
+            return self.get_orders(actor, state, start=1)
+
+        if (start is not None):
+            max_items = self.__get_max_items_from_header(r)
+
+            if (start > max_items or r.status_code == requests.codes.no_content):
+                # terminate recursion
+                """ NOTE: funny thing is, even though the API talks about it,
+                it never responds with 204 (no_content). Therefore we check for
+                exceeding content-range instead."""
+                return []
+
+            if (r.status_code == requests.codes.partial_content):
+                #print('> ' + r.headers['Content-Range'])
+                return r.json()['order'] + self.get_orders(actor, state, start+100)
 
         if (self.__handle_response(r)):
             return r.json()
