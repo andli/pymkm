@@ -316,19 +316,27 @@ class PyMkmApp:
     @api_wrapper
     def clear_purchased_from_wantslists(self, api):
         self.report("clear purchased from wantslists")
-        print("Hold on, fetching wantslists and orders...")
+        print("Hold on, slowly fetching wantslists and orders...")
 
+        wantslists_items = []
         try:
             result = api.get_wantslists()
-            wantslists = [i for i in result['wantslist'] if i['game']['idGame'] == 1]
-            #chosen_wantslist = self.select_from_list_of_wantslists(result)
-            sent_orders = api.get_orders('buyer', 'sent')
+            wantslists = [i['idWantslist'] for i in result['wantslist'] if i['game']['idGame'] == 1]
+            wantslists_lists = [api.get_wantslist_items(i)['wantslist']['item'] for i in wantslists]
+            wantslists_products = []
+            [wantslists_products.extend(i) for i in wantslists_lists]
+
+            #TODO: Search all wantslists for products/metaproducts
+            sent_orders = api.get_orders('buyer', 'sent', start=1)
             received_orders = api.get_orders('buyer', 'received', start=1)
         except Exception as err:
             print(err)
         
-
-        print('hej')
+        if (wantslists_items and (sent_orders or received_orders)):
+            purchased_cards = []
+            purchased_cards.extend([i for i in sent_orders])
+            purchased_cards.extend([i for i in received_orders])
+            print('hej')
 
     @api_wrapper
     def show_account_info(self, api):

@@ -430,6 +430,20 @@ class PyMkmApi:
 
         if (self.__handle_response(r)):
             return r.json()
+
+    def get_wantslist_items(self, idWantsList, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist_Item
+
+        url = f'{self.base_url}/wantslist/{idWantsList}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting wants list items")
+
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
     
     def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
