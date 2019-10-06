@@ -343,6 +343,7 @@ class PyMkmApp:
             purchased_product_ids = []
             for order in received_orders:
                 purchased_product_ids.extend([i['idProduct'] for i in order.get('article')])
+                #TODO: Match with foils etc too
             
             matches = []
             for key, articles in wantslists_lists.items():
