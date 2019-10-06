@@ -24,7 +24,7 @@ from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
-ALLOW_REPORTING = False
+ALLOW_REPORTING = True
 DEV_MODE = False
 
 
