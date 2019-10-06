@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5]
+### Fixed
+- Now considers playsets. (#11)
+
 ## [1.3.3]
 ### Fixed
 - Fixed a bug with looking for deals from a user. (#9)

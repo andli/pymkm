@@ -27,6 +27,7 @@ from micro_menu import *
 ALLOW_REPORTING = False
 DEV_MODE = False
 
+
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
@@ -117,6 +118,7 @@ class PyMkmApp:
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
+                print('Updating prices...')
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
             else:
@@ -130,8 +132,6 @@ class PyMkmApp:
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string('Search card name')
-        undercut_local_market = PyMkmHelper.prompt_bool(
-            'Try to undercut local market? (slower, more requests)')
 
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -144,6 +144,10 @@ class PyMkmApp:
             article = articles[0]
             print('Found: {} [{}].'.format(article['product']
                                            ['enName'], article['product']['expansion']))
+
+        undercut_local_market = PyMkmHelper.prompt_bool(
+            'Try to undercut local market? (slower, more requests)')
+
         r = self.get_article_with_updated_price(
             article, undercut_local_market, api=self.api)
 
@@ -157,6 +161,7 @@ class PyMkmApp:
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
+                print('Updating prices...')
                 api.set_stock([r])
                 print('Price updated.')
             else:
@@ -505,7 +510,7 @@ class PyMkmApp:
                 article['idProduct'],
                 article['product']['rarity'],
                 article['isFoil'],
-                article['isPlayset'],
+                article.get('isPlayset'),
                 language_id=article['language']['idLanguage'],
                 undercut_local_market=undercut_local_market,
                 api=self.api)
@@ -515,7 +520,7 @@ class PyMkmApp:
                     return {
                         "name": article['product']['enName'],
                         "foil": article['isFoil'],
-                        "playset": article['isPlayset'],
+                        "playset": article.get('isPlayset'),
                         "old_price": article['price'],
                         "price": new_price,
                         "price_diff": price_diff,
@@ -595,13 +600,17 @@ class PyMkmApp:
     def draw_price_changes_table(self, sorted_best):
         print(tb.tabulate(
             [
-                [item['count'],
-                 item['name'],
-                 u'\u2713' if item['foil'] else '',
+                [
+                    item['count'],
+                    item['name'],
+                    u'\u2713' if item['foil'] else '',
+                    u'\u2713' if item['playset'] else '',
                     item['old_price'],
                     item['price'],
-                 item['price_diff']] for item in sorted_best],
-            headers=['Count', 'Name', 'Foil?',
+                    item['price_diff']
+                ] for item in sorted_best
+            ],
+            headers=['Count', 'Name', 'Foil', 'Playset',
                      'Old price', 'New price', 'Diff'],
             tablefmt="simple"
         ))
