@@ -25,6 +25,7 @@ from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
 ALLOW_REPORTING = True
+DEV_MODE = False
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -120,7 +121,7 @@ class PyMkmApp:
             self.display_price_changes_table(uploadable_json)
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
-                # Update articles on MKM
+                print('Updating prices...')
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
             else:
@@ -134,8 +135,6 @@ class PyMkmApp:
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string('Search card name')
-        undercut_local_market = PyMkmHelper.prompt_bool(
-            'Try to undercut local market? (slower, more requests)')
 
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -148,6 +147,10 @@ class PyMkmApp:
             article = articles[0]
             print('Found: {} [{}].'.format(article['product']
                                            ['enName'], article['product']['expansion']))
+
+        undercut_local_market = PyMkmHelper.prompt_bool(
+            'Try to undercut local market? (slower, more requests)')
+
         r = self.get_article_with_updated_price(
             article, undercut_local_market, api=self.api)
 
@@ -161,6 +164,7 @@ class PyMkmApp:
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
                 # Update articles on MKM
+                print('Updating prices...')
                 api.set_stock([r])
                 print('Price updated.')
             else:
@@ -171,6 +175,7 @@ class PyMkmApp:
     @api_wrapper
     def list_competition_for_product(self, api):
         self.report("list competition for product")
+        print('Note: does not support playsets (yet).')
 
         search_string = PyMkmHelper.prompt_string('Search card name')
         is_foil = PyMkmHelper.prompt_bool("Foil?")
@@ -238,6 +243,7 @@ class PyMkmApp:
                         condition = article.get('condition')
                         language = article.get('language').get('languageName')
                         foil = article.get('isFoil')
+                        playset = article.get('isPlayset')
                         price = float(article['price'])
 
                         p = api.get_product(article['idProduct'])
@@ -260,6 +266,7 @@ class PyMkmApp:
                                 condition,
                                 language,
                                 u'\u2713' if foil else '',
+                                u'\u2713' if playset else '',
                                 price,
                                 market_price,
                                 price_diff,
@@ -272,8 +279,8 @@ class PyMkmApp:
 
                     if table_data:
                         print('Found some interesting prices:')
-                        print(tb.tabulate(sorted(table_data, key=lambda x: x[8], reverse=True),
-                                          headers=['Name', 'Expansion', 'Condition', 'Language', 'Foil?',
+                        print(tb.tabulate(sorted(table_data, key=lambda x: x[9], reverse=True),
+                                          headers=['Name', 'Expansion', 'Condition', 'Language', 'Foil', 'Playset',
                                                    'Price', 'Market price', 'Market diff', 'Deal %'],
                                           tablefmt="simple")
                               )
@@ -296,18 +303,19 @@ class PyMkmApp:
             name = article['product']['enName']
             expansion = article.get('product').get('expansion')
             foil = article.get('isFoil')
+            playset = article.get('isPlayset')
             language_code = article.get('language')
             language_name = language_code.get('languageName')
             price = article.get('price')
             table_data.append(
-                [name, expansion, u'\u2713' if foil else '', language_name if language_code != 1 else '', price])
+                [name, expansion, u'\u2713' if foil else '', u'\u2713' if playset else '', language_name if language_code != 1 else '', price])
             total_price += price
         if len(stock_list) > 0:
             print('Top {} most expensive articles in stock:\n'.format(
                 str(num_articles)))
-            print(tb.tabulate(sorted(table_data, key=lambda x: x[4], reverse=True)[:num_articles],
-                              headers=['Name', 'Expansion',
-                                       'Foil?', 'Language', 'Price'],
+            print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=True)[:num_articles],
+                              headers=['Name', 'Expansion', 'Foil', 
+                                       'Playset', 'Language', 'Price'],
                               tablefmt="simple")
                   )
             print('\nTotal stock value: {}'.format(str(total_price)))
@@ -468,6 +476,7 @@ class PyMkmApp:
             print('No prices found.')
 
     def get_competition(self, api, product_id, is_foil):
+        #TODO: Add support for playsets
         account = api.get_account()['account']
         country_code = account['country']
         articles = api.get_articles(product_id, **{
@@ -543,6 +552,7 @@ class PyMkmApp:
                 article['idProduct'],
                 article['product']['rarity'],
                 article['isFoil'],
+                article.get('isPlayset'),
                 language_id=article['language']['idLanguage'],
                 undercut_local_market=undercut_local_market,
                 api=self.api)
@@ -552,6 +562,7 @@ class PyMkmApp:
                     return {
                         "name": article['product']['enName'],
                         "foil": article['isFoil'],
+                        "playset": article.get('isPlayset'),
                         "old_price": article['price'],
                         "price": new_price,
                         "price_diff": price_diff,
@@ -568,7 +579,7 @@ class PyMkmApp:
             print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
-    def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, undercut_local_market=False, api=None):
+    def get_price_for_product(self, product_id, rarity, is_foil, is_playset, language_id=1, undercut_local_market=False, api=None):
         try:
             response = api.get_product(product_id)
         except Exception as err:
@@ -584,7 +595,7 @@ class PyMkmApp:
                     trend_price = response['product']['priceGuide']['TRENDFOIL']
 
                 # Set competitive price for region
-                if undercut_local_market:
+                if undercut_local_market and not is_playset: #FIXME: add support for playsets?
                     table_data_local, table_data = self.get_competition(
                         api, product_id, is_foil)
 
@@ -605,6 +616,8 @@ class PyMkmApp:
                 if new_price == None:
                     raise ValueError('No price found!')
                 else:
+                    if is_playset:
+                        new_price = 4 * new_price
                     return new_price
             else:
                 print('No results.')
@@ -629,13 +642,17 @@ class PyMkmApp:
     def draw_price_changes_table(self, sorted_best):
         print(tb.tabulate(
             [
-                [item['count'],
-                 item['name'],
-                 u'\u2713' if item['foil'] else '',
+                [
+                    item['count'],
+                    item['name'],
+                    u'\u2713' if item['foil'] else '',
+                    u'\u2713' if item['playset'] else '',
                     item['old_price'],
                     item['price'],
-                 item['price_diff']] for item in sorted_best],
-            headers=['Count', 'Name', 'Foil?',
+                    item['price_diff']
+                ] for item in sorted_best
+            ],
+            headers=['Count', 'Name', 'Foil', 'Playset',
                      'Old price', 'New price', 'Diff'],
             tablefmt="simple"
         ))
@@ -648,7 +665,7 @@ class PyMkmApp:
             sys.exit(0)
         else:
             keys = ['idArticle', 'idProduct', 'product', 'count',
-                    'price', 'isFoil', 'isSigned', 'language']  # TODO: [language][languageId]
+                    'price', 'isFoil', 'isPlayset', 'isSigned', 'language']  # TODO: [language][languageId]
             stock_list = [{x: y for x, y in article.items() if x in keys}
                           for article in d]
             return stock_list
