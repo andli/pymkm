@@ -117,7 +117,6 @@ class PyMkmApp:
             self.display_price_changes_table(uploadable_json)
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
-                # Update articles on MKM
                 print('Updating prices...')
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
