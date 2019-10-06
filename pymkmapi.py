@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 __license__ = "MIT"
 
 import sys
@@ -290,6 +290,7 @@ class PyMkmApi:
         logging.debug(">> Updating stock")
         chunked_list = list(self.__chunks(payload, 100))
         for chunk in chunked_list:
+            # FIXME: Clean out extra unused data
             xml_payload = self.__json_to_xml(chunk)
             r = mkm_oauth.put(url, data=xml_payload)
 

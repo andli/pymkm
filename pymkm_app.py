@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 __license__ = "MIT"
 
 import csv
@@ -24,7 +24,7 @@ from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
-ALLOW_REPORTING = True
+ALLOW_REPORTING = False
 DEV_MODE = False
 
 class PyMkmApp:
@@ -505,6 +505,7 @@ class PyMkmApp:
                 article['idProduct'],
                 article['product']['rarity'],
                 article['isFoil'],
+                article['isPlayset'],
                 language_id=article['language']['idLanguage'],
                 undercut_local_market=undercut_local_market,
                 api=self.api)
@@ -514,6 +515,7 @@ class PyMkmApp:
                     return {
                         "name": article['product']['enName'],
                         "foil": article['isFoil'],
+                        "playset": article['isPlayset'],
                         "old_price": article['price'],
                         "price": new_price,
                         "price_diff": price_diff,
@@ -530,7 +532,7 @@ class PyMkmApp:
             print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
-    def get_price_for_product(self, product_id, rarity, is_foil, language_id=1, undercut_local_market=False, api=None):
+    def get_price_for_product(self, product_id, rarity, is_foil, is_playset, language_id=1, undercut_local_market=False, api=None):
         try:
             response = api.get_product(product_id)
         except Exception as err:
@@ -567,6 +569,8 @@ class PyMkmApp:
                 if new_price == None:
                     raise ValueError('No price found!')
                 else:
+                    if is_playset:
+                        new_price = 4 * new_price
                     return new_price
             else:
                 print('No results.')
