@@ -324,27 +324,62 @@ class PyMkmApp:
     @api_wrapper
     def clear_purchased_from_wantslists(self, api):
         self.report("clear purchased from wantslists")
-        print("Hold on, slowly fetching wantslists and orders...")
+        print("This function will clear _received_ order items from all of your wantslists.")
+        days_back = PyMkmHelper.prompt_string(f'Enter number of days back in time (leave blank for all time)')
+        print("Hold on, fetching wantslists and received orders (this can be slow)...")
 
-        wantslists_items = []
+        wantslists_lists = []
         try:
             result = api.get_wantslists()
-            wantslists = [i['idWantslist'] for i in result['wantslist'] if i['game']['idGame'] == 1]
-            wantslists_lists = [api.get_wantslist_items(i)['wantslist']['item'] for i in wantslists]
-            wantslists_products = []
-            [wantslists_products.extend(i) for i in wantslists_lists]
+            wantslists = {i['idWantslist']: i['name'] for i in result['wantslist'] if i['game']['idGame'] == 1}
+            wantslists_lists = {k: api.get_wantslist_items(k)['wantslist']['item'] for k,v in wantslists.items()}
 
-            #TODO: Search all wantslists for products/metaproducts
-            sent_orders = api.get_orders('buyer', 'sent', start=1)
+            #sent_orders = api.get_orders('buyer', 'sent', start=1)
             received_orders = api.get_orders('buyer', 'received', start=1)
         except Exception as err:
             print(err)
         
-        if (wantslists_items and (sent_orders or received_orders)):
-            purchased_cards = []
-            purchased_cards.extend([i for i in sent_orders])
-            purchased_cards.extend([i for i in received_orders])
-            print('hej')
+        if wantslists_lists and received_orders:
+            purchased_product_ids = []
+            for order in received_orders:
+                purchased_product_ids.extend([i['idProduct'] for i in order.get('article')])
+            
+            matches = []
+            for key, articles in wantslists_lists.items():
+                for article in articles:
+                    article_type = article.get('type')
+                    if article_type == 'metaproduct':
+                        if article.get('idMetaproduct') in purchased_product_ids:
+                            matches.append({
+                                'wantlist_id': key, 
+                                'wantlist_name': wantslists[key], 
+                                'metaproduct_id': article.get('idMetaproduct'),
+                                'product_name': article.get('metaproduct').get('enName'),
+                                'expansion_name': article.get('metaproduct').get('expansionName'),
+                                'is_foil': article.get('isFoil')
+                                })
+                    elif article_type == 'product':
+                        if article.get('idProduct') in purchased_product_ids:
+                            matches.append({
+                                'wantlist_id': key, 
+                                'wantlist_name': wantslists[key], 
+                                'product_id': article.get('idProduct'),
+                                'product_name': article.get('product').get('enName'),
+                                'expansion_name': article.get('product').get('expansionName'),
+                                'is_foil': article.get('isFoil')
+                                })
+            print(tb.tabulate(
+            [
+                [
+                    item['wantlist_name'],
+                    item['product_name'],
+                    item['expansion_name'],
+                    u'\u2713' if item['is_foil'] else '',
+                ] for item in matches
+            ],
+            headers=['Wantlist', 'Name', 'Expansion', 'Foil'],
+            tablefmt="simple"
+        ))
 
     @api_wrapper
     def show_account_info(self, api):
