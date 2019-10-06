@@ -187,7 +187,7 @@ class TestPyMkmApp(TestCommon):
     @patch('pymkmapi.PyMkmApi.get_stock', return_value=TestCommon.fake_stock)
     @patch('pymkmapi.PyMkmApi.set_stock', return_value=ok_response)
     @patch('pymkmapi.PyMkmApi.find_stock_article', return_value=TestCommon.fake_stock)
-    @patch('builtins.input', side_effect=['2', 'words', 'n', '1', '0'])
+    @patch('builtins.input', side_effect=['2', 'words', '1', 'n', '0'])
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('requests.get', return_value=fake_github_releases)
     def test_menu_option_2(self, mock_open, mock_stdout, *args):
