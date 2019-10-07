@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- New function: clear out purchased cards from all wantslists
+- New function: show already purchased cards from all wantslists
 
 ## [1.3.5]
 ### Fixed

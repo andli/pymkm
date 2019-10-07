@@ -27,6 +27,7 @@ from micro_menu import *
 ALLOW_REPORTING = True
 DEV_MODE = False
 
+
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
@@ -90,8 +91,9 @@ class PyMkmApp:
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
                                )
-        menu.add_function_item("WIP wants",
-                               self.clear_purchased_from_wantslists, {'api': self.api}
+        menu.add_function_item("Clean wantslists",
+                               self.clear_purchased_from_wantslists, {
+                                   'api': self.api}
                                )
         menu.add_function_item("Show account info",
                                self.show_account_info, {'api': self.api}
@@ -314,71 +316,84 @@ class PyMkmApp:
             print('Top {} most expensive articles in stock:\n'.format(
                 str(num_articles)))
             print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=True)[:num_articles],
-                              headers=['Name', 'Expansion', 'Foil', 
+                              headers=['Name', 'Expansion', 'Foil',
                                        'Playset', 'Language', 'Price'],
                               tablefmt="simple")
                   )
             print('\nTotal stock value: {}'.format(str(total_price)))
         return None
-    
+
     @api_wrapper
     def clear_purchased_from_wantslists(self, api):
         self.report("clear purchased from wantslists")
-        print("This function will clear _received_ order items from all of your wantslists.")
-        days_back = PyMkmHelper.prompt_string(f'Enter number of days back in time (leave blank for all time)')
+        print("This will show items in your wantslists you have already received.")
         print("Hold on, fetching wantslists and received orders (this can be slow)...")
 
         wantslists_lists = []
         try:
             result = api.get_wantslists()
-            wantslists = {i['idWantslist']: i['name'] for i in result['wantslist'] if i['game']['idGame'] == 1}
-            wantslists_lists = {k: api.get_wantslist_items(k)['wantslist']['item'] for k,v in wantslists.items()}
+            wantslists = {i['idWantslist']: i['name']
+                for i in result['wantslist'] if i['game']['idGame'] == 1}
+            wantslists_lists = {k: api.get_wantslist_items(
+                k)['wantslist']['item'] for k, v in wantslists.items()}
 
-            #sent_orders = api.get_orders('buyer', 'sent', start=1)
             received_orders = api.get_orders('buyer', 'received', start=1)
         except Exception as err:
             print(err)
-        
+
         if wantslists_lists and received_orders:
             purchased_product_ids = []
+            purchased_products = []
             for order in received_orders:
-                purchased_product_ids.extend([i['idProduct'] for i in order.get('article')])
-                #TODO: Match with foils etc too
-            
+                purchased_product_ids.extend(
+                    [i['idProduct'] for i in order.get('article')])
+                purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
+                    'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in order.get('article'))
+            purchased_products = sorted(purchased_products, key=lambda t: t['date'], reverse=True)
+
             matches = []
             for key, articles in wantslists_lists.items():
                 for article in articles:
-                    article_type = article.get('type')
-                    if article_type == 'metaproduct':
-                        if article.get('idMetaproduct') in purchased_product_ids:
-                            matches.append({
-                                'wantlist_id': key, 
-                                'wantlist_name': wantslists[key], 
+                    a_type = article.get('type')
+                    a_foil = article.get('isFoil') == True
+                    a_product_id = article.get('idProduct')
+
+                    product_matches = [
+                        i for i in purchased_products if i['id'] == a_product_id and i['foil'] == a_foil]
+
+                    if product_matches:
+                        match = {
+                            'wantlist_id': key,
+                            'wantlist_name': wantslists[key],
+                            'date': product_matches[0]['date'],
+                            'is_foil': a_foil,
+                            'count': product_matches[0]['count'] #FIXME count if more than 1 entry
+                        }
+                        if a_type == 'product' and a_product_id in purchased_product_ids:
+                            match.update({
+                                'product_id': a_product_id,
+                                'product_name': article.get('product').get('enName'),
+                                'expansion_name': article.get('product').get('expansionName'),
+                                })
+                        elif a_type == 'metaproduct' and article.get('idMetaproduct') in purchased_product_ids:
+                            match.update({
                                 'metaproduct_id': article.get('idMetaproduct'),
                                 'product_name': article.get('metaproduct').get('enName'),
                                 'expansion_name': article.get('metaproduct').get('expansionName'),
-                                'is_foil': article.get('isFoil')
                                 })
-                    elif article_type == 'product':
-                        if article.get('idProduct') in purchased_product_ids:
-                            matches.append({
-                                'wantlist_id': key, 
-                                'wantlist_name': wantslists[key], 
-                                'product_id': article.get('idProduct'),
-                                'product_name': article.get('product').get('enName'),
-                                'expansion_name': article.get('product').get('expansionName'),
-                                'is_foil': article.get('isFoil')
-                                })
+                        matches.append(match)
             print(tb.tabulate(
             [
                 [
                     item['wantlist_name'],
+                    item['count'],
+                    u'\u2713' if item['is_foil'] else '',
                     item['product_name'],
                     item['expansion_name'],
-                    u'\u2713' if item['is_foil'] else '',
+                    item['date']
                 ] for item in matches
             ],
-            headers=['Wantlist', 'Name', 'Expansion', 'Foil'],
+            headers=['Wantlist', '# bought', 'Foil', 'Name', 'Expansion', 'Date (last) received'],
             tablefmt="simple"
         ))
 
@@ -512,7 +527,7 @@ class PyMkmApp:
             print('No prices found.')
 
     def get_competition(self, api, product_id, is_foil):
-        #TODO: Add support for playsets
+        # TODO: Add support for playsets
         account = api.get_account()['account']
         country_code = account['country']
         articles = api.get_articles(product_id, **{
