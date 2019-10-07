@@ -253,7 +253,7 @@ class TestPyMkmApp(TestCommon):
         app.start()
         print(mock_stdout.getvalue())
         self.assertRegex(mock_stdout.getvalue(),
-                         r"{'account':")
+                         r"This will show items in your ")
 
     @patch('pymkmapi.PyMkmApi.get_account', return_value=TestCommon.fake_account_data)
     @patch('builtins.input', side_effect=['7', '0'])
