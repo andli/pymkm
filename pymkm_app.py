@@ -25,7 +25,7 @@ from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
 ALLOW_REPORTING = True
-DEV_MODE = False
+
 
 
 class PyMkmApp:
@@ -70,6 +70,8 @@ class PyMkmApp:
             pass
         if (parse_version(__version__) < parse_version(latest_version)):
             message = f"Go to Github and download version {latest_version}! It's better!"
+        if hasattr(self, 'DEV_MODE') and self.DEV_MODE:
+            message = "dev mode"
         menu = MicroMenu(f"PyMKM {__version__}", message)
 
         menu.add_function_item("Update stock prices",
