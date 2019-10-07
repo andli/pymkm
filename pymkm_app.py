@@ -92,8 +92,8 @@ class PyMkmApp:
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
                                )
-        menu.add_function_item("Clean wantslists",
-                               self.clear_purchased_from_wantslists, {
+        menu.add_function_item("Clean wantslists (BETA, please try it out)",
+                               self.clean_purchased_from_wantslists, {
                                    'api': self.api}
                                )
         menu.add_function_item("Show account info",
@@ -325,8 +325,8 @@ class PyMkmApp:
         return None
 
     @api_wrapper
-    def clear_purchased_from_wantslists(self, api):
-        self.report("clear purchased from wantslists")
+    def clean_purchased_from_wantslists(self, api):
+        self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
         print("Hold on, fetching wantslists and received orders (this can be slow)...")
 
@@ -358,10 +358,17 @@ class PyMkmApp:
                 for article in articles:
                     a_type = article.get('type')
                     a_foil = article.get('isFoil') == True
-                    a_product_id = article.get('idProduct')
+                    product_matches = []
 
-                    product_matches = [
-                        i for i in purchased_products if i['id'] == a_product_id and i['foil'] == a_foil]
+                    if(a_type == 'metaproduct'):
+                        metaproduct = api.get_metaproduct(article.get('idMetaproduct'))
+                        metaproduct_product_ids = [i['idProduct'] for i in metaproduct['product']]
+                        product_matches = [i for i in purchased_products if i['id']
+                                           in metaproduct_product_ids and i['foil'] == a_foil]
+                    else:
+                        a_product_id = article.get('idProduct')
+                        product_matches = [
+                            i for i in purchased_products if i['id'] == a_product_id and i['foil'] == a_foil]
 
                     if product_matches:
                         match = {
@@ -372,19 +379,20 @@ class PyMkmApp:
                             # FIXME count if more than 1 entry
                             'count': product_matches[0]['count']
                         }
-                        if a_type == 'product' and a_product_id in purchased_product_ids:
+                        if a_type == 'product':
                             match.update({
                                 'product_id': a_product_id,
                                 'product_name': article.get('product').get('enName'),
                                 'expansion_name': article.get('product').get('expansionName'),
                             })
-                        elif a_type == 'metaproduct' and article.get('idMetaproduct') in purchased_product_ids:
+                        elif a_type == 'metaproduct':
                             match.update({
                                 'metaproduct_id': article.get('idMetaproduct'),
                                 'product_name': article.get('metaproduct').get('enName'),
                                 'expansion_name': article.get('metaproduct').get('expansionName'),
                             })
                         matches.append(match)
+
             print(tb.tabulate(
                 [
                     [
@@ -397,7 +405,7 @@ class PyMkmApp:
                     ] for item in matches
                 ],
                 headers=['Wantlist', '# bought', 'Foil', 'Name',
-                         'Expansion', 'Date (last) received'],
+                        'Expansion', 'Date (last) received'],
                 tablefmt="simple"
             ))
 

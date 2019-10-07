@@ -187,6 +187,17 @@ class PyMkmApi:
 
         if (r):
             return r.json()
+        
+    def get_metaproduct(self, metaproduct_id, provided_oauth=None):
+        #https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
+        url = f'{self.base_url}/metaproducts/{str(metaproduct_id)}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting data for metaproduct id " + str(metaproduct_id))
+        r = self.mkm_request(mkm_oauth, url)
+
+        if (r):
+            return r.json()
 
     def get_account(self, provided_oauth=None):
         url = '{}/account'.format(self.base_url)
