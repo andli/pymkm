@@ -27,7 +27,6 @@ from micro_menu import *
 ALLOW_REPORTING = True
 
 
-
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
@@ -335,7 +334,7 @@ class PyMkmApp:
         try:
             result = api.get_wantslists()
             wantslists = {i['idWantslist']: i['name']
-                for i in result['wantslist'] if i['game']['idGame'] == 1}
+                          for i in result['wantslist'] if i['game']['idGame'] == 1}
             wantslists_lists = {k: api.get_wantslist_items(
                 k)['wantslist']['item'] for k, v in wantslists.items()}
 
@@ -351,7 +350,8 @@ class PyMkmApp:
                     [i['idProduct'] for i in order.get('article')])
                 purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
                     'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in order.get('article'))
-            purchased_products = sorted(purchased_products, key=lambda t: t['date'], reverse=True)
+            purchased_products = sorted(
+                purchased_products, key=lambda t: t['date'], reverse=True)
 
             matches = []
             for key, articles in wantslists_lists.items():
@@ -369,35 +369,37 @@ class PyMkmApp:
                             'wantlist_name': wantslists[key],
                             'date': product_matches[0]['date'],
                             'is_foil': a_foil,
-                            'count': product_matches[0]['count'] #FIXME count if more than 1 entry
+                            # FIXME count if more than 1 entry
+                            'count': product_matches[0]['count']
                         }
                         if a_type == 'product' and a_product_id in purchased_product_ids:
                             match.update({
                                 'product_id': a_product_id,
                                 'product_name': article.get('product').get('enName'),
                                 'expansion_name': article.get('product').get('expansionName'),
-                                })
+                            })
                         elif a_type == 'metaproduct' and article.get('idMetaproduct') in purchased_product_ids:
                             match.update({
                                 'metaproduct_id': article.get('idMetaproduct'),
                                 'product_name': article.get('metaproduct').get('enName'),
                                 'expansion_name': article.get('metaproduct').get('expansionName'),
-                                })
+                            })
                         matches.append(match)
             print(tb.tabulate(
-            [
                 [
-                    item['wantlist_name'],
-                    item['count'],
-                    u'\u2713' if item['is_foil'] else '',
-                    item['product_name'],
-                    item['expansion_name'],
-                    item['date']
-                ] for item in matches
-            ],
-            headers=['Wantlist', '# bought', 'Foil', 'Name', 'Expansion', 'Date (last) received'],
-            tablefmt="simple"
-        ))
+                    [
+                        item['wantlist_name'],
+                        item['count'],
+                        u'\u2713' if item['is_foil'] else '',
+                        item['product_name'],
+                        item['expansion_name'],
+                        item['date']
+                    ] for item in matches
+                ],
+                headers=['Wantlist', '# bought', 'Foil', 'Name',
+                         'Expansion', 'Date (last) received'],
+                tablefmt="simple"
+            ))
 
     @api_wrapper
     def show_account_info(self, api):
@@ -490,7 +492,8 @@ class PyMkmApp:
 
     def select_from_list_of_wantslists(self, wantslists):
         index = 1
-        filtered_wantslists = [i for i in wantslists['wantslist'] if i['game']['idGame'] == 1]
+        filtered_wantslists = [
+            i for i in wantslists['wantslist'] if i['game']['idGame'] == 1]
         for wl in filtered_wantslists:
             print(f"{index}: {wl['name']} [{wl['itemCount']}]")
             index += 1
@@ -515,7 +518,7 @@ class PyMkmApp:
             index += 1
         choice = int(input("Choose card: "))
         return articles[choice - 1]
-    
+
     def show_competition_for_product(self, product_id, product_name, is_foil, api):
         print("Found product: {}".format(product_name))
         table_data_local, table_data = self.get_competition(
@@ -648,7 +651,7 @@ class PyMkmApp:
                     trend_price = response['product']['priceGuide']['TRENDFOIL']
 
                 # Set competitive price for region
-                if undercut_local_market and not is_playset: #FIXME: add support for playsets?
+                if undercut_local_market and not is_playset:  # FIXME: add support for playsets?
                     table_data_local, table_data = self.get_competition(
                         api, product_id, is_foil)
 
