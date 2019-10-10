@@ -28,7 +28,7 @@ class MicroMenu:
     def show(self):
         while True:
             self.print_menu(self.menu_title, self.message, self.menu_items)
-            choice = int(input("Action number: "))
+            choice = self.input_number()
 
             if 0 == choice:
                 break
@@ -36,6 +36,15 @@ class MicroMenu:
                 func = self.menu_items[choice - 1][1]
                 kwargs = self.menu_items[choice - 1][2]
                 func(**kwargs)
+
+    def input_number(self):
+        choice = None
+        try:
+            choice = int(input("Action number: "))
+        except ValueError as err:
+            print("Incorrect input, try again.")
+            self.input_number()
+        return choice
 
     def print_menu(self, title, message, menu_items):
         lengths = [len(item[0]) for item in menu_items]

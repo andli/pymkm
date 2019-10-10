@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.3.5"
+__version__ = "1.4.0"
 __license__ = "MIT"
 
 import sys
@@ -187,6 +187,17 @@ class PyMkmApi:
 
         if (r):
             return r.json()
+        
+    def get_metaproduct(self, metaproduct_id, provided_oauth=None):
+        #https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
+        url = f'{self.base_url}/metaproducts/{str(metaproduct_id)}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting data for metaproduct id " + str(metaproduct_id))
+        r = self.mkm_request(mkm_oauth, url)
+
+        if (r):
+            return r.json()
 
     def get_account(self, provided_oauth=None):
         url = '{}/account'.format(self.base_url)
@@ -258,7 +269,7 @@ class PyMkmApi:
                 return []
 
             if (r.status_code == requests.codes.partial_content):
-                print('> ' + r.headers['Content-Range'])
+                #print('> ' + r.headers['Content-Range'])
                 # print('# articles in response: ' + str(len(r.json()['article'])))
                 return r.json()['article'] + self.get_stock(start+100)
 
@@ -418,3 +429,62 @@ class PyMkmApi:
             raise NoResultsError(r.text)
         else:
             raise ConnectionError(r)
+
+    def get_wantslists(self, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist
+
+        url = f'{self.base_url}/wantslist'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting all wants lists")
+
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    def get_wantslist_items(self, idWantsList, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist_Item
+
+        url = f'{self.base_url}/wantslist/{idWantsList}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting wants list items")
+
+        r = mkm_oauth.get(url)
+
+        if (self.__handle_response(r)):
+            return r.json()
+
+    
+    def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
+        # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
+
+        url = f'{self.base_url}/orders/{actor}/{state}'
+        if start:
+            url += f'/{start}'
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting orders")
+
+        r = mkm_oauth.get(url)
+
+        if (r.status_code == requests.codes.temporary_redirect):
+            return self.get_orders(actor, state, start=1)
+
+        if (start is not None):
+            max_items = self.__get_max_items_from_header(r)
+
+            if (start > max_items or r.status_code == requests.codes.no_content):
+                # terminate recursion
+                """ NOTE: funny thing is, even though the API talks about it,
+                it never responds with 204 (no_content). Therefore we check for
+                exceeding content-range instead."""
+                return []
+
+            if (r.status_code == requests.codes.partial_content):
+                #print('> ' + r.headers['Content-Range'])
+                return r.json()['order'] + self.get_orders(actor, state, start+100)
+
+        if (self.__handle_response(r)):
+            return r.json()

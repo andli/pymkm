@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.3.5"
+__version__ = "1.4.0"
 __license__ = "MIT"
 
 import csv
@@ -25,7 +25,6 @@ from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 from micro_menu import *
 
 ALLOW_REPORTING = True
-DEV_MODE = False
 
 
 class PyMkmApp:
@@ -42,15 +41,17 @@ class PyMkmApp:
                 sys.exit(0)
         else:
             self.config = config
-            try:
-                DEV_MODE = self.config['dev_mode']
-            except Exception as err:
-                pass
+
+        self.DEV_MODE = False
+        try:
+            self.DEV_MODE = self.config['dev_mode']
+        except Exception as err:
+            pass
 
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
-        if ALLOW_REPORTING and not DEV_MODE:
+        if ALLOW_REPORTING and not self.DEV_MODE:
             try:
                 r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
                                   json={"command": command, "version": __version__})
@@ -68,6 +69,8 @@ class PyMkmApp:
             pass
         if (parse_version(__version__) < parse_version(latest_version)):
             message = f"Go to Github and download version {latest_version}! It's better!"
+        if hasattr(self, 'DEV_MODE') and self.DEV_MODE:
+            message = "dev mode"
         menu = MicroMenu(f"PyMKM {__version__}", message)
 
         menu.add_function_item("Update stock prices",
@@ -88,6 +91,10 @@ class PyMkmApp:
         menu.add_function_item("Show top 20 expensive items in stock",
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
+                               )
+        menu.add_function_item("Clean wantslists (BETA, please try it out)",
+                               self.clean_purchased_from_wantslists, {
+                                   'api': self.api}
                                )
         menu.add_function_item("Show account info",
                                self.show_account_info, {'api': self.api}
@@ -310,12 +317,97 @@ class PyMkmApp:
             print('Top {} most expensive articles in stock:\n'.format(
                 str(num_articles)))
             print(tb.tabulate(sorted(table_data, key=lambda x: x[5], reverse=True)[:num_articles],
-                              headers=['Name', 'Expansion', 'Foil', 
+                              headers=['Name', 'Expansion', 'Foil',
                                        'Playset', 'Language', 'Price'],
                               tablefmt="simple")
                   )
             print('\nTotal stock value: {}'.format(str(total_price)))
         return None
+
+    @api_wrapper
+    def clean_purchased_from_wantslists(self, api):
+        self.report("clean wantslists")
+        print("This will show items in your wantslists you have already received.")
+        print("Hold on, fetching wantslists and received orders (this can be slow)...")
+
+        wantslists_lists = []
+        try:
+            result = api.get_wantslists()
+            wantslists = {i['idWantslist']: i['name']
+                          for i in result['wantslist'] if i['game']['idGame'] == 1}
+            wantslists_lists = {k: api.get_wantslist_items(
+                k)['wantslist']['item'] for k, v in wantslists.items()}
+
+            received_orders = api.get_orders('buyer', 'received', start=1)
+        except Exception as err:
+            print(err)
+
+        if wantslists_lists and received_orders:
+            purchased_product_ids = []
+            purchased_products = []
+            for order in received_orders:
+                purchased_product_ids.extend(
+                    [i['idProduct'] for i in order.get('article')])
+                purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
+                    'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in order.get('article'))
+            purchased_products = sorted(
+                purchased_products, key=lambda t: t['date'], reverse=True)
+
+            matches = []
+            for key, articles in wantslists_lists.items():
+                for article in articles:
+                    a_type = article.get('type')
+                    a_foil = article.get('isFoil') == True
+                    product_matches = []
+
+                    if(a_type == 'metaproduct'):
+                        metaproduct = api.get_metaproduct(article.get('idMetaproduct'))
+                        metaproduct_product_ids = [i['idProduct'] for i in metaproduct['product']]
+                        product_matches = [i for i in purchased_products if i['id']
+                                           in metaproduct_product_ids and i['foil'] == a_foil]
+                    else:
+                        a_product_id = article.get('idProduct')
+                        product_matches = [
+                            i for i in purchased_products if i['id'] == a_product_id and i['foil'] == a_foil]
+
+                    if product_matches:
+                        match = {
+                            'wantlist_id': key,
+                            'wantlist_name': wantslists[key],
+                            'date': product_matches[0]['date'],
+                            'is_foil': a_foil,
+                            # FIXME count if more than 1 entry
+                            'count': product_matches[0]['count']
+                        }
+                        if a_type == 'product':
+                            match.update({
+                                'product_id': a_product_id,
+                                'product_name': article.get('product').get('enName'),
+                                'expansion_name': article.get('product').get('expansionName'),
+                            })
+                        elif a_type == 'metaproduct':
+                            match.update({
+                                'metaproduct_id': article.get('idMetaproduct'),
+                                'product_name': article.get('metaproduct').get('enName'),
+                                'expansion_name': article.get('metaproduct').get('expansionName'),
+                            })
+                        matches.append(match)
+
+            print(tb.tabulate(
+                [
+                    [
+                        item['wantlist_name'],
+                        item['count'],
+                        u'\u2713' if item['is_foil'] else '',
+                        item['product_name'],
+                        item['expansion_name'],
+                        item['date']
+                    ] for item in matches
+                ],
+                headers=['Wantlist', '# bought', 'Foil', 'Name',
+                        'Expansion', 'Date (last) received'],
+                tablefmt="simple"
+            ))
 
     @api_wrapper
     def show_account_info(self, api):
@@ -406,6 +498,16 @@ class PyMkmApp:
 
 # End of menu item functions ============================================
 
+    def select_from_list_of_wantslists(self, wantslists):
+        index = 1
+        filtered_wantslists = [
+            i for i in wantslists['wantslist'] if i['game']['idGame'] == 1]
+        for wl in filtered_wantslists:
+            print(f"{index}: {wl['name']} [{wl['itemCount']}]")
+            index += 1
+        choice = int(input("Choose wantslist: "))
+        return wantslists[choice - 1]
+
     def select_from_list_of_products(self, products):
         index = 1
         for product in products:
@@ -438,7 +540,7 @@ class PyMkmApp:
             print('No prices found.')
 
     def get_competition(self, api, product_id, is_foil):
-        #TODO: Add support for playsets
+        # TODO: Add support for playsets
         account = api.get_account()['account']
         country_code = account['country']
         articles = api.get_articles(product_id, **{
@@ -557,7 +659,7 @@ class PyMkmApp:
                     trend_price = response['product']['priceGuide']['TRENDFOIL']
 
                 # Set competitive price for region
-                if undercut_local_market and not is_playset: #FIXME: add support for playsets?
+                if undercut_local_market and not is_playset:  # FIXME: add support for playsets?
                     table_data_local, table_data = self.get_competition(
                         api, product_id, is_foil)
 
