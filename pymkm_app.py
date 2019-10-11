@@ -261,7 +261,7 @@ class PyMkmApp:
                         else:
                             market_price = p['product']['priceGuide']['TREND']
                         price_diff = price - market_price
-                        percent_deal = round(-100*(price_diff / market_price))
+                        percent_deal = round(-100 * (price_diff / market_price))
                         if price_diff < -1 or percent_deal >= 10:
                             table_data.append([
                                 name,
@@ -311,7 +311,8 @@ class PyMkmApp:
             language_name = language_code.get('languageName')
             price = article.get('price')
             table_data.append(
-                [name, expansion, u'\u2713' if foil else '', u'\u2713' if playset else '', language_name if language_code != 1 else '', price])
+                [name, expansion, u'\u2713' if foil else '', u'\u2713' if playset else '',
+                 language_name if language_code != 1 else '', price])
             total_price += price
         if len(stock_list) > 0:
             print('Top {} most expensive articles in stock:\n'.format(
@@ -349,7 +350,8 @@ class PyMkmApp:
                 purchased_product_ids.extend(
                     [i['idProduct'] for i in order.get('article')])
                 purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
-                    'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in order.get('article'))
+                    'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in
+                                          order.get('article'))
             purchased_products = sorted(
                 purchased_products, key=lambda t: t['date'], reverse=True)
 
@@ -360,7 +362,7 @@ class PyMkmApp:
                     a_foil = article.get('isFoil') == True
                     product_matches = []
 
-                    if(a_type == 'metaproduct'):
+                    if (a_type == 'metaproduct'):
                         metaproduct = api.get_metaproduct(article.get('idMetaproduct'))
                         metaproduct_product_ids = [i['idProduct'] for i in metaproduct['product']]
                         product_matches = [i for i in purchased_products if i['id']
@@ -405,7 +407,7 @@ class PyMkmApp:
                     ] for item in matches
                 ],
                 headers=['Wantlist', '# bought', 'Foil', 'Name',
-                        'Expansion', 'Date (last) received'],
+                         'Expansion', 'Date (last) received'],
                 tablefmt="simple"
             ))
 
@@ -421,10 +423,11 @@ class PyMkmApp:
         self.report("clear entire stock")
 
         stock_list = self.get_stock_as_array(api=self.api)
-        if PyMkmHelper.prompt_bool("Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
+        if PyMkmHelper.prompt_bool(
+                "Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
 
             # for article in stock_list:
-                # article['count'] = 0
+            # article['count'] = 0
             delete_list = [{'count': x['count'], 'idArticle': x['idArticle']}
                            for x in stock_list]
 
@@ -467,7 +470,8 @@ class PyMkmApp:
                                 language_id = (
                                     1 if language == '' else api.languages.index(language) + 1)
                                 price = self.get_price_for_product(
-                                    product_match[0]['idProduct'], product_match[0]['rarity'], foil, language_id=language_id, api=self.api)
+                                    product_match[0]['idProduct'], product_match[0]['rarity'], foil,
+                                    language_id=language_id, api=self.api)
                                 card = {
                                     'idProduct': product_match[0]['idProduct'],
                                     'idLanguage': language_id,
@@ -496,7 +500,7 @@ class PyMkmApp:
             except Exception as err:
                 print(err.value)
 
-# End of menu item functions ============================================
+    # End of menu item functions ============================================
 
     def select_from_list_of_wantslists(self, wantslists):
         index = 1
@@ -570,13 +574,13 @@ class PyMkmApp:
         return table_data_local, table_data
 
     def print_product_top_list(self, title_string, table_data, sort_column, rows):
-        print(70*'-')
+        print(70 * '-')
         print('{} \n'.format(title_string))
         print(tb.tabulate(sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
                           headers=['Username', 'Country',
                                    'Condition', 'Count', 'Price'],
                           tablefmt="simple"))
-        print(70*'-')
+        print(70 * '-')
         print('Total average price: {}, Total median price: {}, Total # of articles: {}\n'.format(
             str(PyMkmHelper.calculate_average(table_data, 3, 4)),
             str(PyMkmHelper.calculate_median(table_data, 3, 4)),
@@ -611,7 +615,8 @@ class PyMkmApp:
 
     def get_article_with_updated_price(self, article, undercut_local_market=False, api=None):
         # TODO: compare prices also for signed cards, like foils
-        if not article.get('isSigned'):  # keep prices for signed cards fixed
+        # keep prices for signed cards fixed
+        if not article.get('isSigned') and not article['product']['idGame'] == 3:
             new_price = self.get_price_for_product(
                 article['idProduct'],
                 article['product']['rarity'],
@@ -643,7 +648,8 @@ class PyMkmApp:
             print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
-    def get_price_for_product(self, product_id, rarity, is_foil, is_playset, language_id=1, undercut_local_market=False, api=None):
+    def get_price_for_product(self, product_id, rarity, is_foil, is_playset, language_id=1, undercut_local_market=False,
+                              api=None):
         try:
             response = api.get_product(product_id)
         except Exception as err:
@@ -666,7 +672,8 @@ class PyMkmApp:
                     if len(table_data_local) > 0:
                         # Undercut if there is local competition
                         lowest_in_country = PyMkmHelper.round_down_to_limit(rounding_limit,
-                                                                            PyMkmHelper.calculate_lowest(table_data_local, 4))
+                                                                            PyMkmHelper.calculate_lowest(
+                                                                                table_data_local, 4))
                         new_price = max(rounding_limit, min(
                             trend_price, lowest_in_country - rounding_limit))
                     else:
