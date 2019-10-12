@@ -616,21 +616,28 @@ class PyMkmApp:
     def get_article_with_updated_price(self, article, undercut_local_market=False, api=None):
         # TODO: compare prices also for signed cards, like foils
         # keep prices for signed cards fixed
-        if not article.get('isSigned') and not article['product']['idGame'] == 3:
+        if not article.get('isSigned'):
+            # FIXME : look for a better code
+            # Yugioh's Card (idGame 3) never got attribute isFoil
+            # Fix Issue #12
+            if article['product']['idGame'] == 3:
+                foil = False
+            else:
+                foil = article['isFoil']
             new_price = self.get_price_for_product(
-                article['idProduct'],
-                article['product']['rarity'],
-                article['isFoil'],
-                article.get('isPlayset'),
-                language_id=article['language']['idLanguage'],
-                undercut_local_market=undercut_local_market,
-                api=self.api)
+                    article['idProduct'],
+                    article['product']['rarity'],
+                    foil,
+                    article.get('isPlayset'),
+                    language_id=article['language']['idLanguage'],
+                    undercut_local_market=undercut_local_market,
+                    api=self.api)
             if new_price:
                 price_diff = new_price - article['price']
                 if price_diff != 0:
                     return {
                         "name": article['product']['enName'],
-                        "foil": article['isFoil'],
+                        "foil": foil,
                         "playset": article.get('isPlayset'),
                         "old_price": article['price'],
                         "price": new_price,
