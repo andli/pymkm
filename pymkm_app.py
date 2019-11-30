@@ -92,7 +92,7 @@ class PyMkmApp:
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
                                )
-        menu.add_function_item("Clean wantslists (BETA, please try it out)",
+        menu.add_function_item("Clean wantslists (BETA, non-destructive)",
                                self.clean_purchased_from_wantslists, {
                                    'api': self.api}
                                )
@@ -346,7 +346,7 @@ class PyMkmApp:
         if wantslists_lists and received_orders:
             purchased_product_ids = []
             purchased_products = []
-            for order in received_orders:
+            for order in received_orders: #TODO: foil in purchase removes non-foil in wants
                 purchased_product_ids.extend(
                     [i['idProduct'] for i in order.get('article')])
                 purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
@@ -355,7 +355,7 @@ class PyMkmApp:
             purchased_products = sorted(
                 purchased_products, key=lambda t: t['date'], reverse=True)
 
-            matches = []
+            matches = [] #TODO: add a progress bar? double?
             for key, articles in wantslists_lists.items():
                 for article in articles:
                     a_type = article.get('type')
