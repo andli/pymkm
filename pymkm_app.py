@@ -621,7 +621,7 @@ class PyMkmApp:
             new_price = self.get_price_for_product(
                     article['idProduct'],
                     article['product']['rarity'],
-                    article.getattr('isFoil', False),
+                    article.get('isFoil', False),
                     article.get('isPlayset'),
                     language_id=article['language']['idLanguage'],
                     undercut_local_market=undercut_local_market,
