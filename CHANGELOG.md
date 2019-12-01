@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Time shifted rarity supported.
 - Default action (no) for yes/no prompts.
+- Better support for non-card products like booster displays and bundles.
 
 ## [1.4.1]
 ### Changed
