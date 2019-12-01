@@ -69,18 +69,18 @@ class PyMkmApi:
             self.config = config
 
     def __handle_response(self, response):
-        try:
-            self.requests_count = response.headers['X-Request-Limit-Count']
-            self.requests_max = response.headers['X-Request-Limit-Max']
-        except (AttributeError, KeyError) as err:
-            logging.debug(">> Attribute not found in header: {}".format(err))
-
         handled_codes = (
             requests.codes.ok,
             requests.codes.partial_content,
             requests.codes.temporary_redirect,
         )
         if (response.status_code in handled_codes):
+            try:
+                self.requests_count = response.headers['X-Request-Limit-Count']
+                self.requests_max = response.headers['X-Request-Limit-Max']
+            except (AttributeError, KeyError) as err:
+                logging.debug(">> Attribute not found in header: {}".format(err))
+
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif (response.status_code == requests.codes.no_content):
@@ -374,7 +374,10 @@ class PyMkmApi:
         r = mkm_oauth.get(url, params=params)
 
         if (self.__handle_response(r)):
-            return r.json()
+            try:
+                return r.json()
+            except json.decoder.JSONDecodeError:
+                logging.error(">> Error parsing json: " + r.text)
 
     def find_stock_article(self, name, game_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Articles

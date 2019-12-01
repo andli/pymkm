@@ -77,10 +77,10 @@ class PyMkmApp:
                                self.update_stock_prices_to_trend, {
                                    'api': self.api}
                                )
-        menu.add_function_item("Update price for a card",
+        menu.add_function_item("Update price for a product",
                                self.update_product_to_trend, {'api': self.api}
                                )
-        menu.add_function_item("List competition for a card",
+        menu.add_function_item("List competition for a product",
                                self.list_competition_for_product, {
                                    'api': self.api}
                                )
@@ -137,7 +137,7 @@ class PyMkmApp:
         ''' This function updates one product in the user's stock to TREND. '''
         self.report("update product price to trend")
 
-        search_string = PyMkmHelper.prompt_string('Search card name')
+        search_string = PyMkmHelper.prompt_string('Search product name')
 
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -148,8 +148,12 @@ class PyMkmApp:
             article = self.select_from_list_of_articles(articles)
         else:
             article = articles[0]
-            print('Found: {} [{}].'.format(article['product']
-                                           ['enName'], article['product']['expansion']))
+            found_string = f"Found: {article['product']['enName']}"
+            if article['product'].get('expansion'):
+                found_string += f"[{article['product'].get('expansion')}]."
+            else:
+                found_string += '.'
+            print(found_string)
 
         undercut_local_market = PyMkmHelper.prompt_bool(
             'Try to undercut local market? (slower, more requests)')
@@ -178,9 +182,9 @@ class PyMkmApp:
     @api_wrapper
     def list_competition_for_product(self, api):
         self.report("list competition for product")
-        print('Note: does not support playsets (yet).')
+        print('Note: does not support playsets, booster displays etc (yet).')
 
-        search_string = PyMkmHelper.prompt_string('Search card name')
+        search_string = PyMkmHelper.prompt_string('Search product name')
         is_foil = PyMkmHelper.prompt_bool("Foil?")
 
         result = api.find_product(search_string, **{
@@ -620,7 +624,7 @@ class PyMkmApp:
 
             new_price = self.get_price_for_product(
                     article['idProduct'],
-                    article['product']['rarity'],
+                    article['product'].get('rarity'),
                     article.get('isFoil', False),
                     article.get('isPlayset'),
                     language_id=article['language']['idLanguage'],
@@ -631,7 +635,7 @@ class PyMkmApp:
                 if price_diff != 0:
                     return {
                         "name": article['product']['enName'],
-                        "foil": foil,
+                        "foil": article.get('isFoil', False),
                         "playset": article.get('isPlayset'),
                         "old_price": article['price'],
                         "price": new_price,
@@ -642,6 +646,9 @@ class PyMkmApp:
 
     def get_rounding_limit_for_rarity(self, rarity):
         rounding_limit = float(self.config['price_limit_by_rarity']['default'])
+        if not rarity:
+            return rounding_limit
+
         try:
             rounding_limit = float(
                 self.config['price_limit_by_rarity'][rarity.lower()])
