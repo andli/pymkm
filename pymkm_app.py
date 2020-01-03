@@ -264,21 +264,22 @@ class PyMkmApp:
                             market_price = p['product']['priceGuide']['TRENDFOIL']
                         else:
                             market_price = p['product']['priceGuide']['TREND']
-                        price_diff = price - market_price
-                        percent_deal = round(-100 * (price_diff / market_price))
-                        if price_diff < -1 or percent_deal >= 10:
-                            table_data.append([
-                                name,
-                                expansion_name,
-                                condition,
-                                language,
-                                u'\u2713' if foil else '',
-                                u'\u2713' if playset else '',
-                                price,
-                                market_price,
-                                price_diff,
-                                percent_deal
-                            ])
+                        if market_price > 0:
+                            price_diff = price - market_price
+                            percent_deal = round(-100 * (price_diff / market_price))
+                            if price_diff < -1 or percent_deal >= 10:
+                                table_data.append([
+                                    name,
+                                    expansion_name,
+                                    condition,
+                                    language,
+                                    u'\u2713' if foil else '',
+                                    u'\u2713' if playset else '',
+                                    price,
+                                    market_price,
+                                    price_diff,
+                                    percent_deal
+                                ])
 
                         index += 1
                         bar.update(index)
