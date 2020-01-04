@@ -132,7 +132,8 @@ class PyMkmApi:
         if language_string in self.languages:
             return self.languages.index(language_string) + 1
         else:
-            return None
+            logging.debug(">>> Configuration error, review config file.")
+            raise Exception("Configuration error (search_filters, language).")
 
     @staticmethod
     def __chunks(l, n):

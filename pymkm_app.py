@@ -240,7 +240,7 @@ class PyMkmApp:
                 if language_filter_string:
                     language_filter_code = api.get_language_code_from_string(language_filter_string)
                     if language_filter_code:
-                        filtered_articles = [x for x in result if x.get('language').get('idLanguage') == language_filter_code]
+                        filtered_articles = [x for x in filtered_articles if x.get('language').get('idLanguage') == language_filter_code]
 
                 sorted_articles = sorted(
                     filtered_articles, key=lambda x: x['price'], reverse=True)
@@ -248,7 +248,7 @@ class PyMkmApp:
                     f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria.")
                 num_searches = int(PyMkmHelper.prompt_string(
                     f'Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})'))
-                if num_searches > 1 and num_searches <= len(sorted_articles):
+                if num_searches >= 1 and num_searches <= len(sorted_articles):
                     table_data = []
 
                     index = 0
