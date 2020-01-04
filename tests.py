@@ -126,6 +126,9 @@ Dragon Breath,Scourge,1,Foil,French"""
                     "uncommon": "0.25",
                     "rare": "0.1337",
                     "mythic": "0.25"
+                },
+                "search_filters": {
+                    "language": ""
                 }
             }
             """
