@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.4.4"
+__version__ = "1.4.5"
 __license__ = "MIT"
 
 import csv
@@ -230,10 +230,17 @@ class PyMkmApp:
         else:
 
             if (result):
-                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
                 filtered_articles = result
+                # condition
+                ### [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
                 # price > 1
                 filtered_articles = [x for x in result if x.get('price') > 1]
+                # language from configured filter
+                language_filter_string = self.config['search_filters']['language']
+                if language_filter_string:
+                    language_filter_code = api.get_language_code_from_string(language_filter_string)
+                    if language_filter_code:
+                        filtered_articles = [x for x in result if x.get('language').get('idLanguage') == language_filter_code]
 
                 sorted_articles = sorted(
                     filtered_articles, key=lambda x: x['price'], reverse=True)

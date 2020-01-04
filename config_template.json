@@ -10,5 +10,7 @@
     "rare": "0.25",
     "mythic": "0.25",
     "time shifted": "0.25"
+  },
+  "search_filters": {
   }
 }

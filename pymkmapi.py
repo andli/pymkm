@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.4.4"
+__version__ = "1.4.5"
 __license__ = "MIT"
 
 import sys
@@ -127,6 +127,12 @@ class PyMkmApi:
         except KeyError as err:
             logging.debug(">>> Header error finding content-range")
         return max_items
+
+    def get_language_code_from_string(self, language_string):
+        if language_string in self.languages:
+            return self.languages.index(language_string) + 1
+        else:
+            return None
 
     @staticmethod
     def __chunks(l, n):
