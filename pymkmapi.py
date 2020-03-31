@@ -18,24 +18,24 @@ from requests import ConnectionError
 
 
 def api_wrapper(func):
-
     def wrapper(*arg, **kwargs):
         logging.debug(f">> Entering {func.__name__}")
 
         return_value = func(*arg, **kwargs)
         if 'api' in kwargs:
             api = kwargs['api']
-            if (int(api.requests_max) > 0):
+            if int(api.requests_max) > 0:
                 print('\n>> Cardmarket.com requests used today: {}/{}\n'.format(
                     api.requests_count, api.requests_max))
         logging.debug(">> Exited {}".format(func.__name__))
         return return_value
+
     return wrapper
 
 
 class NoResultsError(Exception):
     def __init__(self, message, errors=None):
-        if (message == None):
+        if message is None:
             message = 'No results found.'
         super().__init__(message)
 
@@ -57,7 +57,7 @@ class PyMkmApi:
     requests_count = 0
 
     def __init__(self, config=None):
-        if (config == None):
+        if config is None:
             logging.debug(">> Loading config file")
             try:
                 self.config = json.load(open('config.json'))
@@ -74,7 +74,7 @@ class PyMkmApi:
             requests.codes.partial_content,
             requests.codes.temporary_redirect,
         )
-        if (response.status_code in handled_codes):
+        if response.status_code in handled_codes:
             try:
                 self.requests_count = response.headers['X-Request-Limit-Count']
                 self.requests_max = response.headers['X-Request-Limit-Max']
@@ -83,22 +83,22 @@ class PyMkmApi:
 
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
-        elif (response.status_code == requests.codes.no_content):
+        elif response.status_code == requests.codes.no_content:
             raise NoResultsError('No results found.')
-        elif (response.status_code == requests.codes.bad_request):
+        elif response.status_code == requests.codes.bad_request:
             print(json.loads(response.text)['mkm_error_description'])
             return False
-        elif (response.status_code == requests.codes.not_found):
+        elif response.status_code == requests.codes.not_found:
             return False
         else:
             raise requests.exceptions.ConnectionError(response)
 
     def __setup_service(self, url, provided_oauth):
         oauth = None
-        if (provided_oauth != None):
+        if provided_oauth is not None:
             return provided_oauth
         else:
-            if (self.config != None):
+            if self.config is not None:
                 oauth = OAuth1Session(
                     self.config['app_token'],
                     client_secret=self.config['app_secret'],
@@ -107,7 +107,7 @@ class PyMkmApi:
                     realm=url
                 )
 
-                if (oauth == None):
+                if oauth is None:
                     raise ConnectionError("Failed to establish OAuth session.")
                 else:
                     return oauth
@@ -133,7 +133,7 @@ class PyMkmApi:
         # For item i in a range that is a length of l,
         for i in range(0, len(l), n):
             # Create an index range for l of n items:
-            yield l[i:i+n]
+            yield l[i:i + n]
 
     def get_games(self, provided_oauth=None):
         url = '{}/games'.format(self.base_url)
@@ -150,11 +150,11 @@ class PyMkmApi:
             r = mkm_oauth.get(url, allow_redirects=False)
             self.__handle_response(r)
             return r
-        #except requests.exceptions.ConnectionError as err:
+        # except requests.exceptions.ConnectionError as err:
         except Exception as err:
             print(f'\n>> Cardmarket connection error: {err}')
             logging.error(err)
-            #sys.exit(0)
+            # sys.exit(0)
 
     def get_expansions(self, game_id, provided_oauth=None):
         url = '{}/games/{}/expansions'.format(self.base_url, str(game_id))
@@ -163,7 +163,7 @@ class PyMkmApi:
         logging.debug(">> Getting all expansions for game id " + str(game_id))
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
 
     def get_cards_in_expansion(self, expansion_id, provided_oauth=None):
@@ -175,7 +175,7 @@ class PyMkmApi:
             ">> Getting all cards for expansion id: " + str(expansion_id))
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
 
     def get_product(self, product_id, provided_oauth=None):
@@ -185,18 +185,18 @@ class PyMkmApi:
         logging.debug(">> Getting data for product id " + str(product_id))
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
-        
+
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
-        #https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
+        # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
         url = f'{self.base_url}/metaproducts/{str(metaproduct_id)}'
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         logging.debug(">> Getting data for metaproduct id " + str(metaproduct_id))
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
 
     def get_account(self, provided_oauth=None):
@@ -206,7 +206,7 @@ class PyMkmApi:
         logging.debug(">> Getting account details")
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
 
     def get_articles_in_shoppingcarts(self, provided_oauth=None):
@@ -216,7 +216,7 @@ class PyMkmApi:
         logging.debug(">> Getting articles in other users' shopping carts")
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r):
+        if r:
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, provided_oauth=None):
@@ -230,7 +230,7 @@ class PyMkmApi:
         # cancelOrders
         # relistItems
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def set_display_language(self, display_langauge=1, provided_oauth=None):
@@ -242,38 +242,38 @@ class PyMkmApi:
                       str(display_langauge))
         r = mkm_oauth.put(url, params={'idDisplayLanguage': display_langauge})
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def get_stock(self, start=None, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = '{}/stock'.format(self.base_url)
-        if (start):
+        if start:
             url = url + '/' + str(start)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         logging.debug(">> Getting stock")
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r.status_code == requests.codes.temporary_redirect):
+        if r.status_code == requests.codes.temporary_redirect:
             return self.get_stock(1)
 
-        if (start is not None):
+        if start is not None:
             max_items = self.__get_max_items_from_header(r)
 
-            if (start > max_items or r.status_code == requests.codes.no_content):
+            if start > max_items or r.status_code == requests.codes.no_content:
                 # terminate recursion
                 """ NOTE: funny thing is, even though the API talks about it,
                 it never responds with 204 (no_content). Therefore we check for
                 exceeding content-range instead."""
                 return []
 
-            if (r.status_code == requests.codes.partial_content):
-                #print('> ' + r.headers['Content-Range'])
+            if r.status_code == requests.codes.partial_content:
+                # print('> ' + r.headers['Content-Range'])
                 # print('# articles in response: ' + str(len(r.json()['article'])))
-                return r.json()['article'] + self.get_stock(start+100)
+                return r.json()['article'] + self.get_stock(start + 100)
 
-        if (r):
+        if r:
             return r.json()['article']
 
     def add_stock(self, payload=None, provided_oauth=None):
@@ -289,7 +289,7 @@ class PyMkmApi:
             r = mkm_oauth.post(url, data=xml_payload)
 
         # TODO: Only considers the last response.
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def set_stock(self, payload=None, provided_oauth=None):
@@ -306,7 +306,7 @@ class PyMkmApi:
             r = mkm_oauth.put(url, data=xml_payload)
 
         # TODO: Only considers the last response.
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def delete_stock(self, payload=None, provided_oauth=None):
@@ -322,7 +322,7 @@ class PyMkmApi:
             r = mkm_oauth.delete(url, data=xml_payload)
 
         # TODO: Only considers the last response.
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def get_articles(self, product_id, start=0, provided_oauth=None, **kwargs):
@@ -334,27 +334,27 @@ class PyMkmApi:
         logging.debug(">> Getting articles on product: " + str(product_id))
         params = kwargs
 
-        if (start > 0):
+        if start > 0:
             params.update({'start': start, 'maxResults': INCREMENT})
 
         r = mkm_oauth.get(url, params=params)
 
         max_items = 0
-        if (r.status_code == requests.codes.partial_content):
+        if r.status_code == requests.codes.partial_content:
             max_items = self.__get_max_items_from_header(r)
             logging.debug('> Content-Range header: ' +
                           r.headers['Content-Range'])
             logging.debug('> # articles in response: ' +
                           str(len(r.json()['article'])))
-            if (start + INCREMENT >= max_items and self.__handle_response(r)):
+            if start + INCREMENT >= max_items and self.__handle_response(r):
                 return r.json()['article']
             else:
                 next_start = start + INCREMENT
                 params.update({'start': next_start, 'maxResults': INCREMENT})
                 return r.json()['article'] + self.get_articles(product_id, **kwargs)
-        elif (r.status_code == requests.codes.no_content):
+        elif r.status_code == requests.codes.no_content:
             raise NoResultsError('No products found in stock.')
-        elif (r.status_code == requests.codes.ok):
+        elif r.status_code == requests.codes.ok:
             return r.json()['article']
         else:
             raise ConnectionError(r)
@@ -373,7 +373,7 @@ class PyMkmApi:
 
         r = mkm_oauth.get(url, params=params)
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             try:
                 return r.json()
             except json.decoder.JSONDecodeError:
@@ -390,9 +390,9 @@ class PyMkmApi:
 
         r = self.mkm_request(mkm_oauth, url)
 
-        if (r.status_code == requests.codes.no_content):
+        if r.status_code == requests.codes.no_content:
             raise NoResultsError('No articles found.')
-        elif (r.status_code == requests.codes.ok):
+        elif r.status_code == requests.codes.ok:
             return r.json()['article']
         else:
             raise ConnectionError(r)
@@ -406,29 +406,29 @@ class PyMkmApi:
         logging.debug(">> Getting articles from user: " + str(user_id))
         params = kwargs
 
-        if (start > 0):
+        if start > 0:
             params.update({'start': start, 'maxResults': INCREMENT})
 
         r = mkm_oauth.get(url, params=params)
 
         max_items = 0
-        if (r.status_code == requests.codes.partial_content):
+        if r.status_code == requests.codes.partial_content:
             max_items = self.__get_max_items_from_header(r)
             logging.debug('> Content-Range header: ' +
                           r.headers['Content-Range'])
             logging.debug('> # articles in response: ' +
                           str(len(r.json()['article'])))
-            if (start + INCREMENT >= max_items and self.__handle_response(r)):
+            if start + INCREMENT >= max_items and self.__handle_response(r):
                 return r.json()['article']
             else:
                 next_start = start + INCREMENT
                 params.update({'start': next_start, 'maxResults': INCREMENT})
                 return r.json()['article'] + self.find_user_articles(user_id, game_id, **kwargs)
-        elif (r.status_code == requests.codes.no_content):
+        elif r.status_code == requests.codes.no_content:
             raise NoResultsError('No products found in stock.')
-        elif (r.status_code == requests.codes.ok):
+        elif r.status_code == requests.codes.ok:
             return r.json()['article']
-        elif (r.status_code == requests.codes.bad_request):
+        elif r.status_code == requests.codes.bad_request:
             raise NoResultsError(r.text)
         else:
             raise ConnectionError(r)
@@ -443,7 +443,7 @@ class PyMkmApi:
 
         r = mkm_oauth.get(url)
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
     def get_wantslist_items(self, idWantsList, provided_oauth=None, **kwargs):
@@ -456,10 +456,9 @@ class PyMkmApi:
 
         r = mkm_oauth.get(url)
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
 
-    
     def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
 
@@ -472,22 +471,22 @@ class PyMkmApi:
 
         r = mkm_oauth.get(url)
 
-        if (r.status_code == requests.codes.temporary_redirect):
+        if r.status_code == requests.codes.temporary_redirect:
             return self.get_orders(actor, state, start=1)
 
-        if (start is not None):
+        if start is not None:
             max_items = self.__get_max_items_from_header(r)
 
-            if (start > max_items or r.status_code == requests.codes.no_content):
+            if start > max_items or r.status_code == requests.codes.no_content:
                 # terminate recursion
                 """ NOTE: funny thing is, even though the API talks about it,
                 it never responds with 204 (no_content). Therefore we check for
                 exceeding content-range instead."""
                 return []
 
-            if (r.status_code == requests.codes.partial_content):
-                #print('> ' + r.headers['Content-Range'])
-                return r.json()['order'] + self.get_orders(actor, state, start+100)
+            if r.status_code == requests.codes.partial_content:
+                # print('> ' + r.headers['Content-Range'])
+                return r.json()['order'] + self.get_orders(actor, state, start + 100)
 
-        if (self.__handle_response(r)):
+        if self.__handle_response(r):
             return r.json()
