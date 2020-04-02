@@ -9,7 +9,6 @@ __license__ = "MIT"
 
 import math
 import statistics
-import sys
 from distutils.util import strtobool
 
 
@@ -59,7 +58,6 @@ class PyMkmHelper:
         except ValueError:
             print("Please answer with y/n")
             return PyMkmHelper.prompt_bool(prompt_string)
-        
 
     @staticmethod
     def prompt_string(prompt_string):

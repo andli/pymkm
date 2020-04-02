@@ -10,19 +10,16 @@ __license__ = "MIT"
 import csv
 import json
 import logging
-import math
-import os.path
 import pprint
-import sys
-from pkg_resources import parse_version
 
 import progressbar
-import tabulate as tb
 import requests
+import tabulate as tb
+from pkg_resources import parse_version
 
+from micro_menu import *
 from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
-from micro_menu import *
 
 ALLOW_REPORTING = True
 
@@ -31,7 +28,7 @@ class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
 
     def __init__(self, config=None):
-        if (config == None):
+        if config is None:
             logging.debug(">> Loading config file")
             try:
                 self.config = json.load(open('config.json'))
@@ -67,7 +64,7 @@ class PyMkmApp:
             latest_version = r.json()['tag_name']
         except Exception as err:
             pass
-        if (parse_version(__version__) < parse_version(latest_version)):
+        if parse_version(__version__) < parse_version(latest_version):
             message = f"Go to Github and download version {latest_version}! It's better!"
         if hasattr(self, 'DEV_MODE') and self.DEV_MODE:
             message = "dev mode"
@@ -123,7 +120,7 @@ class PyMkmApp:
 
             self.display_price_changes_table(uploadable_json)
 
-            if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
+            if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                 print('Updating prices...')
                 api.set_stock(uploadable_json)
                 print('Prices updated.')
@@ -134,7 +131,7 @@ class PyMkmApp:
 
     @api_wrapper
     def update_product_to_trend(self, api):
-        ''' This function updates one product in the user's stock to TREND. '''
+        """ This function updates one product in the user's stock to TREND. """
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string('Search product name')
@@ -169,7 +166,7 @@ class PyMkmApp:
                               for item in [r]), 2))
             ))
 
-            if PyMkmHelper.prompt_bool("Do you want to update these prices?") == True:
+            if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                 # Update articles on MKM
                 print('Updating prices...')
                 api.set_stock([r])
@@ -195,7 +192,7 @@ class PyMkmApp:
             # TODO: Add language support
         })
 
-        if (result):
+        if result:
             products = result['product']
 
             stock_list_products = [x['idProduct']
@@ -229,7 +226,8 @@ class PyMkmApp:
             print(err.mkm_msg())
         else:
 
-            if (result):
+            if result:
+                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
                 filtered_articles = result
                 # condition
                 ### [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
@@ -248,7 +246,7 @@ class PyMkmApp:
                     f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria.")
                 num_searches = int(PyMkmHelper.prompt_string(
                     f'Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})'))
-                if num_searches >= 1 and num_searches <= len(sorted_articles):
+                if 1 < num_searches <= len(sorted_articles):
                     table_data = []
 
                     index = 0
@@ -358,7 +356,7 @@ class PyMkmApp:
         if wantslists_lists and received_orders:
             purchased_product_ids = []
             purchased_products = []
-            for order in received_orders: #TODO: foil in purchase removes non-foil in wants
+            for order in received_orders:  # TODO: foil in purchase removes non-foil in wants
                 purchased_product_ids.extend(
                     [i['idProduct'] for i in order.get('article')])
                 purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
@@ -367,14 +365,14 @@ class PyMkmApp:
             purchased_products = sorted(
                 purchased_products, key=lambda t: t['date'], reverse=True)
 
-            matches = [] #TODO: add a progress bar? double?
+            matches = []  # TODO: add a progress bar? double?
             for key, articles in wantslists_lists.items():
                 for article in articles:
                     a_type = article.get('type')
                     a_foil = article.get('isFoil') == True
                     product_matches = []
 
-                    if (a_type == 'metaproduct'):
+                    if a_type == 'metaproduct':
                         metaproduct = api.get_metaproduct(article.get('idMetaproduct'))
                         metaproduct_product_ids = [i['idProduct'] for i in metaproduct['product']]
                         product_matches = [i for i in purchased_products if i['id']
@@ -436,7 +434,7 @@ class PyMkmApp:
 
         stock_list = self.get_stock_as_array(api=self.api)
         if PyMkmHelper.prompt_bool(
-                "Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))) == True:
+                "Do you REALLY want to clear your entire stock ({} items)?".format(len(stock_list))):
 
             # for article in stock_list:
             # article['count'] = 0
@@ -466,7 +464,7 @@ class PyMkmApp:
                 row_array = row.split(',')
                 if index > 0:
                     (name, set_name, count, foil, language, *other) = row_array
-                    if (all(v is not '' for v in [name, set_name, count])):
+                    if all(v is not '' for v in [name, set_name, count]):
                         try:
                             possible_products = api.find_product(name)[
                                 'product']
@@ -631,13 +629,13 @@ class PyMkmApp:
         if not article.get('isSigned'):
 
             new_price = self.get_price_for_product(
-                    article['idProduct'],
-                    article['product'].get('rarity'),
-                    article.get('isFoil', False),
-                    article.get('isPlayset'),
-                    language_id=article['language']['idLanguage'],
-                    undercut_local_market=undercut_local_market,
-                    api=self.api)
+                article['idProduct'],
+                article['product'].get('rarity'),
+                article.get('isFoil', False),
+                article.get('isPlayset'),
+                language_id=article['language']['idLanguage'],
+                undercut_local_market=undercut_local_market,
+                api=self.api)
             if new_price:
                 price_diff = new_price - article['price']
                 if price_diff != 0:
@@ -700,7 +698,7 @@ class PyMkmApp:
                     new_price = PyMkmHelper.round_up_to_limit(
                         rounding_limit, trend_price)
 
-                if new_price == None:
+                if new_price is None:
                     raise ValueError('No price found!')
                 else:
                     if is_playset:

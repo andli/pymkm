@@ -10,9 +10,11 @@ __license__ = "MIT"
 
 from pymkm_app import PyMkmApp
 
+
 def main():
     app = PyMkmApp()
     app.start()
+
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
