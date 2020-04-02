@@ -1,3 +1,5 @@
+requests
+progressbar
 requests_oauthlib
 tabulate
 dicttoxml
