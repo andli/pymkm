@@ -55,10 +55,12 @@ class PyMkmApp:
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
+        uuid = self.config['uuid']
+
         if ALLOW_REPORTING and not self.DEV_MODE:
             try:
                 r = requests.post('https://andli-stats-server.herokuapp.com/pymkm',
-                                  json={"command": command, "version": __version__})
+                                  json={"command": command, "uuid": uuid, "version": __version__})
             except Exception as err:
                 pass
 
