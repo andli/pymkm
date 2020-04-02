@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - New language search filter configuration option.
-
+- PEP8 conformance (thank you @caliendojulien for the PR).
+- 
 
 ## [1.4.4]
 ### Added

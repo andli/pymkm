@@ -89,7 +89,7 @@ class PyMkmApp:
                                self.show_top_expensive_articles_in_stock, {
                                    'num_articles': 20, 'api': self.api}
                                )
-        menu.add_function_item("Clean wantslists (BETA, non-destructive)",
+        menu.add_function_item("Wantslists cleanup suggestions",
                                self.clean_purchased_from_wantslists, {
                                    'api': self.api}
                                )
