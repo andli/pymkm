@@ -651,6 +651,8 @@ class PyMkmApp:
         bar.finish()
 
         print('Total stock value: {}'.format(str(round(total_price, 2))))
+        if len(stock_list) != len(filtered_stock_list):
+            print(f'Note: {len(stock_list) - len(filtered_stock_list)} items filtered out because of sticky prices.')
         return result_json
 
     def get_article_with_updated_price(self, article, undercut_local_market=False, api=None):
