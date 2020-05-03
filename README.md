@@ -3,6 +3,7 @@
 See the [Changelog](CHANGELOG.md) for what's new.
 
 # 📙 PyMKM
+
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
 The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
@@ -16,14 +17,21 @@ The app also keeps track of how many API requests your have left each day.
 
 ![Screengrab](https://raw.githubusercontent.com/andli/pymkm/master/screengrab.png)
 
+## 🔓 Locking prices
+
+Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
+
 ## 📄 CSV importing
+
 If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.
 
 Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo). The file has to follow this format (including the header row):
+
 ```
 Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French
 ```
+
 Remove all quotation marks and extra commas in card names.
 
 Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
@@ -34,13 +42,15 @@ This feature allows you to get a better view of how you should price individual 
 
 ![Competition](https://raw.githubusercontent.com/andli/pymkm/master/competition.png)
 
-## 🔨 How?
+## 🔨 How
+
 1. Install requirements using `pip install -r requirements.txt`
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
 1. Run `main.py`.
 1. Profit.
 
 ## 📈 Price calculation
+
 The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
 Cardmarket does not however supply trend prices for foils, so my algorithm is this:
 
@@ -52,7 +62,9 @@ _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressive
 1. Never go below the rounding limit for foils
 
 ## ✔️ Supported calls
+
 These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
+
 * `get_games`
 * `get_expansions`
 * `get_cards_in_expansion`
