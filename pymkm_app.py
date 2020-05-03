@@ -37,7 +37,7 @@ class PyMkmApp:
                 logging.error(
                     "You must copy config_template.json to config.json and populate the fields.")
                 sys.exit(0)
-            
+
             # if no UUID is present, generate one and add it to the file
             if 'uuid' not in self.config:
                 self.config['uuid'] = str(uuid.uuid4())
@@ -145,9 +145,10 @@ class PyMkmApp:
 
         search_string = PyMkmHelper.prompt_string('Search product name')
         sticky_price_char = self.config['sticky_price_char']
-        filtered = lambda stock_item: stock_item['comments'].startswith(sticky_price_char)
+        def filtered(stock_item): return stock_item['comments'].startswith(
+            sticky_price_char)
         # if we find the sticky price marker, filter out articles
-        
+
         filtered_articles = []
         try:
             articles = api.find_stock_article(search_string, 1)
@@ -156,7 +157,7 @@ class PyMkmApp:
             print(err)
 
         if not filtered_articles:
-            print('No articles found')
+            print(f'{len(articles)} articles found, no editable prices.')
         else:
             if len(filtered_articles) > 1:
                 article = self.select_from_list_of_articles(filtered_articles)
@@ -165,6 +166,10 @@ class PyMkmApp:
                 found_string = f"Found: {article['product']['enName']}"
                 if article['product'].get('expansion'):
                     found_string += f"[{article['product'].get('expansion')}]."
+                if article['isFoil']:
+                    found_string += f"[foil: {article['isFoil']}]."
+                if article['comments']:
+                    found_string += f"[comment: {article['comments']}]."
                 else:
                     found_string += '.'
                 print(found_string)
@@ -180,7 +185,7 @@ class PyMkmApp:
 
                 print('\nTotal price difference: {}.'.format(
                     str(round(sum(item['price_diff'] * item['count']
-                                for item in [r]), 2))
+                                  for item in [r]), 2))
                 ))
 
                 if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
@@ -247,15 +252,17 @@ class PyMkmApp:
                 # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
                 filtered_articles = result
                 # condition
-                ### [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
+                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
                 # price > 1
                 filtered_articles = [x for x in result if x.get('price') > 1]
                 # language from configured filter
                 language_filter_string = self.config['search_filters']['language']
                 if language_filter_string:
-                    language_filter_code = api.get_language_code_from_string(language_filter_string)
+                    language_filter_code = api.get_language_code_from_string(
+                        language_filter_string)
                     if language_filter_code:
-                        filtered_articles = [x for x in filtered_articles if x.get('language').get('idLanguage') == language_filter_code]
+                        filtered_articles = [x for x in filtered_articles if x.get(
+                            'language').get('idLanguage') == language_filter_code]
 
                 sorted_articles = sorted(
                     filtered_articles, key=lambda x: x['price'], reverse=True)
@@ -288,7 +295,8 @@ class PyMkmApp:
                             market_price = p['product']['priceGuide']['TREND']
                         if market_price > 0:
                             price_diff = price - market_price
-                            percent_deal = round(-100 * (price_diff / market_price))
+                            percent_deal = round(-100 *
+                                                 (price_diff / market_price))
                             if price_diff < -1 or percent_deal >= 10:
                                 table_data.append([
                                     name,
@@ -378,7 +386,7 @@ class PyMkmApp:
                     [i['idProduct'] for i in order.get('article')])
                 purchased_products.extend({'id': i['idProduct'], 'foil': i.get(
                     'isFoil'), 'count': i['count'], 'date': order['state']['dateReceived']} for i in
-                                          order.get('article'))
+                    order.get('article'))
             purchased_products = sorted(
                 purchased_products, key=lambda t: t['date'], reverse=True)
 
@@ -390,8 +398,10 @@ class PyMkmApp:
                     product_matches = []
 
                     if a_type == 'metaproduct':
-                        metaproduct = api.get_metaproduct(article.get('idMetaproduct'))
-                        metaproduct_product_ids = [i['idProduct'] for i in metaproduct['product']]
+                        metaproduct = api.get_metaproduct(
+                            article.get('idMetaproduct'))
+                        metaproduct_product_ids = [
+                            i['idProduct'] for i in metaproduct['product']]
                         product_matches = [i for i in purchased_products if i['id']
                                            in metaproduct_product_ids and i['foil'] == a_foil]
                     else:
@@ -552,8 +562,7 @@ class PyMkmApp:
         index = 1
         for article in articles:
             product = article['product']
-            print('{}: {} [{}] {}'.format(index, product['enName'],
-                                          product['expansion'], product['rarity']))
+            print(f'{index}: {product["enName"]}[{product["expansion"]}], foil: {article["isFoil"]}, comment: {article["comments"]}')
             index += 1
         choice = int(input("Choose card: "))
         return articles[choice - 1]
@@ -620,7 +629,8 @@ class PyMkmApp:
         # HACK: filter out a foil product
         sticky_price_char = self.config['sticky_price_char']
         # if we find the sticky price marker, filter out articles
-        filtered = lambda stock_item: stock_item['comments'].startswith(sticky_price_char)
+        def filtered(stock_item): return stock_item['comments'].startswith(
+            sticky_price_char)
         filtered_stock_list = [x for x in stock_list if not filtered(x)]
 
         result_json = []
