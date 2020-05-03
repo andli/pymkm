@@ -13,5 +13,6 @@
   },
   "search_filters": {
     "language": ""
-  }
+  },
+  "sticky_price_char": "!"
 }

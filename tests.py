@@ -19,11 +19,11 @@ from pymkmapi import PyMkmApi
 class TestCommon(unittest.TestCase):
 
     fake_stock = [
-        {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': 'false', 'isSigned': 'true', 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
+        {'count': 1, 'idArticle': 410480091, 'idProduct': 1692, 'isFoil': 'false', 'comments': '', 'isSigned': 'true', 'language': {'idLanguage': 7, 'languageName': 'Japanese'}, 'price': 0.75, 'product': {
             'enName': 'Words of Worship', 'expIcon': '39', 'expansion': 'Onslaught', 'idGame': 1, 'image': './img/items/1/ONS/1692.jpg', 'locName': 'Words of Worship', 'nr': '61', 'rarity': 'Rare'}},
-        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': 'true', 'isSigned': 'true', 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
+        {'count': 1, 'idArticle': 412259385, 'idProduct': 9145, 'isFoil': 'true', 'comments': '! poop', 'isSigned': 'true', 'language': {'idLanguage': 4, 'languageName': 'Spanish'}, 'price': 0.25, 'product': {
             'enName': 'Mulch words', 'expIcon': '18', 'expansion': 'Stronghold', 'idGame': 1, 'image': './img/items/1/STH/9145.jpg', 'locName': 'Estiércol y paja', 'nr': None, 'rarity': 'Common'}},
-        {'count': 1, 'idArticle': 407911824, 'idProduct': 1079, 'isFoil': 'false', 'isSigned': 'false', 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
+        {'count': 1, 'idArticle': 407911824, 'idProduct': 1079, 'isFoil': 'false', 'comments': '', 'isSigned': 'false', 'language': {'idLanguage': 1, 'languageName': 'English'}, 'price': 0.5, 'product': {
             'enName': 'Everflowing Chalice', 'expIcon': '164', 'expansion': 'Duel Decks: Elspeth... Tezzeret', 'idGame': 1, 'image': './img/items/1/DDF/242440.jpg', 'locName': 'Everflowing Chalice', 'nr': '60', 'rarity': 'Uncommon'}}
     ]
 
@@ -129,7 +129,8 @@ Dragon Breath,Scourge,1,Foil,French"""
                 },
                 "search_filters": {
                     "language": ""
-                }
+                },
+                "sticky_price_char": "!"
             }
             """
         )

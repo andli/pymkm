@@ -144,46 +144,54 @@ class PyMkmApp:
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string('Search product name')
-
+        sticky_price_char = self.config['sticky_price_char']
+        filtered = lambda stock_item: stock_item['comments'].startswith(sticky_price_char)
+        # if we find the sticky price marker, filter out articles
+        
+        filtered_articles = []
         try:
             articles = api.find_stock_article(search_string, 1)
+            filtered_articles = [x for x in articles if not filtered(x)]
         except Exception as err:
             print(err)
 
-        if len(articles) > 1:
-            article = self.select_from_list_of_articles(articles)
+        if not filtered_articles:
+            print('No articles found')
         else:
-            article = articles[0]
-            found_string = f"Found: {article['product']['enName']}"
-            if article['product'].get('expansion'):
-                found_string += f"[{article['product'].get('expansion')}]."
+            if len(filtered_articles) > 1:
+                article = self.select_from_list_of_articles(filtered_articles)
             else:
-                found_string += '.'
-            print(found_string)
+                article = filtered_articles[0]
+                found_string = f"Found: {article['product']['enName']}"
+                if article['product'].get('expansion'):
+                    found_string += f"[{article['product'].get('expansion')}]."
+                else:
+                    found_string += '.'
+                print(found_string)
 
-        undercut_local_market = PyMkmHelper.prompt_bool(
-            'Try to undercut local market? (slower, more requests)')
+            undercut_local_market = PyMkmHelper.prompt_bool(
+                'Try to undercut local market? (slower, more requests)')
 
-        r = self.get_article_with_updated_price(
-            article, undercut_local_market, api=self.api)
+            r = self.get_article_with_updated_price(
+                article, undercut_local_market, api=self.api)
 
-        if r:
-            self.draw_price_changes_table([r])
+            if r:
+                self.draw_price_changes_table([r])
 
-            print('\nTotal price difference: {}.'.format(
-                str(round(sum(item['price_diff'] * item['count']
-                              for item in [r]), 2))
-            ))
+                print('\nTotal price difference: {}.'.format(
+                    str(round(sum(item['price_diff'] * item['count']
+                                for item in [r]), 2))
+                ))
 
-            if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
-                # Update articles on MKM
-                print('Updating prices...')
-                api.set_stock([r])
-                print('Price updated.')
+                if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
+                    # Update articles on MKM
+                    print('Updating prices...')
+                    api.set_stock([r])
+                    print('Price updated.')
+                else:
+                    print('Prices not updated.')
             else:
-                print('Prices not updated.')
-        else:
-            print('No prices to update.')
+                print('No prices to update.')
 
     @api_wrapper
     def list_competition_for_product(self, api):
@@ -610,14 +618,17 @@ class PyMkmApp:
     def calculate_new_prices_for_stock(self, undercut_local_market, api):
         stock_list = self.get_stock_as_array(api=self.api)
         # HACK: filter out a foil product
-        # stock_list = [x for x in stock_list if x['isFoil']]
+        sticky_price_char = self.config['sticky_price_char']
+        # if we find the sticky price marker, filter out articles
+        filtered = lambda stock_item: stock_item['comments'].startswith(sticky_price_char)
+        filtered_stock_list = [x for x in stock_list if not filtered(x)]
 
         result_json = []
         total_price = 0
         index = 0
 
-        bar = progressbar.ProgressBar(max_value=len(stock_list))
-        for article in stock_list:
+        bar = progressbar.ProgressBar(max_value=len(filtered_stock_list))
+        for article in filtered_stock_list:
             updated_article = self.get_article_with_updated_price(
                 article, undercut_local_market, api=self.api)
             if updated_article:
@@ -758,7 +769,7 @@ class PyMkmApp:
             print('No response from API.')
             sys.exit(0)
         else:
-            keys = ['idArticle', 'idProduct', 'product', 'count',
+            keys = ['idArticle', 'idProduct', 'product', 'count', 'comments',
                     'price', 'isFoil', 'isPlayset', 'isSigned', 'language']  # TODO: [language][languageId]
             stock_list = [{x: y for x, y in article.items() if x in keys}
                           for article in d]
