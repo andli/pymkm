@@ -3,4 +3,4 @@ progressbar
 requests_oauthlib
 tabulate
 dicttoxml
-progressbar2
+micromenu

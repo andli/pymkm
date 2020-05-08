@@ -13,12 +13,12 @@ import logging
 import pprint
 import uuid
 
+import micromenu
 import progressbar
 import requests
 import tabulate as tb
 from pkg_resources import parse_version
 
-from micro_menu import *
 from pymkm_helper import PyMkmHelper
 from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 
@@ -77,7 +77,7 @@ class PyMkmApp:
             message = f"Go to Github and download version {latest_version}! It's better!"
         if hasattr(self, 'DEV_MODE') and self.DEV_MODE:
             message = "dev mode"
-        menu = MicroMenu(f"PyMKM {__version__}", message)
+        menu = micromenu.Menu(f"PyMKM {__version__}", message)
 
         menu.add_function_item("Update stock prices",
                                self.update_stock_prices_to_trend, {
