@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 __license__ = "MIT"
 
 import sys
