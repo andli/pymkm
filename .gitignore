@@ -9,3 +9,6 @@ __pycache__/
 config.json
 data.json
 price_changes.json
+
+failed_imports.csv
+list.csv
