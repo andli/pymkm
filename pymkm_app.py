@@ -508,7 +508,7 @@ class PyMkmApp:
                                 language_id = (
                                     1 if language == '' else api.languages.index(language) + 1)
                                 price = self.get_price_for_product(
-                                    product_match[0]['idProduct'], product_match[0]['rarity'], foil,
+                                    product_match[0]['idProduct'], product_match[0]['rarity'], foil, False,
                                     language_id=language_id, api=self.api)
                                 card = {
                                     'idProduct': product_match[0]['idProduct'],
