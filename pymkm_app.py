@@ -604,6 +604,7 @@ class PyMkmApp:
                 row = row.rstrip()
                 row_array = row.split(",")
                 if index > 0:
+                    row_array = [x.strip('"') for x in row_array]
                     (name, set_name, count, foil, language, *other) = row_array
                     if all(v is not "" for v in [name, set_name, count]):
                         try:
