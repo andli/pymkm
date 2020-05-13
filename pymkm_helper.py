@@ -13,7 +13,6 @@ from distutils.util import strtobool
 
 
 class PyMkmHelper:
-
     @staticmethod
     def calculate_average(table, col_no_count, col_no_price):
         flat_array = []
@@ -49,9 +48,9 @@ class PyMkmHelper:
 
     @staticmethod
     def prompt_bool(prompt_string):
-        print('{} [y/N]: '.format(prompt_string))
+        print("{} [y/N]: ".format(prompt_string))
         val = input()
-        if val == '':
+        if val == "":
             return False
         try:
             return strtobool(val)
@@ -61,6 +60,6 @@ class PyMkmHelper:
 
     @staticmethod
     def prompt_string(prompt_string):
-        print('{}: '.format(prompt_string))
+        print("{}: ".format(prompt_string))
         val = input()
         return val
