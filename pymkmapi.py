@@ -397,6 +397,9 @@ class PyMkmApi:
         if "search" not in kwargs:
             params["search"] = search
 
+        if len(search) < 4:
+            params["exact"] = "true"
+
         r = mkm_oauth.get(url, params=params)
 
         if self.__handle_response(r):

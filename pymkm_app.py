@@ -606,7 +606,7 @@ class PyMkmApp:
                 if index > 0:
                     row_array = [x.strip('"') for x in row_array]
                     (name, set_name, count, foil, language, *other) = row_array
-                    if all(v is not "" for v in [name, set_name, count]):
+                    if all(v != "" for v in [name, set_name, count]):
                         try:
                             possible_products = api.find_product(name)["product"]
                         except Exception as err:
@@ -617,6 +617,7 @@ class PyMkmApp:
                                 for x in possible_products
                                 if x["expansionName"] == set_name
                                 and x["categoryName"] == "Magic Single"
+                                and x["enName"] == name
                             ]
                             if len(product_match) == 0:
                                 problem_cards.append(row_array)
