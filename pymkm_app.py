@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.6.1"
+__version__ = "1.6.2"
 __license__ = "MIT"
 
 import csv
@@ -617,7 +617,8 @@ class PyMkmApp:
                                 for x in possible_products
                                 if x["expansionName"] == set_name
                                 and x["categoryName"] == "Magic Single"
-                                and x["enName"] == name
+                                or x["enName"]
+                                == name  # TODO: add filter for flip card / split card names?
                             ]
                             if len(product_match) == 0:
                                 problem_cards.append(row_array)
