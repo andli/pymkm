@@ -61,23 +61,25 @@ _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressive
 1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
 1. Never go below the rounding limit for foils
 
+Base prices and discounts for lower grading can be set in `config.json`.
+
 ## ✔️ Supported calls
 
 These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
 
-* `get_games`
-* `get_expansions`
-* `get_cards_in_expansion`
-* `get_product`
-* `get_account`
-* `get_articles_in_shoppingcarts`
-* `set_vacation_status`
-* `set_display_language`
-* `get_stock`
-* `set_stock`
-* `add_stock`
-* `delete_stock`
-* `get_articles`
-* `find_product`
-* `find_stock_article`
-* `find_user_articles`
+- `get_games`
+- `get_expansions`
+- `get_cards_in_expansion`
+- `get_product`
+- `get_account`
+- `get_articles_in_shoppingcarts`
+- `set_vacation_status`
+- `set_display_language`
+- `get_stock`
+- `set_stock`
+- `add_stock`
+- `delete_stock`
+- `get_articles`
+- `find_product`
+- `find_stock_article`
+- `find_user_articles`

@@ -11,6 +11,15 @@
     "mythic": "0.25",
     "time shifted": "0.25"
   },
+  "discount_per_grade": {
+    "M": "1",
+    "NM": "1",
+    "EX": "1",
+    "GD": "1",
+    "LP": "1",
+    "PL": "1",
+    "PO": "1"
+  },
   "search_filters": {
     "language": ""
   },
