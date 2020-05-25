@@ -702,12 +702,12 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
     def test_round_down_to_limit(self):
         self.assertEqual(self.helper.round_down_to_limit(0.25, 0.99), 0.75)
         self.assertEqual(self.helper.round_down_to_limit(0.25, 1.01), 1)
-        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.1), 0)
+        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.1), 0.25)
 
         self.assertEqual(self.helper.round_down_to_limit(0.1, 0.99), 0.9)
         self.assertEqual(self.helper.round_down_to_limit(0.01, 0.011), 0.01)
         self.assertEqual(self.helper.round_down_to_limit(0.01, 1), 1)
-        self.assertEqual(self.helper.round_down_to_limit(1, 0.1), 0)
+        self.assertEqual(self.helper.round_down_to_limit(1, 0.1), 1)
 
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("builtins.input", side_effect=["y", "n", "p", "n"])
