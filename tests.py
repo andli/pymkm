@@ -687,7 +687,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
             ["Frazze11", "SE", "NM", 3, 1.3],
             ["andli826", "SE", "NM", 2, 1.82],
         ]
-        self.assertEqual(self.helper.calculate_lowest(table, 4), 1.21)
+        self.assertEqual(self.helper.get_lowest_price_from_table(table, 4), 1.21)
 
     def test_round_up_to_limit(self):
         self.assertEqual(self.helper.round_up_to_limit(0.25, 0.99), 1)

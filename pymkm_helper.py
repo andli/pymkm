@@ -30,7 +30,7 @@ class PyMkmHelper:
         return round(statistics.median(flat_array), 2)
 
     @staticmethod
-    def calculate_lowest(table, col_no_price):
+    def get_lowest_price_from_table(table, col_no_price):
         flat_array = []
         for row in table:
             flat_array.extend([row[col_no_price]])

@@ -632,6 +632,7 @@ class PyMkmApp:
                                 price = self.get_price_for_product(
                                     product_match[0]["idProduct"],
                                     product_match[0]["rarity"],
+                                    product_match[0].get("condition"),
                                     foil,
                                     False,
                                     language_id=language_id,
@@ -719,6 +720,7 @@ class PyMkmApp:
 
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
+        # TODO: Add support for card condition
         account = api.get_account()["account"]
         country_code = account["country"]
         articles = api.get_articles(
@@ -814,6 +816,7 @@ class PyMkmApp:
             new_price = self.get_price_for_product(
                 article["idProduct"],
                 article["product"].get("rarity"),
+                article["product"].get("condition"),
                 article.get("isFoil", False),
                 article.get("isPlayset"),
                 language_id=article["language"]["idLanguage"],
@@ -845,10 +848,18 @@ class PyMkmApp:
             print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
         return rounding_limit
 
+    def get_discount_for_condition(self, condition):
+        try:
+            discount = float(self.config["discount_by_condition"][condition])
+        except KeyError as err:
+            print(f"ERROR: Unknown condition '{condition}'.")
+        return discount
+
     def get_price_for_product(
         self,
         product_id,
         rarity,
+        condition,
         is_foil,
         is_playset,
         language_id=1,
@@ -860,51 +871,51 @@ class PyMkmApp:
         except Exception as err:
             print("No response from API.")
             sys.exit(0)
-        else:
-            rounding_limit = self.get_rounding_limit_for_rarity(rarity)
 
-            if response:
-                if not is_foil:
-                    trend_price = response["product"]["priceGuide"]["TREND"]
-                else:
-                    trend_price = response["product"]["priceGuide"]["TRENDFOIL"]
-
-                # Set competitive price for region
-                if (
-                    undercut_local_market and not is_playset
-                ):  # FIXME: add support for playsets?
-                    table_data_local, table_data = self.get_competition(
-                        api, product_id, is_foil
-                    )
-
-                    if len(table_data_local) > 0:
-                        # Undercut if there is local competition
-                        lowest_in_country = PyMkmHelper.round_down_to_limit(
-                            rounding_limit,
-                            PyMkmHelper.calculate_lowest(table_data_local, 4),
-                        )
-                        new_price = max(
-                            rounding_limit,
-                            min(trend_price, lowest_in_country - rounding_limit),
-                        )
-                    else:
-                        # No competition in our country, set price a bit higher.
-                        new_price = PyMkmHelper.round_up_to_limit(
-                            rounding_limit, trend_price * 1.2
-                        )
-                else:
-                    new_price = PyMkmHelper.round_up_to_limit(
-                        rounding_limit, trend_price
-                    )
-
-                if new_price is None:
-                    raise ValueError("No price found!")
-                else:
-                    if is_playset:
-                        new_price = 4 * new_price
-                    return new_price
+        if response:
+            if not is_foil:
+                trend_price = response["product"]["priceGuide"]["TREND"]
             else:
-                print("No results.")
+                trend_price = response["product"]["priceGuide"]["TRENDFOIL"]
+
+            # Set competitive price for region
+            if undercut_local_market:
+                table_data_local, table_data = self.get_competition(
+                    api, product_id, is_foil
+                )
+
+                if len(table_data_local) > 0:
+                    # Undercut if there is local competition
+                    lowest_in_country = 
+                        PyMkmHelper.get_lowest_price_from_table(table_data_local, 4)
+                    new_price = max(
+                        rounding_limit,
+                        min(trend_price, lowest_in_country - rounding_limit),
+                    )
+                else:
+                    # No competition in our country, set price a bit higher.
+                    new_price = trend_price * 1.2
+
+            else:  # don't try to undercut local market
+                new_price = trend_price
+
+            if new_price is None:
+                raise ValueError("No price found!")
+            else:
+                if is_playset:
+                    new_price = 4 * new_price
+                
+                # Apply condition discount
+                if condition:
+                    new_price = new_price * get_discount_for_condition(condition)
+
+                # Round
+                rounding_limit = self.get_rounding_limit_for_rarity(rarity)
+                new_price = PyMkmHelper.round_down_to_limit(rounding_limit, new_price)
+
+                return new_price
+        else:
+            print("No results.")
 
     def display_price_changes_table(self, changes_json):
         # table breaks because of progress bar rendering
