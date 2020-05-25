@@ -61,7 +61,7 @@ _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressive
 1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
 1. Never go below the rounding limit for foils
 
-Base prices and discounts for lower grading can be set in `config.json`.
+Base prices (€) and discounts for lower grading (decimal %) can be set in `config.json`.
 
 ## ✔️ Supported calls
 
