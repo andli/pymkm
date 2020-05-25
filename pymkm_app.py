@@ -816,7 +816,7 @@ class PyMkmApp:
             new_price = self.get_price_for_product(
                 article["idProduct"],
                 article["product"].get("rarity"),
-                article["product"].get("condition"),
+                article.get("condition"),
                 article.get("isFoil", False),
                 article.get("isPlayset"),
                 language_id=article["language"]["idLanguage"],
@@ -866,6 +866,8 @@ class PyMkmApp:
         undercut_local_market=False,
         api=None,
     ):
+        rounding_limit = self.get_rounding_limit_for_rarity(rarity)
+
         try:
             response = api.get_product(product_id)
         except Exception as err:
@@ -906,12 +908,12 @@ class PyMkmApp:
                 if is_playset:
                     new_price = 4 * new_price
 
+                old_price = new_price
                 # Apply condition discount
                 if condition:
-                    new_price = new_price * get_discount_for_condition(condition)
+                    new_price = new_price * self.get_discount_for_condition(condition)
 
                 # Round
-                rounding_limit = self.get_rounding_limit_for_rarity(rarity)
                 new_price = PyMkmHelper.round_down_to_limit(rounding_limit, new_price)
 
                 return new_price
@@ -982,6 +984,7 @@ class PyMkmApp:
                 "count",
                 "comments",
                 "price",
+                "condition",
                 "isFoil",
                 "isPlayset",
                 "isSigned",
