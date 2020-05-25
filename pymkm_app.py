@@ -886,8 +886,9 @@ class PyMkmApp:
 
                 if len(table_data_local) > 0:
                     # Undercut if there is local competition
-                    lowest_in_country = 
-                        PyMkmHelper.get_lowest_price_from_table(table_data_local, 4)
+                    lowest_in_country = PyMkmHelper.get_lowest_price_from_table(
+                        table_data_local, 4
+                    )
                     new_price = max(
                         rounding_limit,
                         min(trend_price, lowest_in_country - rounding_limit),
@@ -904,7 +905,7 @@ class PyMkmApp:
             else:
                 if is_playset:
                     new_price = 4 * new_price
-                
+
                 # Apply condition discount
                 if condition:
                     new_price = new_price * get_discount_for_condition(condition)
