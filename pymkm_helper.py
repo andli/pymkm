@@ -44,7 +44,7 @@ class PyMkmHelper:
     @staticmethod
     def round_down_to_limit(limit, price):
         inverse_limit = 1 / limit
-        return math.floor(price * inverse_limit) / inverse_limit
+        return max(limit, math.floor(price * inverse_limit) / inverse_limit)
 
     @staticmethod
     def prompt_bool(prompt_string):
