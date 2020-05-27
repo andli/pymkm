@@ -12,7 +12,7 @@
     "time shifted": "0.25"
   },
   "discount_by_condition": {
-    "M": "1",
+    "MT": "1",
     "NM": "1",
     "EX": "1",
     "GD": "1",
