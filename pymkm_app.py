@@ -430,10 +430,10 @@ class PyMkmApp:
     def clean_purchased_from_wantslists(self, api):
         self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
-        print("Hold on, fetching wantslists and received orders (this can be slow)...")
 
         wantslists_lists = []
         try:
+            print("Gettings wantslists from Cardmarket...")
             result = api.get_wantslists()
             wantslists = {
                 i["idWantslist"]: i["name"]
@@ -445,6 +445,7 @@ class PyMkmApp:
                 for k, v in wantslists.items()
             }
 
+            print("Gettings received orders from Cardmarket...")
             received_orders = api.get_orders("buyer", "received", start=1)
         except Exception as err:
             print(err)
@@ -471,8 +472,13 @@ class PyMkmApp:
                 purchased_products, key=lambda t: t["date"], reverse=True
             )
 
-            matches = []  # TODO: add a progress bar? double?
+            total_number_of_items = sum([len(x) for x in wantslists_lists.values()])
+            index = 0
+            print("Matching received purchases with wantslists...")
+            bar = progressbar.ProgressBar(max_value=total_number_of_items)
+            matches = []
             for key, articles in wantslists_lists.items():
+
                 for article in articles:
                     a_type = article.get("type")
                     a_foil = article.get("isFoil") == True
@@ -503,8 +509,7 @@ class PyMkmApp:
                             "wantlist_name": wantslists[key],
                             "date": product_matches[0]["date"],
                             "is_foil": a_foil,
-                            # FIXME count if more than 1 entry
-                            "count": product_matches[0]["count"],
+                            "count": sum([x.get("count") for x in product_matches]),
                         }
                         if a_type == "product":
                             match.update(
@@ -531,6 +536,9 @@ class PyMkmApp:
                                 }
                             )
                         matches.append(match)
+                    index += 1
+                    bar.update(index)
+            bar.finish()
 
             print(
                 tb.tabulate(
