@@ -500,6 +500,7 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         self.assertEquals(app.get_rounding_limit_for_rarity("rare"), 0.1337)
         self.assertEquals(app.get_rounding_limit_for_rarity("time shifted"), 0.25)
+        self.assertEquals(app.get_rounding_limit_for_rarity("XX"), 0.25)
 
     def test_get_discount_for_condition(self):
         app = PyMkmApp(self.config)
