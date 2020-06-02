@@ -623,10 +623,17 @@ class PyMkmApp:
                             product_match = [
                                 x
                                 for x in possible_products
-                                if x["expansionName"] == set_name
-                                and x["categoryName"] == "Magic Single"
-                                or x["enName"]
-                                == name  # TODO: add filter for flip card / split card names?
+                                if (
+                                    x["expansionName"] == set_name
+                                    and x["enName"] == name
+                                    and x["categoryName"] == "Magic Single"
+                                )
+                                or (
+                                    # filter for flip card / split card names
+                                    "/" in x["enName"]
+                                    and x["expansionName"] == set_name
+                                    and x["categoryName"] == "Magic Single"
+                                )
                             ]
                             if len(product_match) == 0:
                                 problem_cards.append(row_array)
@@ -654,7 +661,7 @@ class PyMkmApp:
                                     "condition": "NM",
                                     "isFoil": ("true" if foil else "false"),
                                 }
-                                api.add_stock([card])
+                                # api.add_stock([card])
                             else:
                                 problem_cards.append(row_array)
                     else:
