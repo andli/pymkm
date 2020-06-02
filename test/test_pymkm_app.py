@@ -2,11 +2,7 @@
 Python unittest
 """
 import io
-import json
-import logging
-import random
 import unittest
-from distutils.util import strtobool
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
 import requests
@@ -14,7 +10,7 @@ from requests_oauthlib import OAuth1Session
 
 from pymkm.pymkmapi import PyMkmApi
 from pymkm.pymkm_app import PyMkmApp
-from test_common import TestCommon
+from test.test_common import TestCommon
 
 
 class TestPyMkmApp(TestCommon):

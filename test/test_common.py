@@ -3,14 +3,13 @@ Python unittest
 """
 import io
 import json
-import logging
-import random
+
 import unittest
-from distutils.util import strtobool
+
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
-import requests
-from requests_oauthlib import OAuth1Session
+from pymkm.pymkm_app import PyMkmApp
+from pymkm.pymkmapi import PyMkmApi
 
 
 class TestCommon(unittest.TestCase):
@@ -482,7 +481,7 @@ Dragon Breath,Scourge,1,Foil,French"""
             """
         )
 
-        self.patcher = patch("pymkm_app.PyMkmApp.report")
+        self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
         self.mock_report = self.patcher.start()
 
     def tearDown(self):
