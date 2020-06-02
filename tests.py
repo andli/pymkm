@@ -130,6 +130,13 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "idProduct": 9145,
                 "rarity": "Rare",
             },
+            {
+                "categoryName": "Magic Single",
+                "enName": "Dragon Breath",
+                "expansionName": "Scourge2",
+                "idProduct": 9145,
+                "rarity": "Rare",
+            },
         ]
     }
 
