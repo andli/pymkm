@@ -13,9 +13,47 @@ The app also keeps track of how many API requests your have left each day.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
-**NOTE 2:** From version 1.1.0 this app collects a tiny amount (`{'command': 'import from csv', 'version': '1.1.0'}`) of usage data. If you want to opt out from this, please change `ALLOW_REPORTING = True` to `False` in `pymkm_app.py`. The purpose is to allow me to see what people use the most and to focus on improving that.
+**NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `ALLOW_REPORTING = True` to `False` in `pymkm_app.py`.
 
-![Screengrab](https://raw.githubusercontent.com/andli/pymkm/master/screengrab.png)
+```
+╭─── PyMKM 1.6.5 ────────────────────────────────────────╮
+│ 1: Update stock prices                                 │
+│ 2: Update price for a product                          │
+│ 3: List competition for a product                      │
+│ 4: Find deals from a user                              │
+│ 5: Show top 20 expensive items in stock                │
+│ 6: Wantslists cleanup suggestions                      │
+│ 7: Show account info                                   │
+│ 8: Clear entire stock (WARNING)                        │
+│ 9: Import stock from .\list.csv                        │
+│ 0: Exit                                                │
+╰────────────────────────────────────────────────────────╯
+Action number: 1
+Try to undercut local market? (slower, more requests) [y/N]:
+
+100% (74 of 74) |#########################################| Elapsed Time: 0:00:21 Time:  0:00:21
+Total stock value: 49.25
+Note: 2 items filtered out because of sticky prices.
+
+Best diffs:
+
+  Count  Name             Foil    Playset      Old price    New price    Diff
+-------  ---------------  ------  ---------  -----------  -----------  ------
+      1  Manaweft Sliver                            1.25          1.5    0.25
+
+Worst diffs:
+
+  Count  Name                              Foil    Playset      Old price    New price    Diff
+-------  --------------------------------  ------  ---------  -----------  -----------  ------
+      1  Shield of the Oversoul                                      1            0.75   -0.25
+      1  Battle Sliver                             ✓                 1            0.75   -0.25
+      2  Predatory Sliver                          ✓                 2            1.75   -0.25
+      1  Kalemne, Disciple of Iroas (V.1)                            0.75         0.5    -0.25
+      1  Foreboding Ruins                                            1.5          1.25   -0.25
+
+Total price difference: -1.25.
+Do you want to update these prices? [y/N]:
+```
 
 ## 🔨 How
 
@@ -23,6 +61,20 @@ The app also keeps track of how many API requests your have left each day.
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
 1. Run `main.py`.
 1. Profit.
+
+## 📈 Price calculation
+
+The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
+Cardmarket does not however supply trend prices for foils, so my algorithm is this:
+
+_NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
+
+1. Filter out foils, English, not altered, not signed, minimum Good condition.
+1. Set price to lowest + (median - lowest / 4), rounded to closest rouding limit.
+1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
+1. Never go below the rounding limit for foils
+
+Base prices (€) and discounts for lower grading (decimal %) can be set in `config.json`.
 
 ## 🔓 Locking prices
 
@@ -47,21 +99,37 @@ Any cards that fail to import are written to a new .csv file called `failed_impo
 
 This feature allows you to get a better view of how you should price individual cards depending on your local market and also the whole market:
 
-![Competition](https://raw.githubusercontent.com/andli/pymkm/master/competition.png)
+```
+Action number: 3
+Note: does not support playsets, booster displays etc (yet).
+Search product name:
+temple gar
+Foil? [y/N]:
 
-## 📈 Price calculation
+Found product: Temple Garden
+----------------------------------------------------------------------
+Local competition:
 
-The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
-Cardmarket does not however supply trend prices for foils, so my algorithm is this:
+Username     Country    Condition      Count    Price
+-----------  ---------  -----------  -------  -------
+Karand       SE         NM                 1        6
+-> andli826  SE         NM                 1       13
+----------------------------------------------------------------------
+Total average price: 9.5, Total median price: 9.5, Total # of articles: 2
 
-_NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
+----------------------------------------------------------------------
+Top 20 cheapest:
 
-1. Filter out foils, English, not altered, not signed, minimum Good condition.
-1. Set price to lowest + (median - lowest / 4), rounded to closest rouding limit.
-1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
-1. Never go below the rounding limit for foils
-
-Base prices (€) and discounts for lower grading (decimal %) can be set in `config.json`.
+Username         Country    Condition      Count    Price
+---------------  ---------  -----------  -------  -------
+syresatve        GR         NM                 1     4.9
+Tromeck          ES         NM                 1     4.99
+    <cut out rows to save vertical space in README.md>
+peiraikos        GR         NM                 1     5.95
+finespoo         FI         NM                 2     5.98
+----------------------------------------------------------------------
+Total average price: 9.82, Total median price: 7.79, Total # of articles: 320
+```
 
 ## ✔️ Supported calls
 
