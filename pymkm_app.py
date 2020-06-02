@@ -426,13 +426,10 @@ class PyMkmApp:
             print("Gettings wantslists from Cardmarket...")
             result = api.get_wantslists()
             wantslists = {
-                i["idWantslist"]: i["name"]
-                for i in result["wantslist"]
-                if i["game"]["idGame"] == 1
+                i["idWantslist"]: i["name"] for i in result if i["game"]["idGame"] == 1
             }
             wantslists_lists = {
-                k: api.get_wantslist_items(k)["wantslist"]["item"]
-                for k, v in wantslists.items()
+                k: api.get_wantslist_items(k)["item"] for k, v in wantslists.items()
             }
 
             print("Gettings received orders from Cardmarket...")

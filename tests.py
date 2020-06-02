@@ -247,6 +247,220 @@ Dragon Breath,Scourge,1,Foil,French"""
         "message": "Successfully set the account on vacation.",
     }
 
+    cardmarket_get_wantslists = {
+        "wantslist": [
+            {
+                "game": {
+                    "abbreviation": "MtG",
+                    "idGame": 1,
+                    "name": "Magic the Gathering",
+                },
+                "idWantslist": 2789285,
+                "itemCount": 3,
+                "name": "0 prio",
+            },
+            {
+                "game": {
+                    "abbreviation": "MtG",
+                    "idGame": 1,
+                    "name": "Magic the Gathering",
+                },
+                "idWantslist": 6106824,
+                "itemCount": 36,
+                "name": "cmd-musthave",
+            },
+        ]
+    }
+
+    get_wantslists = cardmarket_get_wantslists["wantslist"]
+
+    cardmarket_get_wantslist_items = {
+        "wantslist": {
+            "idWantslist": 2789285,
+            "game": {"idGame": 1, "name": "Magic the Gathering", "abbreviation": "MtG"},
+            "name": "0 prio",
+            "itemCount": 3,
+            "item": [
+                {
+                    "idWant": "5ec4f6cf456a56266329f79c",
+                    "count": 1,
+                    "wishPrice": 0,
+                    "fromPrice": 0.95,
+                    "mailAlert": "false",
+                    "type": "product",
+                    "idProduct": 1637,
+                    "product": {
+                        "idProduct": 1637,
+                        "idMetaproduct": 344,
+                        "countReprints": 1,
+                        "enName": "Aurification",
+                        "locName": "Aurification",
+                        "localization": [
+                            {
+                                "name": "Aurification",
+                                "idLanguage": 1,
+                                "languageName": "English",
+                            },
+                            {
+                                "name": "Aurification",
+                                "idLanguage": 2,
+                                "languageName": "French",
+                            },
+                            {
+                                "name": "Goldstarre",
+                                "idLanguage": 3,
+                                "languageName": "German",
+                            },
+                            {
+                                "name": "Aurificaci\\u00f3n",
+                                "idLanguage": 4,
+                                "languageName": "Spanish",
+                            },
+                            {
+                                "name": "Aurificazione",
+                                "idLanguage": 5,
+                                "languageName": "Italian",
+                            },
+                        ],
+                        "website": "\\/en\\/Magic\\/Products\\/Singles\\/Onslaught\\/Aurification",
+                        "image": "\\/\\/static.cardmarket.com\\/img\\/40b5efd939eda860937c1901755cb6fd\\/items\\/1\\/ONS\\/1637.jpg",
+                        "gameName": "Magic the Gathering",
+                        "categoryName": "Magic Single",
+                        "idGame": 1,
+                        "number": "6",
+                        "rarity": "Rare",
+                        "expansionName": "Onslaught",
+                        "expansionIcon": 39,
+                        "countArticles": 521,
+                        "countFoils": 55,
+                    },
+                    "idLanguage": [1],
+                    "minCondition": "NM",
+                    "isFoil": "null",
+                    "isSigned": "null",
+                    "isAltered": "null",
+                },
+                {
+                    "idWant": "5ecae829456a5605da4796dc",
+                    "count": 4,
+                    "wishPrice": 0,
+                    "fromPrice": 0.1,
+                    "mailAlert": "false",
+                    "type": "product",
+                    "idProduct": 431849,
+                    "product": {
+                        "idProduct": 431849,
+                        "idMetaproduct": 208641,
+                        "countReprints": 5,
+                        "enName": "Gray Merchant of Asphodel",
+                        "locName": "Gray Merchant of Asphodel",
+                        "localization": [
+                            {
+                                "name": "Gray Merchant of Asphodel",
+                                "idLanguage": 1,
+                                "languageName": "English",
+                            },
+                            {
+                                "name": "Marchand gris d\\u0027Asphod\\u00e8le",
+                                "idLanguage": 2,
+                                "languageName": "French",
+                            },
+                            {
+                                "name": "Grauer H\\u00e4ndler aus Asphodel",
+                                "idLanguage": 3,
+                                "languageName": "German",
+                            },
+                            {
+                                "name": "Comerciante plomizo de Asfodel",
+                                "idLanguage": 4,
+                                "languageName": "Spanish",
+                            },
+                            {
+                                "name": "Mercante Grigio di Asfodelo",
+                                "idLanguage": 5,
+                                "languageName": "Italian",
+                            },
+                        ],
+                        "website": "\\/en\\/Magic\\/Products\\/Singles\\/Theros-Beyond-Death-Promos\\/Gray-Merchant-of-Asphodel",
+                        "image": "\\/\\/static.cardmarket.com\\/img\\/1e821b1745c6b8fa1ceeea8d3c975631\\/items\\/1\\/PTHB\\/431849.jpg",
+                        "gameName": "Magic the Gathering",
+                        "categoryName": "Magic Single",
+                        "idGame": 1,
+                        "number": "355",
+                        "rarity": "Uncommon",
+                        "expansionName": "Theros Beyond Death: Promos",
+                        "expansionIcon": 179,
+                        "countArticles": 1225,
+                        "countFoils": 366,
+                    },
+                    "idLanguage": [1],
+                    "minCondition": "NM",
+                    "isFoil": "null",
+                    "isSigned": "null",
+                    "isAltered": "null",
+                },
+                {
+                    "idWant": "5ecae85df168567cb9799141",
+                    "count": 1,
+                    "wishPrice": 0,
+                    "fromPrice": 0.05,
+                    "mailAlert": "false",
+                    "type": "metaproduct",
+                    "idMetaproduct": 263232,
+                    "metaproduct": {
+                        "idMetaproduct": 263232,
+                        "enName": "Meteor Golem",
+                        "locName": "Meteor Golem",
+                        "localization": [
+                            {
+                                "name": "Meteor Golem",
+                                "idLanguage": 1,
+                                "languageName": "English",
+                            },
+                            {
+                                "name": "Golem m\\u00e9t\\u00e9oritique",
+                                "idLanguage": 2,
+                                "languageName": "French",
+                            },
+                            {
+                                "name": "Meteorgolem",
+                                "idLanguage": 3,
+                                "languageName": "German",
+                            },
+                            {
+                                "name": "G\\u00f3lem meteoro",
+                                "idLanguage": 4,
+                                "languageName": "Spanish",
+                            },
+                            {
+                                "name": "Golem Meteora",
+                                "idLanguage": 5,
+                                "languageName": "Italian",
+                            },
+                        ],
+                        "image": "\\/\\/static.cardmarket.com\\/img\\/71955b92b2d7acc6e26a7eed2430ed02\\/items\\/1\\/C19\\/393282.jpg",
+                    },
+                    "idLanguage": [1],
+                    "minCondition": "NM",
+                    "isFoil": "true",
+                    "isSigned": "null",
+                    "isAltered": "null",
+                },
+            ],
+        },
+        "links": [
+            {"rel": "self", "href": "\\/wantslist\\/2789285", "method": "GET"},
+            {"rel": "manage_items", "href": "\\/wantslist\\/2789285", "method": "PUT"},
+            {
+                "rel": "delete_list",
+                "href": "\\/wantslist\\/2789285",
+                "method": "DELETE",
+            },
+        ],
+    }
+
+    get_wantslist_items = cardmarket_get_wantslist_items["wantslist"]
+
     def setUp(self):
         self.config = json.loads(
             """
@@ -774,6 +988,27 @@ class TestPyMkmApiCalls(TestCommon):
 
         result = self.api.delete_stock(TestCommon.get_stock_result, mock_oauth)
         self.assertEqual(len(result), 3)
+
+    def test_get_wantslists(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_get_wantslists, 200, "testing ok"
+            )
+        )
+        result = self.api.get_wantslists(mock_oauth)
+        self.assertEqual(result, TestCommon.get_wantslists)
+
+    def test_get_wantslist_items(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_get_wantslist_items, 200, "testing ok"
+            )
+        )
+        wantslist_id = 2789285
+        result = self.api.get_wantslist_items(wantslist_id, mock_oauth)
+        self.assertEqual(result, TestCommon.get_wantslist_items)
 
 
 class TestPyMkmHelperFunctions(unittest.TestCase):
