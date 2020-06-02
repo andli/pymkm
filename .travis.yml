@@ -1,13 +1,13 @@
 sudo: required
-dist: xenial   # required for Python >= 3.7
+dist: xenial # required for Python >= 3.7
 language: python
 python:
   - "3.7"
-  - "nightly"  # nightly build
+  - "nightly" # nightly build
 install:
   - travis_retry pip install -r requirements-dev.txt
-script: 
-  - coverage run --omit=tests.py tests.py
-after_success: 
-  - coverage report
+script:
+  - coverage run -m --source=./pymkm/ unittest discover
+after_success:
+  - coverage report -m
   - bash <(curl -s https://codecov.io/bash)
