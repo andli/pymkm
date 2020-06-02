@@ -888,7 +888,9 @@ class PyMkmApp:
             discount = float(self.config["discount_by_condition"][condition])
         except KeyError as err:
             print(f"ERROR: Unknown condition '{condition}'.")
-        return discount
+            raise err
+        else:
+            return discount
 
     def get_price_for_product(
         self,

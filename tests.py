@@ -247,10 +247,11 @@ Dragon Breath,Scourge,1,Foil,French"""
                     "common": "0.25",
                     "uncommon": "0.25",
                     "rare": "0.1337",
-                    "mythic": "0.25"
+                    "mythic": "0.25",
+                    "time shifted": "0.25"
                 },
                 "discount_by_condition": {
-                    "M": "1.5",
+                    "MT": "1.5",
                     "NM": "1",
                     "EX": "0.9",
                     "GD": "0.7",
@@ -494,6 +495,18 @@ class TestPyMkmApp(TestCommon):
             app.start()
             log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message, r">> Exited import_from_csv")
+
+    def test_get_rounding_limit_for_rarity(self):
+        app = PyMkmApp(self.config)
+        self.assertEquals(app.get_rounding_limit_for_rarity("rare"), 0.1337)
+        self.assertEquals(app.get_rounding_limit_for_rarity("time shifted"), 0.25)
+
+    def test_get_discount_for_condition(self):
+        app = PyMkmApp(self.config)
+        self.assertEquals(app.get_discount_for_condition("MT"), 1.5)
+        self.assertEquals(app.get_discount_for_condition("LP"), 0.6)
+        with self.assertRaises(KeyError):
+            app.get_discount_for_condition("XX")
 
 
 class TestPyMkmApiCalls(TestCommon):
