@@ -8,7 +8,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "1.6.5"
 __license__ = "MIT"
 
-from pymkm_app import PyMkmApp
+from pymkm.pymkm_app import PyMkmApp
 
 
 def main():

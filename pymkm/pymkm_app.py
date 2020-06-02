@@ -20,8 +20,8 @@ import requests
 import tabulate as tb
 from pkg_resources import parse_version
 
-from pymkm_helper import PyMkmHelper
-from pymkmapi import PyMkmApi, api_wrapper, NoResultsError
+from .pymkm_helper import PyMkmHelper
+from .pymkmapi import PyMkmApi, api_wrapper, NoResultsError
 
 ALLOW_REPORTING = True
 
