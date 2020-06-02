@@ -13,6 +13,7 @@ import requests
 from requests_oauthlib import OAuth1Session
 
 from pymkm.pymkmapi import PyMkmApi
+from pymkm.pymkm_app import PyMkmApp
 from test_common import TestCommon
 
 

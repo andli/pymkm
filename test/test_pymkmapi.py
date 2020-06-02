@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 import requests
 from requests_oauthlib import OAuth1Session
 
-from pymkm.pymkm_app import PyMkmApp
+from pymkm.pymkmapi import PyMkmApi
 from test_common import TestCommon
 
 
