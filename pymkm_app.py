@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.6.3"
+__version__ = "1.6.4"
 __license__ = "MIT"
 
 import csv
@@ -616,7 +616,9 @@ class PyMkmApp:
                     (name, set_name, count, foil, language, *other) = row_array
                     if all(v != "" for v in [name, set_name, count]):
                         try:
-                            possible_products = api.find_product(name)["product"]
+                            possible_products = api.find_product(name, idGame="1")[
+                                "product"
+                            ]
                         except Exception as err:
                             problem_cards.append(row_array)
                         else:
@@ -631,6 +633,16 @@ class PyMkmApp:
                                 or (
                                     # filter for flip card / split card names
                                     "/" in x["enName"]
+                                    and x["enName"].startswith(name)
+                                    and x["expansionName"] == set_name
+                                    and x["categoryName"] == "Magic Single"
+                                )
+                                or (
+                                    # filter for the ligature Æ
+                                    "Æ"
+                                    in x[
+                                        "enName"
+                                    ]  # TODO: add some sort of string distance
                                     and x["expansionName"] == set_name
                                     and x["categoryName"] == "Magic Single"
                                 )
@@ -661,7 +673,7 @@ class PyMkmApp:
                                     "condition": "NM",
                                     "isFoil": ("true" if foil else "false"),
                                 }
-                                # api.add_stock([card])
+                                api.add_stock([card])
                             else:
                                 problem_cards.append(row_array)
                     else:
