@@ -37,14 +37,14 @@ class PyMkmHelper:
         return min(flat_array)
 
     @staticmethod
-    def round_up_to_limit(limit, price):
+    def round_up_to_multiple_of_lower_limit(limit, price):
         inverse_limit = 1 / limit
-        return math.ceil(price * inverse_limit) / inverse_limit
+        return round(math.ceil(price * inverse_limit) / inverse_limit, 2)
 
     @staticmethod
-    def round_down_to_limit(limit, price):
+    def round_down_to_multiple_of_lower_limit(limit, price):
         inverse_limit = 1 / limit
-        return max(limit, math.floor(price * inverse_limit) / inverse_limit)
+        return round(max(limit, math.floor(price * inverse_limit) / inverse_limit), 2)
 
     @staticmethod
     def prompt_bool(prompt_string):

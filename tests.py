@@ -7,6 +7,7 @@ import logging
 import random
 import unittest
 from unittest.mock import MagicMock, Mock, mock_open, patch
+from distutils.util import strtobool
 
 import requests
 from requests_oauthlib import OAuth1Session
@@ -18,97 +19,105 @@ from pymkmapi import PyMkmApi
 
 class TestCommon(unittest.TestCase):
 
-    fake_stock = [
-        {
-            "count": 1,
-            "idArticle": 410480091,
-            "idProduct": 1692,
-            "isFoil": "false",
-            "comments": "",
-            "isSigned": "true",
-            "language": {"idLanguage": 7, "languageName": "Japanese"},
-            "price": 0.75,
-            "product": {
-                "enName": "Words of Worship",
-                "expIcon": "39",
-                "expansion": "Onslaught",
-                "idGame": 1,
-                "image": "./img/items/1/ONS/1692.jpg",
-                "locName": "Words of Worship",
-                "nr": "61",
-                "rarity": "Rare",
-            },
-        },
-        {
-            "count": 1,
-            "idArticle": 412259385,
-            "idProduct": 9145,
-            "isFoil": "true",
-            "comments": "! poop",
-            "isSigned": "true",
-            "language": {"idLanguage": 4, "languageName": "Spanish"},
-            "price": 0.25,
-            "product": {
-                "enName": "Mulch words",
-                "expIcon": "18",
-                "expansion": "Stronghold",
-                "idGame": 1,
-                "image": "./img/items/1/STH/9145.jpg",
-                "locName": "Estiércol y paja",
-                "nr": None,
-                "rarity": "Common",
-            },
-        },
-        {
-            "count": 1,
-            "idArticle": 407911824,
-            "idProduct": 1079,
-            "isFoil": "false",
-            "comments": "",
-            "isSigned": "false",
-            "language": {"idLanguage": 1, "languageName": "English"},
-            "price": 0.5,
-            "product": {
-                "enName": "Everflowing Chalice",
-                "expIcon": "164",
-                "expansion": "Duel Decks: Elspeth... Tezzeret",
-                "idGame": 1,
-                "image": "./img/items/1/DDF/242440.jpg",
-                "locName": "Everflowing Chalice",
-                "nr": "60",
-                "rarity": "Uncommon",
-            },
-        },
-    ]
-
-    fake_product = {
-        "product": [
+    cardmarket_get_stock_result = {
+        "article": [
             {
-                "categoryName": "Magic Single",
-                "countArticles": 876,
-                "countFoils": 46,
-                "countReprints": 1,
+                "count": 1,
+                "idArticle": 410480091,
                 "idProduct": 1692,
-                "enName": "Words of Worship",
-                "expansion": {
-                    "enName": "Onslaught",
-                    "expansionIcon": 39,
-                    "idExpansion": 41,
+                "isFoil": False,
+                "isPlayset": False,
+                "comments": "x",
+                "isSigned": True,
+                "language": {"idLanguage": 7, "languageName": "Japanese"},
+                "price": 0.75,
+                "condition": "NM",
+                "product": {
+                    "enName": "Words of Worship",
+                    "expIcon": "39",
+                    "expansion": "Onslaught",
+                    "idGame": 1,
+                    "image": "./img/items/1/ONS/1692.jpg",
+                    "locName": "Words of Worship",
+                    "nr": "61",
+                    "rarity": "Rare",
                 },
-                "gameName": "Magic the Gathering",
-                "idGame": "1",
-                "idMetaproduct": 6716,
-                "priceGuide": {
-                    "AVG": 0.67,
-                    "LOW": 0.05,
-                    "LOWEX": 0.05,
-                    "LOWFOIL": 2.49,
-                    "SELL": 0.47,
-                    "TREND": 0.64,
-                    "TRENDFOIL": 6.37,
+            },
+            {
+                "count": 1,
+                "idArticle": 412259385,
+                "idProduct": 9145,
+                "isFoil": True,
+                "isPlayset": False,
+                "comments": "! poop",
+                "isSigned": True,
+                "language": {"idLanguage": 4, "languageName": "Spanish"},
+                "price": 0.25,
+                "condition": "NM",
+                "product": {
+                    "enName": "Mulch words",
+                    "expIcon": "18",
+                    "expansion": "Stronghold",
+                    "idGame": 1,
+                    "image": "./img/items/1/STH/9145.jpg",
+                    "locName": "Estiércol y paja",
+                    "nr": None,
+                    "rarity": "Common",
                 },
-            }
+            },
+            {
+                "count": 1,
+                "idArticle": 407911824,
+                "idProduct": 1079,
+                "isFoil": False,
+                "isPlayset": False,
+                "comments": "",
+                "isSigned": False,
+                "language": {"idLanguage": 1, "languageName": "English"},
+                "price": 0.5,
+                "condition": "NM",
+                "product": {
+                    "enName": "Everflowing Chalice",
+                    "expIcon": "164",
+                    "expansion": "Duel Decks: Elspeth... Tezzeret",
+                    "idGame": 1,
+                    "image": "./img/items/1/DDF/242440.jpg",
+                    "locName": "Everflowing Chalice",
+                    "nr": "60",
+                    "rarity": "Uncommon",
+                },
+            },
         ]
+    }
+
+    get_stock_result = cardmarket_get_stock_result["article"]
+
+    fake_product_response = {
+        "product": {
+            "categoryName": "Magic Single",
+            "countArticles": 876,
+            "countFoils": 46,
+            "countReprints": 1,
+            "idProduct": 1692,
+            "enName": "Words of Worship",
+            "expansion": {
+                "enName": "Onslaught",
+                "expansionIcon": 39,
+                "idExpansion": 41,
+            },
+            "gameName": "Magic the Gathering",
+            "idGame": "1",
+            "idMetaproduct": 6716,
+            "priceGuide": {
+                "AVG": 3.18,
+                "LOW": 0.29,
+                "LOWEX": 0.8,
+                "LOWFOIL": 0.8,
+                "SELL": 2.18,
+                "TREND": 2.11,
+                "TRENDFOIL": 2.07,
+            },
+        }
     }
 
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
@@ -171,64 +180,68 @@ Dragon Breath,Scourge,1,Foil,French"""
         ]
     }
 
-    fake_articles_result = [
-        {
-            "comments": "x",
-            "condition": "EX",
-            "count": 1,
-            "idArticle": 371427479,
-            "idProduct": 1692,
-            "inShoppingCart": "false",
-            "isAltered": "false",
-            "isFoil": "false",
-            "isPlayset": "false",
-            "isSigned": "false",
-            "language": {"idLanguage": 1, "languageName": "English"},
-            "price": 0.2,
-            "seller": {
-                "address": {"country": 1},
-                "avgShippingTime": 1,
-                "email": "x",
-                "idUser": 34018,
-                "isCommercial": 0,
-                "isSeller": "true",
-                "legalInformation": "x",
-                "lossPercentage": "0 - 2%",
-                "username": "test",
+    cardmarket_find_user_articles_result = {
+        "article": [
+            {
+                "comments": "x",
+                "condition": "EX",
+                "count": 1,
+                "idArticle": 371427479,
+                "idProduct": 1692,
+                "inShoppingCart": False,
+                "isAltered": False,
+                "isFoil": False,
+                "isPlayset": False,
+                "isSigned": False,
+                "language": {"idLanguage": 1, "languageName": "English"},
+                "price": 0.2,
+                "seller": {
+                    "address": {"country": 1},
+                    "avgShippingTime": 1,
+                    "email": "x",
+                    "idUser": 34018,
+                    "isCommercial": 0,
+                    "isSeller": True,
+                    "legalInformation": "x",
+                    "lossPercentage": "0 - 2%",
+                    "username": "test",
+                },
             },
-        },
-        {
-            "comments": "x",
-            "condition": "EX",
-            "count": 1,
-            "idArticle": 406723464,
-            "idProduct": 1692,
-            "inShoppingCart": "false",
-            "isAltered": "false",
-            "isFoil": "false",
-            "isPlayset": "false",
-            "isSigned": "false",
-            "language": {"idLanguage": 1, "languageName": "English"},
-            "price": 0.2,
-            "seller": {
-                "address": {"country": 1},
-                "avgShippingTime": 0,
-                "email": "x",
-                "idUser": 655460,
-                "isCommercial": 0,
-                "isSeller": "true",
-                "legalInformation": "x",
-                "lossPercentage": "0 - 2%",
-                "username": "test",
+            {
+                "comments": "x",
+                "condition": "EX",
+                "count": 1,
+                "idArticle": 406723464,
+                "idProduct": 1692,
+                "inShoppingCart": False,
+                "isAltered": False,
+                "isFoil": False,
+                "isPlayset": False,
+                "isSigned": False,
+                "language": {"idLanguage": 1, "languageName": "English"},
+                "price": 0.2,
+                "seller": {
+                    "address": {"country": 1},
+                    "avgShippingTime": 0,
+                    "email": "x",
+                    "idUser": 655460,
+                    "isCommercial": 0,
+                    "isSeller": True,
+                    "legalInformation": "x",
+                    "lossPercentage": "0 - 2%",
+                    "username": "test",
+                },
             },
-        },
-    ]
+        ]
+    }
+
+    find_user_articles_result = cardmarket_find_user_articles_result["article"]
 
     fake_account_data = {
         "account": {
             "username": "test",
             "country": "test",
-            "onVacation": "true",
+            "onVacation": True,
             "idDisplayLanguage": "1",
         },
         "message": "Successfully set the account on vacation.",
@@ -246,7 +259,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                     "default": "0.25",
                     "common": "0.25",
                     "uncommon": "0.25",
-                    "rare": "0.1337",
+                    "rare": "1.0",
                     "mythic": "0.25",
                     "time shifted": "0.25"
                 },
@@ -302,14 +315,19 @@ class TestPyMkmApp(TestCommon):
         app.start()
         self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
 
-    @patch("pymkm_app.PyMkmApi.get_product", return_value=TestCommon.fake_product)
     @patch(
-        "pymkmapi.PyMkmApi.get_articles", return_value=TestCommon.fake_articles_result
+        "pymkm_app.PyMkmApi.get_product", return_value=TestCommon.fake_product_response,
     )
-    @patch("pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
     @patch("pymkmapi.PyMkmApi.set_stock", return_value=ok_response)
-    @patch("builtins.input", side_effect=["1", "n", "0"])
+    @patch("pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
+    @patch(
+        "pymkmapi.PyMkmApi.get_articles",
+        return_value=TestCommon.find_user_articles_result,
+    )
+    @patch(
+        "pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result,
+    )
+    @patch("builtins.input", side_effect=["1", "y", "y", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("requests.get", return_value=fake_github_releases)
     def test_menu_option_1(self, mock_open, mock_stdout, *args):
@@ -323,9 +341,11 @@ class TestPyMkmApp(TestCommon):
             )
 
     @patch("pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
     @patch("pymkmapi.PyMkmApi.set_stock", return_value=ok_response)
-    @patch("pymkmapi.PyMkmApi.find_stock_article", return_value=TestCommon.fake_stock)
+    @patch(
+        "pymkmapi.PyMkmApi.find_stock_article", return_value=TestCommon.get_stock_result
+    )
     @patch("builtins.input", side_effect=["2", "words", "1", "n", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("requests.get", return_value=fake_github_releases)
@@ -338,10 +358,11 @@ class TestPyMkmApp(TestCommon):
             self.assertRegex(log_record.message, r">> Exited update_product_to_trend")
 
     @patch(
-        "pymkmapi.PyMkmApi.get_articles", return_value=TestCommon.fake_articles_result
+        "pymkmapi.PyMkmApi.get_articles",
+        return_value=TestCommon.find_user_articles_result,
     )
     @patch("pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
         return_value=TestCommon.fake_find_product_result_one_match_of_3,
@@ -361,10 +382,10 @@ class TestPyMkmApp(TestCommon):
 
     @patch(
         "pymkmapi.PyMkmApi.find_user_articles",
-        return_value=TestCommon.fake_articles_result,
+        return_value=TestCommon.find_user_articles_result,
     )
     @patch("pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
         return_value=TestCommon.fake_find_product_result_one_match_of_3,
@@ -380,7 +401,7 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message, r">> Exited find_deals_from_user")
 
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
     @patch("builtins.input", side_effect=["5", "0"])
     @patch("requests.get", return_value=fake_github_releases)
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -415,7 +436,7 @@ class TestPyMkmApp(TestCommon):
         print(mock_stdout.getvalue())
         self.assertRegex(mock_stdout.getvalue(), r"{'account':")
 
-    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
     @patch("pymkmapi.PyMkmApi.delete_stock", return_value=ok_response)
     @patch("builtins.input", side_effect=["8", "y", "0"])
     @patch("requests.get", return_value=fake_github_releases)
@@ -498,16 +519,36 @@ class TestPyMkmApp(TestCommon):
 
     def test_get_rounding_limit_for_rarity(self):
         app = PyMkmApp(self.config)
-        self.assertEquals(app.get_rounding_limit_for_rarity("rare"), 0.1337)
-        self.assertEquals(app.get_rounding_limit_for_rarity("time shifted"), 0.25)
-        self.assertEquals(app.get_rounding_limit_for_rarity("XX"), 0.25)
+        self.assertEqual(app.get_rounding_limit_for_rarity("rare"), 1.0)
+        self.assertEqual(app.get_rounding_limit_for_rarity("time shifted"), 0.25)
+        self.assertEqual(app.get_rounding_limit_for_rarity("XX"), 0.25)
 
     def test_get_discount_for_condition(self):
         app = PyMkmApp(self.config)
-        self.assertEquals(app.get_discount_for_condition("MT"), 1.5)
-        self.assertEquals(app.get_discount_for_condition("LP"), 0.6)
+        self.assertEqual(app.get_discount_for_condition("MT"), 1.5)
+        self.assertEqual(app.get_discount_for_condition("LP"), 0.6)
         with self.assertRaises(KeyError):
             app.get_discount_for_condition("XX")
+
+    @patch(
+        "pymkm_app.PyMkmApi.get_product", return_value=TestCommon.fake_product_response,
+    )
+    @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result)
+    def test_get_price_for_product(self, mock_response, mock_get_stock):
+        self.api = PyMkmApi(self.config)
+        app = PyMkmApp(self.config)
+
+        fake_product = app.get_stock_as_array(self.api)[0]
+        price = app.get_price_for_product(
+            fake_product["idProduct"],
+            fake_product["product"]["rarity"],
+            fake_product["condition"],
+            fake_product["isFoil"],
+            fake_product["isPlayset"],
+            api=self.api,
+        )
+
+        self.assertEqual(price, 3.0)
 
 
 class TestPyMkmApiCalls(TestCommon):
@@ -548,15 +589,14 @@ class TestPyMkmApiCalls(TestCommon):
             self.assertGreater(len(cm.records), 0)
 
     def test_get_stock(self):
-        articles_response = "{{'article': {}}}".format(
-            TestCommon.fake_articles_result
-        ).replace("'", '"')
-        articles_response_json = json.loads(articles_response)
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(articles_response_json, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_get_stock_result, 200, "testing ok"
+            )
         )
-        self.assertEqual(self.api.get_stock(None, mock_oauth)[0]["comments"], "x")
+        stock = self.api.get_stock(None, mock_oauth)
+        self.assertEqual(stock[0]["comments"], "x")
 
     def test_get_games(self):
         test_json = json.loads('{"test": "test"}')
@@ -598,20 +638,20 @@ class TestPyMkmApiCalls(TestCommon):
     def test_find_product(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(TestCommon.fake_product, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.fake_product_response, 200, "testing ok"
+            )
         )
         search_string = "test"
         result = self.api.find_product(search_string, mock_oauth)
-        self.assertEqual(result, TestCommon.fake_product)
+        self.assertEqual(result, TestCommon.fake_product_response)
 
     def test_find_stock_article(self):
-        articles_response = "{{'article': {}}}".format(
-            TestCommon.fake_articles_result
-        ).replace("'", '"')
-        articles_response_json = json.loads(articles_response)
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(articles_response_json, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
+            )
         )
         name = "test"
         game_id = 1
@@ -628,14 +668,11 @@ class TestPyMkmApiCalls(TestCommon):
         self.assertEqual(self.api.get_articles_in_shoppingcarts(mock_oauth), test_json)
 
     def test_get_articles(self):
-        articles_response = "{{'article': {}}}".format(
-            TestCommon.fake_articles_result
-        ).replace("'", '"')
-        articles_response_json = json.loads(articles_response)
-
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(articles_response_json, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
+            )
         )
         product_id = 1
 
@@ -644,7 +681,7 @@ class TestPyMkmApiCalls(TestCommon):
 
         mock_oauth.get = MagicMock(
             return_value=self.MockResponse(
-                articles_response_json, 206, "partial content"
+                TestCommon.cardmarket_find_user_articles_result, 206, "partial content"
             )
         )
         product_id = 1
@@ -653,14 +690,12 @@ class TestPyMkmApiCalls(TestCommon):
         self.assertEqual(result[0]["comments"], "x")
 
     def test_find_user_articles(self):
-        articles_response = "{{'article': {}}}".format(
-            TestCommon.fake_articles_result
-        ).replace("'", '"')
-        articles_response_json = json.loads(articles_response)
 
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(articles_response_json, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
+            )
         )
         user_id = 1
         game_id = 1
@@ -670,7 +705,7 @@ class TestPyMkmApiCalls(TestCommon):
 
         mock_oauth.get = MagicMock(
             return_value=self.MockResponse(
-                articles_response_json, 206, "partial content"
+                TestCommon.cardmarket_find_user_articles_result, 206, "partial content"
             )
         )
 
@@ -688,7 +723,7 @@ class TestPyMkmApiCalls(TestCommon):
 
         result = self.api.set_vacation_status(vacation_status, mock_oauth)
         self.assertEqual(result["message"], "Successfully set the account on vacation.")
-        self.assertEqual(result["account"]["onVacation"], str(vacation_status).lower())
+        self.assertEqual(result["account"]["onVacation"], vacation_status)
 
     def test_set_display_language(self):
         mock_oauth = Mock(spec=OAuth1Session)
@@ -707,28 +742,34 @@ class TestPyMkmApiCalls(TestCommon):
     def test_add_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.post = MagicMock(
-            return_value=self.MockResponse(TestCommon.fake_stock, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.get_stock_result, 200, "testing ok"
+            )
         )
 
-        result = self.api.add_stock(TestCommon.fake_stock, mock_oauth)
+        result = self.api.add_stock(TestCommon.get_stock_result, mock_oauth)
         self.assertEqual(len(result), 3)
 
     def test_set_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.put = MagicMock(
-            return_value=self.MockResponse(TestCommon.fake_stock, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.get_stock_result, 200, "testing ok"
+            )
         )
 
-        result = self.api.set_stock(TestCommon.fake_stock, mock_oauth)
+        result = self.api.set_stock(TestCommon.get_stock_result, mock_oauth)
         self.assertEqual(len(result), 3)
 
     def test_delete_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.delete = MagicMock(
-            return_value=self.MockResponse(TestCommon.fake_stock, 200, "testing ok")
+            return_value=self.MockResponse(
+                TestCommon.get_stock_result, 200, "testing ok"
+            )
         )
 
-        result = self.api.delete_stock(TestCommon.fake_stock, mock_oauth)
+        result = self.api.delete_stock(TestCommon.get_stock_result, mock_oauth)
         self.assertEqual(len(result), 3)
 
 
@@ -762,24 +803,42 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         self.assertEqual(self.helper.get_lowest_price_from_table(table, 4), 1.21)
 
     def test_round_up_to_limit(self):
-        self.assertEqual(self.helper.round_up_to_limit(0.25, 0.99), 1)
-        self.assertEqual(self.helper.round_up_to_limit(0.25, 0), 0)
-        self.assertEqual(self.helper.round_up_to_limit(0.25, 0.1), 0.25)
+        self.assertEqual(self.helper.round_up_to_multiple_of_lower_limit(0.25, 0.99), 1)
+        self.assertEqual(self.helper.round_up_to_multiple_of_lower_limit(0.25, 0), 0)
+        self.assertEqual(
+            self.helper.round_up_to_multiple_of_lower_limit(0.25, 0.1), 0.25
+        )
 
-        self.assertEqual(self.helper.round_up_to_limit(0.1, 0.99), 1)
-        self.assertEqual(self.helper.round_up_to_limit(0.01, 0.011), 0.02)
-        self.assertEqual(self.helper.round_up_to_limit(0.01, 1), 1)
-        self.assertEqual(self.helper.round_up_to_limit(1, 0.1), 1)
+        self.assertEqual(self.helper.round_up_to_multiple_of_lower_limit(0.1, 0.99), 1)
+        self.assertEqual(
+            self.helper.round_up_to_multiple_of_lower_limit(0.01, 0.011), 0.02
+        )
+        self.assertEqual(self.helper.round_up_to_multiple_of_lower_limit(0.01, 1), 1)
+        self.assertEqual(self.helper.round_up_to_multiple_of_lower_limit(1, 0.1), 1)
 
     def test_round_down_to_limit(self):
-        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.99), 0.75)
-        self.assertEqual(self.helper.round_down_to_limit(0.25, 1.01), 1)
-        self.assertEqual(self.helper.round_down_to_limit(0.25, 0.1), 0.25)
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.25, 0.99), 0.75
+        )
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.25, 1.01), 1
+        )
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.25, 0.1), 0.25
+        )
 
-        self.assertEqual(self.helper.round_down_to_limit(0.1, 0.99), 0.9)
-        self.assertEqual(self.helper.round_down_to_limit(0.01, 0.011), 0.01)
-        self.assertEqual(self.helper.round_down_to_limit(0.01, 1), 1)
-        self.assertEqual(self.helper.round_down_to_limit(1, 0.1), 1)
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.1, 0.99), 0.9
+        )
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.01, 0.011), 0.01
+        )
+        self.assertEqual(self.helper.round_down_to_multiple_of_lower_limit(0.01, 1), 1)
+        self.assertEqual(self.helper.round_down_to_multiple_of_lower_limit(1, 0.1), 1)
+
+        self.assertEqual(
+            self.helper.round_down_to_multiple_of_lower_limit(0.10, 8.44), 8.4
+        )
 
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("builtins.input", side_effect=["y", "n", "p", "n"])

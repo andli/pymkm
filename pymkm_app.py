@@ -272,111 +272,101 @@ class PyMkmApp:
         except NoResultsError as err:
             print(err.mkm_msg())
         else:
-
-            if result:
-                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
-                filtered_articles = result
-                # condition
-                # [x for x in result if x.get('condition') in PyMkmApi.conditions[:3]]  # EX+
-                # price > 1
-                filtered_articles = [x for x in result if x.get("price") > 1]
-                # language from configured filter
-                language_filter_string = self.config["search_filters"]["language"]
-                if language_filter_string:
-                    language_filter_code = api.get_language_code_from_string(
-                        language_filter_string
-                    )
-                    if language_filter_code:
-                        filtered_articles = [
-                            x
-                            for x in filtered_articles
-                            if x.get("language").get("idLanguage")
-                            == language_filter_code
-                        ]
-
-                sorted_articles = sorted(
-                    filtered_articles, key=lambda x: x["price"], reverse=True
+            filtered_articles = [x for x in result if x.get("price") > 1]
+            # language from configured filter
+            language_filter_string = self.config["search_filters"]["language"]
+            if language_filter_string:
+                language_filter_code = api.get_language_code_from_string(
+                    language_filter_string
                 )
-                print(
-                    f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria."
+                if language_filter_code:
+                    filtered_articles = [
+                        x
+                        for x in filtered_articles
+                        if x.get("language").get("idLanguage") == language_filter_code
+                    ]
+
+            sorted_articles = sorted(
+                filtered_articles, key=lambda x: x["price"], reverse=True
+            )
+            print(
+                f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria."
+            )
+            num_searches = int(
+                PyMkmHelper.prompt_string(
+                    f"Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})"
                 )
-                num_searches = int(
-                    PyMkmHelper.prompt_string(
-                        f"Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})"
-                    )
-                )
-                if 1 < num_searches <= len(sorted_articles):
-                    table_data = []
+            )
+            if 1 < num_searches <= len(sorted_articles):
+                table_data = []
 
-                    index = 0
-                    bar = progressbar.ProgressBar(max_value=num_searches)
-                    for article in sorted_articles[:num_searches]:
-                        condition = article.get("condition")
-                        language = article.get("language").get("languageName")
-                        foil = article.get("isFoil")
-                        playset = article.get("isPlayset")
-                        price = float(article["price"])
+                index = 0
+                bar = progressbar.ProgressBar(max_value=num_searches)
+                for article in sorted_articles[:num_searches]:
+                    condition = article.get("condition")
+                    language = article.get("language").get("languageName")
+                    foil = article.get("isFoil")
+                    playset = article.get("isPlayset")
+                    price = float(article["price"])
 
-                        p = api.get_product(article["idProduct"])
-                        name = p["product"]["enName"]
-                        expansion = p["product"].get("expansion")
-                        if expansion:
-                            expansion_name = expansion.get("enName")
-                        else:
-                            expansion_name = "N/A"
-                        if foil:
-                            market_price = p["product"]["priceGuide"]["TRENDFOIL"]
-                        else:
-                            market_price = p["product"]["priceGuide"]["TREND"]
-                        if market_price > 0:
-                            price_diff = price - market_price
-                            percent_deal = round(-100 * (price_diff / market_price))
-                            if price_diff < -1 or percent_deal >= 10:
-                                table_data.append(
-                                    [
-                                        name,
-                                        expansion_name,
-                                        condition,
-                                        language,
-                                        "\u2713" if foil else "",
-                                        "\u2713" if playset else "",
-                                        price,
-                                        market_price,
-                                        price_diff,
-                                        percent_deal,
-                                    ]
-                                )
-
-                        index += 1
-                        bar.update(index)
-                    bar.finish()
-
-                    if table_data:
-                        print("Found some interesting prices:")
-                        print(
-                            tb.tabulate(
-                                sorted(table_data, key=lambda x: x[9], reverse=True),
-                                headers=[
-                                    "Name",
-                                    "Expansion",
-                                    "Condition",
-                                    "Language",
-                                    "Foil",
-                                    "Playset",
-                                    "Price",
-                                    "Market price",
-                                    "Market diff",
-                                    "Deal %",
-                                ],
-                                tablefmt="simple",
-                            )
-                        )
+                    p = api.get_product(article["idProduct"])
+                    name = p["product"]["enName"]
+                    expansion = p["product"].get("expansion")
+                    if expansion:
+                        expansion_name = expansion.get("enName")
                     else:
-                        print("Found no deals. :(")
+                        expansion_name = "N/A"
+                    if foil:
+                        market_price = p["product"]["priceGuide"]["TRENDFOIL"]
+                    else:
+                        market_price = p["product"]["priceGuide"]["TREND"]
+                    if market_price > 0:
+                        price_diff = price - market_price
+                        percent_deal = round(-100 * (price_diff / market_price))
+                        if price_diff < -1 or percent_deal >= 10:
+                            table_data.append(
+                                [
+                                    name,
+                                    expansion_name,
+                                    condition,
+                                    language,
+                                    "\u2713" if foil else "",
+                                    "\u2713" if playset else "",
+                                    price,
+                                    market_price,
+                                    price_diff,
+                                    percent_deal,
+                                ]
+                            )
+
+                    index += 1
+                    bar.update(index)
+                bar.finish()
+
+                if table_data:
+                    print("Found some interesting prices:")
+                    print(
+                        tb.tabulate(
+                            sorted(table_data, key=lambda x: x[9], reverse=True),
+                            headers=[
+                                "Name",
+                                "Expansion",
+                                "Condition",
+                                "Language",
+                                "Foil",
+                                "Playset",
+                                "Price",
+                                "Market price",
+                                "Market diff",
+                                "Deal %",
+                            ],
+                            tablefmt="simple",
+                        )
+                    )
                 else:
-                    print("Invalid number.")
+                    print("Found no deals. :(")
             else:
-                print("No results found.")
+                print("Invalid number.")
 
     @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
@@ -949,7 +939,9 @@ class PyMkmApp:
                     new_price = new_price * self.get_discount_for_condition(condition)
 
                 # Round
-                new_price = PyMkmHelper.round_down_to_limit(rounding_limit, new_price)
+                new_price = PyMkmHelper.round_up_to_multiple_of_lower_limit(
+                    rounding_limit, new_price
+                )
 
                 return new_price
         else:
