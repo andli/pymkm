@@ -650,7 +650,7 @@ class PyMkmApp:
                             if len(product_match) == 0:
                                 problem_cards.append(row_array)
                             elif len(product_match) == 1:
-                                foil = True if foil == "Foil" else False
+                                foil = True if foil.lower() == "foil" else False
                                 language_id = (
                                     1
                                     if language == ""
