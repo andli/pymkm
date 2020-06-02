@@ -680,7 +680,7 @@ class PyMkmApp:
                         "condition": "NM",
                         "isFoil": ("true" if foil else "false"),
                     }
-                    # api.add_stock([card])
+                    api.add_stock([card])
                     return True
                 else:
                     # no single matching card
