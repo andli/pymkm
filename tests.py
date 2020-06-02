@@ -114,7 +114,26 @@ class TestCommon(unittest.TestCase):
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
-    fake_find_product_result_2 = {
+    fake_find_product_result_no_match = {
+        "product": [
+            {
+                "categoryName": "Magic Single",
+                "enName": "Dragon BreathXX",
+                "expansionName": "Scourge",
+                "idProduct": 9145,
+                "rarity": "Rare",
+            },
+            {
+                "categoryName": "Magic Single",
+                "enName": "Dragon Breath",
+                "expansionName": "ScourgeXX",
+                "idProduct": 9145,
+                "rarity": "Rare",
+            },
+        ]
+    }
+
+    fake_find_product_result_one_match_of_3 = {
         "product": [
             {
                 "categoryName": "Magic Single",
@@ -125,7 +144,7 @@ Dragon Breath,Scourge,1,Foil,French"""
             },
             {
                 "categoryName": "Magic Single",
-                "enName": "Dragon Breath2",
+                "enName": "Dragon BreathXX",
                 "expansionName": "Scourge",
                 "idProduct": 9145,
                 "rarity": "Rare",
@@ -133,14 +152,14 @@ Dragon Breath,Scourge,1,Foil,French"""
             {
                 "categoryName": "Magic Single",
                 "enName": "Dragon Breath",
-                "expansionName": "Scourge2",
+                "expansionName": "ScourgeXX",
                 "idProduct": 9145,
                 "rarity": "Rare",
             },
         ]
     }
 
-    fake_find_product_result_1 = {
+    fake_find_product_result_one_match_only = {
         "product": [
             {
                 "categoryName": "Magic Single",
@@ -324,7 +343,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_2,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3,
     )
     @patch("builtins.input", side_effect=["3", "words", "n", "1", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -347,7 +366,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.fake_stock)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_2,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3,
     )
     @patch("builtins.input", side_effect=["4", "words", "5", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -411,7 +430,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkmapi.PyMkmApi.add_stock", return_value=ok_response)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_2,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3,
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -434,7 +453,30 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkmapi.PyMkmApi.add_stock", return_value=ok_response)
     @patch(
         "pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_1,
+        return_value=TestCommon.fake_find_product_result_no_match,
+    )
+    @patch("builtins.input", side_effect=["9", "0"])
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        create=True,
+        read_data=TestCommon.fake_list_csv,
+    )
+    @patch("requests.get", return_value=fake_github_releases)
+    def test_menu_option_9_no_match(self, mock_open, mock_stdout, *args):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level="DEBUG") as cm:
+            app.start()
+            log_record = cm.records[len(cm.records) - 1]
+            self.assertRegex(log_record.message, r">> Exited import_from_csv")
+
+    @patch("pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
+    @patch("pymkmapi.PyMkmApi.add_stock", return_value=ok_response)
+    @patch(
+        "pymkmapi.PyMkmApi.find_product",
+        return_value=TestCommon.fake_find_product_result_one_match_only,
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
