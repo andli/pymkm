@@ -219,7 +219,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "isPlayset": False,
                 "isSigned": False,
                 "language": {"idLanguage": 1, "languageName": "English"},
-                "price": 0.2,
+                "price": 1.5,
                 "seller": {
                     "address": {"country": 1},
                     "avgShippingTime": 0,
@@ -381,6 +381,9 @@ class TestPyMkmApp(TestCommon):
             )
 
     @patch(
+        "pymkmapi.PyMkmApi.get_product", return_value=TestCommon.fake_product_response,
+    )
+    @patch(
         "pymkmapi.PyMkmApi.find_user_articles",
         return_value=TestCommon.find_user_articles_result,
     )
@@ -390,7 +393,7 @@ class TestPyMkmApp(TestCommon):
         "pymkmapi.PyMkmApi.find_product",
         return_value=TestCommon.fake_find_product_result_one_match_of_3,
     )
-    @patch("builtins.input", side_effect=["4", "words", "5", "0"])
+    @patch("builtins.input", side_effect=["4", "words", "1", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("requests.get", return_value=fake_github_releases)
     def test_menu_option_4(self, mock_stdout, *args):

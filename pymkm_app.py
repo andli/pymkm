@@ -297,7 +297,7 @@ class PyMkmApp:
                     f"Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})"
                 )
             )
-            if 1 < num_searches <= len(sorted_articles):
+            if 1 <= num_searches <= len(sorted_articles):
                 table_data = []
 
                 index = 0
