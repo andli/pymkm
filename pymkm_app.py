@@ -614,69 +614,10 @@ class PyMkmApp:
                 if index > 0:
                     row_array = [x.strip('"') for x in row_array]
                     (name, set_name, count, foil, language, *other) = row_array
-                    if all(v != "" for v in [name, set_name, count]):
-                        try:
-                            possible_products = api.find_product(name, idGame="1")[
-                                "product"
-                            ]
-                        except Exception as err:
-                            problem_cards.append(row_array)
-                        else:
-                            product_match = [
-                                x
-                                for x in possible_products
-                                if (
-                                    x["expansionName"] == set_name
-                                    and x["enName"] == name
-                                    and x["categoryName"] == "Magic Single"
-                                )
-                                or (
-                                    # filter for flip card / split card names
-                                    "/" in x["enName"]
-                                    and x["enName"].startswith(name)
-                                    and x["expansionName"] == set_name
-                                    and x["categoryName"] == "Magic Single"
-                                )
-                                or (
-                                    # filter for the ligature Æ
-                                    "Æ"
-                                    in x[
-                                        "enName"
-                                    ]  # TODO: add some sort of string distance
-                                    and x["expansionName"] == set_name
-                                    and x["categoryName"] == "Magic Single"
-                                )
-                            ]
-                            if len(product_match) == 0:
-                                problem_cards.append(row_array)
-                            elif len(product_match) == 1:
-                                foil = True if foil.lower() == "foil" else False
-                                language_id = (
-                                    1
-                                    if language == ""
-                                    else api.languages.index(language) + 1
-                                )
-                                price = self.get_price_for_product(
-                                    product_match[0]["idProduct"],
-                                    product_match[0]["rarity"],
-                                    product_match[0].get("condition"),
-                                    foil,
-                                    False,
-                                    language_id=language_id,
-                                    api=self.api,
-                                )
-                                card = {
-                                    "idProduct": product_match[0]["idProduct"],
-                                    "idLanguage": language_id,
-                                    "count": count,
-                                    "price": str(price),
-                                    "condition": "NM",
-                                    "isFoil": ("true" if foil else "false"),
-                                }
-                                api.add_stock([card])
-                            else:
-                                problem_cards.append(row_array)
-                    else:
+                    foil = True if foil.lower() == "foil" else False
+                    if not self.match_card_and_add_stock(
+                        api, name, set_name, count, foil, language, *other
+                    ):
                         problem_cards.append(row_array)
 
                 bar.update(index)
@@ -689,14 +630,81 @@ class PyMkmApp:
                 ) as csvfile:
                     csv_writer = csv.writer(csvfile)
                     csv_writer.writerows(problem_cards)
-                print("Wrote failed imports to failed_imports.csv")
                 print(
-                    "Most failures are due to mismatching set names or multiple versions of cards."
+                    f"Wrote {len(problem_cards)} failed imports to failed_imports.csv"
                 )
+                print("Report failures as an issue in the pymkm GitHub repo, please!")
             except Exception as err:
                 print(err.value)
+        else:
+            print("All cards added successfully")
 
     # End of menu item functions ============================================
+
+    def match_card_and_add_stock(
+        self, api, name, set_name, count, foil, language, *other
+    ):
+        if all(v != "" for v in [name, set_name, count]):
+            try:
+                possible_products = api.find_product(name, idGame="1")["product"]
+            except Exception as err:
+                return False
+            else:
+                product_match = [
+                    x
+                    for x in possible_products
+                    if self.card_equals(x["enName"], x["expansionName"], name, set_name)
+                    and x["categoryName"] == "Magic Single"
+                ]
+                if len(product_match) == 0:
+                    # no viable match
+                    return False
+                elif len(product_match) == 1:
+                    language_id = (
+                        1 if language == "" else api.languages.index(language) + 1
+                    )
+                    price = self.get_price_for_product(
+                        product_match[0]["idProduct"],
+                        product_match[0]["rarity"],
+                        product_match[0].get("condition"),
+                        foil,
+                        False,
+                        language_id=language_id,
+                        api=self.api,
+                    )
+                    card = {
+                        "idProduct": product_match[0]["idProduct"],
+                        "idLanguage": language_id,
+                        "count": count,
+                        "price": str(price),
+                        "condition": "NM",
+                        "isFoil": ("true" if foil else "false"),
+                    }
+                    # api.add_stock([card])
+                    return True
+                else:
+                    # no single matching card
+                    return False
+        else:
+            # incomplete data from card scanner
+            return False
+
+    def card_equals(self, db_cardname, db_setname, local_cardname, local_setname):
+        # TODO: add some sort of string distance like Levenshtein
+        filtered_db_cardname = db_cardname.replace(",", "")
+        filtered_db_cardname = filtered_db_cardname.replace("Æ", "Ae")
+
+        if db_setname != local_setname:
+            return False
+        else:
+            # filter for flip card / split card names
+            if filtered_db_cardname == local_cardname or (
+                "/" in filtered_db_cardname
+                and filtered_db_cardname.startswith(local_cardname)
+            ):
+                return True
+            else:
+                return False
 
     def select_from_list_of_wantslists(self, wantslists):
         index = 1
