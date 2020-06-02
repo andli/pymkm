@@ -279,7 +279,7 @@ Dragon Breath,Scourge,1,Foil,French"""
             "idWantslist": 2789285,
             "game": {"idGame": 1, "name": "Magic the Gathering", "abbreviation": "MtG"},
             "name": "0 prio",
-            "itemCount": 3,
+            "itemCount": 2,
             "item": [
                 {
                     "idWant": "5ec4f6cf456a56266329f79c",
@@ -295,33 +295,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                         "countReprints": 1,
                         "enName": "Aurification",
                         "locName": "Aurification",
-                        "localization": [
-                            {
-                                "name": "Aurification",
-                                "idLanguage": 1,
-                                "languageName": "English",
-                            },
-                            {
-                                "name": "Aurification",
-                                "idLanguage": 2,
-                                "languageName": "French",
-                            },
-                            {
-                                "name": "Goldstarre",
-                                "idLanguage": 3,
-                                "languageName": "German",
-                            },
-                            {
-                                "name": "Aurificaci\\u00f3n",
-                                "idLanguage": 4,
-                                "languageName": "Spanish",
-                            },
-                            {
-                                "name": "Aurificazione",
-                                "idLanguage": 5,
-                                "languageName": "Italian",
-                            },
-                        ],
+                        "localization": [],
                         "website": "\\/en\\/Magic\\/Products\\/Singles\\/Onslaught\\/Aurification",
                         "image": "\\/\\/static.cardmarket.com\\/img\\/40b5efd939eda860937c1901755cb6fd\\/items\\/1\\/ONS\\/1637.jpg",
                         "gameName": "Magic the Gathering",
@@ -354,33 +328,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                         "countReprints": 5,
                         "enName": "Gray Merchant of Asphodel",
                         "locName": "Gray Merchant of Asphodel",
-                        "localization": [
-                            {
-                                "name": "Gray Merchant of Asphodel",
-                                "idLanguage": 1,
-                                "languageName": "English",
-                            },
-                            {
-                                "name": "Marchand gris d\\u0027Asphod\\u00e8le",
-                                "idLanguage": 2,
-                                "languageName": "French",
-                            },
-                            {
-                                "name": "Grauer H\\u00e4ndler aus Asphodel",
-                                "idLanguage": 3,
-                                "languageName": "German",
-                            },
-                            {
-                                "name": "Comerciante plomizo de Asfodel",
-                                "idLanguage": 4,
-                                "languageName": "Spanish",
-                            },
-                            {
-                                "name": "Mercante Grigio di Asfodelo",
-                                "idLanguage": 5,
-                                "languageName": "Italian",
-                            },
-                        ],
+                        "localization": [],
                         "website": "\\/en\\/Magic\\/Products\\/Singles\\/Theros-Beyond-Death-Promos\\/Gray-Merchant-of-Asphodel",
                         "image": "\\/\\/static.cardmarket.com\\/img\\/1e821b1745c6b8fa1ceeea8d3c975631\\/items\\/1\\/PTHB\\/431849.jpg",
                         "gameName": "Magic the Gathering",
@@ -399,53 +347,6 @@ Dragon Breath,Scourge,1,Foil,French"""
                     "isSigned": "null",
                     "isAltered": "null",
                 },
-                {
-                    "idWant": "5ecae85df168567cb9799141",
-                    "count": 1,
-                    "wishPrice": 0,
-                    "fromPrice": 0.05,
-                    "mailAlert": "false",
-                    "type": "metaproduct",
-                    "idMetaproduct": 263232,
-                    "metaproduct": {
-                        "idMetaproduct": 263232,
-                        "enName": "Meteor Golem",
-                        "locName": "Meteor Golem",
-                        "localization": [
-                            {
-                                "name": "Meteor Golem",
-                                "idLanguage": 1,
-                                "languageName": "English",
-                            },
-                            {
-                                "name": "Golem m\\u00e9t\\u00e9oritique",
-                                "idLanguage": 2,
-                                "languageName": "French",
-                            },
-                            {
-                                "name": "Meteorgolem",
-                                "idLanguage": 3,
-                                "languageName": "German",
-                            },
-                            {
-                                "name": "G\\u00f3lem meteoro",
-                                "idLanguage": 4,
-                                "languageName": "Spanish",
-                            },
-                            {
-                                "name": "Golem Meteora",
-                                "idLanguage": 5,
-                                "languageName": "Italian",
-                            },
-                        ],
-                        "image": "\\/\\/static.cardmarket.com\\/img\\/71955b92b2d7acc6e26a7eed2430ed02\\/items\\/1\\/C19\\/393282.jpg",
-                    },
-                    "idLanguage": [1],
-                    "minCondition": "NM",
-                    "isFoil": "true",
-                    "isSigned": "null",
-                    "isAltered": "null",
-                },
             ],
         },
         "links": [
@@ -460,6 +361,97 @@ Dragon Breath,Scourge,1,Foil,French"""
     }
 
     get_wantslist_items = cardmarket_get_wantslist_items["wantslist"]
+
+    get_orders = [
+        {
+            "idOrder": 22935635,
+            "isBuyer": True,
+            "seller": {"idUser": 764949, "username": "Versus-GC",},
+            "buyer": {"idUser": 787453, "username": "andli826",},
+            "state": {
+                "state": "evaluated",
+                "dateBought": "2020-05-16T00:49:51+0200",
+                "datePaid": "2020-05-16T00:49:58+0200",
+                "dateSent": "2020-05-18T18:11:48+0200",
+                "dateReceived": "2020-06-01T15:48:58+0200",
+            },
+            "shippingMethod": {
+                "idShippingMethod": 11425980,
+                "name": "Letter (Correio Normal)",
+                "price": 1.7,
+                "isLetter": True,
+                "isInsured": False,
+            },
+            "trackingNumber": "",
+            "temporaryEmail": "",
+            "isPresale": False,
+            "shippingAddress": {"name": "Andreas Ehrlund",},
+            "note": "",
+            "articleCount": 4,
+            "evaluation": {
+                "evaluationGrade": 1,
+                "itemDescription": 1,
+                "packaging": 1,
+                "comment": "Very nice quality cards!",
+            },
+            "article": [
+                {
+                    "idArticle": 778922254,
+                    "idProduct": 1637,
+                    "language": {"idLanguage": 1, "languageName": "English"},
+                    "comments": "",
+                    "price": 1.5,
+                    "count": 1,
+                    "inShoppingCart": False,
+                    "priceEUR": 1.5,
+                    "priceGBP": 1.5,
+                    "product": {
+                        "idGame": 1,
+                        "enName": "Aurification",
+                        "locName": "Aurification",
+                        "image": "//static.cardmarket.com/img/c21340a8e384bef0513bfcc9dbdf37e5/items/1/KTK/269545.jpg",
+                        "expansion": "Onslaught",
+                        "nr": "6",
+                        "expIcon": 39,
+                        "rarity": "Rare",
+                    },
+                    "condition": "EX",
+                    "isFoil": False,
+                    "isSigned": False,
+                    "isPlayset": False,
+                    "isAltered": False,
+                },
+                {
+                    "idArticle": 778922259,
+                    "idProduct": 296748,
+                    "language": {"idLanguage": 1, "languageName": "English"},
+                    "comments": "",
+                    "price": 1.5,
+                    "count": 1,
+                    "inShoppingCart": False,
+                    "priceEUR": 1.5,
+                    "priceGBP": 1.5,
+                    "product": {
+                        "idGame": 1,
+                        "enName": "Throne of the God-Pharaoh",
+                        "locName": "Throne of the God-Pharaoh",
+                        "image": "//static.cardmarket.com/img/aac5e13f076472092ab1297934042e21/items/1/AKH/296748.jpg",
+                        "expansion": "Amonkhet",
+                        "nr": "237",
+                        "expIcon": 396,
+                        "rarity": "Rare",
+                    },
+                    "condition": "EX",
+                    "isFoil": False,
+                    "isSigned": False,
+                    "isPlayset": False,
+                    "isAltered": False,
+                },
+            ],
+            "articleValue": 11,
+            "totalValue": 12.7,
+        }
+    ]
 
     def setUp(self):
         self.config = json.loads(
@@ -631,6 +623,14 @@ class TestPyMkmApp(TestCommon):
             mock_stdout.getvalue(), r"Top 20 most expensive articles in stock:"
         )
 
+    @patch(
+        "pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_orders,
+    )
+    @patch(
+        "pymkmapi.PyMkmApi.get_wantslist_items",
+        return_value=TestCommon.get_wantslist_items,
+    )
+    @patch("pymkmapi.PyMkmApi.get_wantslists", return_value=TestCommon.get_wantslists)
     @patch("pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
     @patch("builtins.input", side_effect=["6", "0"])
     @patch("requests.get", return_value=fake_github_releases)
