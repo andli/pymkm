@@ -77,6 +77,14 @@ class TestPyMkmApiCalls(TestCommon):
         stock = self.api.get_stock(None, mock_oauth)
         self.assertEqual(stock[0]["comments"], "x")
 
+    def test_get_orders(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(TestCommon.get_orders, 200, "testing ok")
+        )
+        orders = self.api.get_orders("buyer", "received", 1, mock_oauth)
+        self.assertEqual(orders[0]["idOrder"], 22935635)
+
     def test_get_games(self):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
