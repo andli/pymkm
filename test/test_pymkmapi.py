@@ -114,6 +114,17 @@ class TestPyMkmApiCalls(TestCommon):
         product_id = 1
         self.assertEqual(self.api.get_product(product_id, mock_oauth), test_json)
 
+    def test_get_metaproduct(self):
+        test_json = json.loads('{"test": "test"}')
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(test_json, 200, "testing ok")
+        )
+        metaproduct_id = 1
+        self.assertEqual(
+            self.api.get_metaproduct(metaproduct_id, mock_oauth), test_json
+        )
+
     def test_find_product(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
