@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 import requests
 from requests_oauthlib import OAuth1Session
 
-from pymkm.pymkmapi import PyMkmApi
+from pymkm.pymkmapi import PyMkmApi, NoResultsError
 from pymkm.pymkm_app import PyMkmApp
 from test.test_common import TestCommon
 
@@ -22,6 +22,16 @@ class TestPyMkmApiCalls(TestCommon):
         super(TestPyMkmApiCalls, self).setUp()
 
         self.api = PyMkmApi(self.config)
+
+    def test_no_results(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(None, 204, "testing ok")
+        )
+        with self.assertLogs(level="ERROR") as cm:
+            empty_response = self.api.get_expansions(1, mock_oauth)
+            log_record_message = cm.records[0].message
+            self.assertEqual(log_record_message, "No results found.")
 
     def test_file_not_found2(self):
         open_name = "%s.open" % __name__
