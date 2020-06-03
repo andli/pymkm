@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.5]
 
+### Added
+
+- Added many unit tests to increase test coverage
+
 ### Changed
 
+- Refactored test file structure
 - Refactored card matching code in csv import to make it more robust and less messy
 
 ## [1.6.4]
