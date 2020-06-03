@@ -33,6 +33,12 @@ class TestPyMkmApiCalls(TestCommon):
             log_record_message = cm.records[0].message
             self.assertEqual(log_record_message, "No results found.")
 
+    def test_get_language_code_from_string(self):
+        language_code = self.api.get_language_code_from_string("English")
+        self.assertEqual(language_code, 1)
+        with self.assertRaises(Exception):
+            self.api.get_language_code_from_string("Elvish")
+
     def test_file_not_found2(self):
         open_name = "%s.open" % __name__
         with patch("builtins.open", mock_open(read_data="data")) as mocked_open:
