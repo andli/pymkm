@@ -21,7 +21,7 @@ import tabulate as tb
 from pkg_resources import parse_version
 
 from .pymkm_helper import PyMkmHelper
-from .pymkmapi import PyMkmApi, api_wrapper, NoResultsError
+from .pymkmapi import PyMkmApi, api_wrapper, CardmarketError
 
 ALLOW_REPORTING = True
 
@@ -68,18 +68,21 @@ class PyMkmApp:
             except Exception as err:
                 pass
 
-    def start(self):
-        message = None
+    def check_latest_version(self):
         latest_version = None
         try:
             r = requests.get("https://api.github.com/repos/andli/pymkm/releases/latest")
             latest_version = r.json()["tag_name"]
         except Exception as err:
-            pass
+            logging.error("Connection error with github.com")
         if parse_version(__version__) < parse_version(latest_version):
-            message = (
-                f"Go to Github and download version {latest_version}! It's better!"
-            )
+            return f"Go to Github and download version {latest_version}! It's better!"
+        else:
+            return None
+
+    def start(self):
+        message = self.check_latest_version()
+
         if hasattr(self, "DEV_MODE") and self.DEV_MODE:
             message = "dev mode"
         menu = micromenu.Menu(f"PyMKM {__version__}", message)
@@ -226,40 +229,46 @@ class PyMkmApp:
         search_string = PyMkmHelper.prompt_string("Search product name")
         is_foil = PyMkmHelper.prompt_bool("Foil?")
 
-        result = api.find_product(
-            search_string,
-            **{
-                # 'exact ': 'true',
-                "idGame": 1,
-                "idLanguage": 1,
-                # TODO: Add Partial Content support
-                # TODO: Add language support
-            },
-        )
-
-        if result:
-            products = result["product"]
-
-            stock_list_products = [
-                x["idProduct"] for x in self.get_stock_as_array(api=self.api)
-            ]
-            products = [x for x in products if x["idProduct"] in stock_list_products]
-
-            if len(products) == 0:
-                print("No matching cards in stock.")
-            else:
-                if len(products) > 1:
-                    product = self.select_from_list_of_products(
-                        [i for i in products if i["categoryName"] == "Magic Single"]
-                    )
-                elif len(products) == 1:
-                    product = products[0]
-
-                self.show_competition_for_product(
-                    product["idProduct"], product["enName"], is_foil, api=self.api
-                )
+        try:
+            result = api.find_product(
+                search_string,
+                **{
+                    # 'exact ': 'true',
+                    "idGame": 1,
+                    "idLanguage": 1,
+                    # TODO: Add Partial Content support
+                    # TODO: Add language support
+                },
+            )
+        except CardmarketError as err:
+            print(err.mkm_msg())
+            logging.debug(err.mkm_msg())
         else:
-            print("No results found.")
+            if result:
+                products = result["product"]
+
+                stock_list_products = [
+                    x["idProduct"] for x in self.get_stock_as_array(api=self.api)
+                ]
+                products = [
+                    x for x in products if x["idProduct"] in stock_list_products
+                ]
+
+                if len(products) == 0:
+                    print("No matching cards in stock.")
+                else:
+                    if len(products) > 1:
+                        product = self.select_from_list_of_products(
+                            [i for i in products if i["categoryName"] == "Magic Single"]
+                        )
+                    elif len(products) == 1:
+                        product = products[0]
+
+                    self.show_competition_for_product(
+                        product["idProduct"], product["enName"], is_foil, api=self.api
+                    )
+            else:
+                print("No results found.")
 
     @api_wrapper
     def find_deals_from_user(self, api):
@@ -269,8 +278,9 @@ class PyMkmApp:
 
         try:
             result = api.find_user_articles(search_string)
-        except NoResultsError as err:
+        except CardmarketError as err:
             print(err.mkm_msg())
+            logging.debug(err.mkm_msg())
         else:
             filtered_articles = [x for x in result if x.get("price") > 1]
             # language from configured filter
@@ -634,6 +644,9 @@ class PyMkmApp:
         if all(v != "" for v in [name, set_name, count]):
             try:
                 possible_products = api.find_product(name, idGame="1")["product"]
+            except CardmarketError as err:
+                print(err.mkm_msg())
+                logging.debug(err.mkm_msg())
             except Exception as err:
                 return False
             else:

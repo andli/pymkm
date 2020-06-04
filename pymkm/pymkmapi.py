@@ -36,7 +36,7 @@ def api_wrapper(func):
     return wrapper
 
 
-class NoResultsError(Exception):
+class CardmarketError(Exception):
     def __init__(self, message, errors=None):
         if message is None:
             message = "No results found."
@@ -45,8 +45,7 @@ class NoResultsError(Exception):
         self.errors = errors
 
     def mkm_msg(self):
-        msg = json.loads(self.args[0])
-        return msg["mkm_error_description"]
+        return "\n[Cardmarket error] " + self.args[0].get("mkm_error_description")
 
 
 class PyMkmApi:
@@ -103,9 +102,9 @@ class PyMkmApi:
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif response.status_code == requests.codes.no_content:
-            raise NoResultsError("No results found.")
+            raise CardmarketError("No results found.")
         elif response.status_code == requests.codes.bad_request:
-            print(json.loads(response.text)["mkm_error_description"])
+            raise CardmarketError(response.json())
             return False
         elif response.status_code == requests.codes.not_found:
             return False
@@ -379,7 +378,7 @@ class PyMkmApi:
                 params.update({"start": next_start, "maxResults": INCREMENT})
                 return r.json()["article"] + self.get_articles(product_id, **kwargs)
         elif r.status_code == requests.codes.no_content:
-            raise NoResultsError("No products found in stock.")
+            raise CardmarketError("No products found in stock.")
         elif r.status_code == requests.codes.ok:
             return r.json()["article"]
         else:
@@ -421,7 +420,7 @@ class PyMkmApi:
         r = self.mkm_request(mkm_oauth, url)
 
         if r.status_code == requests.codes.no_content:
-            raise NoResultsError("No articles found.")
+            raise CardmarketError("No articles found.")
         elif r.status_code == requests.codes.ok:
             return r.json()["article"]
         else:
@@ -457,11 +456,11 @@ class PyMkmApi:
                     user_id, game_id, **kwargs
                 )
         elif r.status_code == requests.codes.no_content:
-            raise NoResultsError("No products found in stock.")
+            raise CardmarketError("No products found in stock.")
         elif r.status_code == requests.codes.ok:
             return r.json()["article"]
         elif r.status_code == requests.codes.bad_request:
-            raise NoResultsError(r.text)
+            raise CardmarketError(r.text)
         else:
             raise ConnectionError(r)
 

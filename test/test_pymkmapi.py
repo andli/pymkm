@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 
 from requests_oauthlib import OAuth1Session
 
-from pymkm.pymkmapi import PyMkmApi, NoResultsError
+from pymkm.pymkmapi import PyMkmApi, CardmarketError
 from pymkm.pymkm_app import PyMkmApp
 from test.test_common import TestCommon
 
@@ -289,6 +289,17 @@ class TestPyMkmApiCalls(TestCommon):
         wantslist_id = 2789285
         result = self.api.get_wantslist_items(wantslist_id, mock_oauth)
         self.assertEqual(result, TestCommon.get_wantslist_items)
+
+    def test_mkm_error_message(self):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=self.MockResponse(
+                TestCommon.cardmarket_example_error_message, 400, "testing error"
+            )
+        )
+        product_name = "testnameplsignore"
+        with self.assertRaises(CardmarketError):
+            result = self.api.find_product(product_name, mock_oauth)
 
 
 if __name__ == "__main__":
