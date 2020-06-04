@@ -297,7 +297,7 @@ class TestPyMkmApp(TestCommon):
         self.assertEqual(price, 3.0)
 
     @patch("requests.get", return_value=TestCommon.fake_github_releases)
-    def check_latest_version(self):
+    def test_check_latest_version(self, *args):
         app = PyMkmApp(self.config)
         self.assertIsNone(app.check_latest_version())
 
