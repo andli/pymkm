@@ -6,7 +6,6 @@ import json
 import unittest
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
-import requests
 from requests_oauthlib import OAuth1Session
 
 from pymkm.pymkmapi import PyMkmApi, NoResultsError

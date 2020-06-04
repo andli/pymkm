@@ -13,6 +13,21 @@ from pymkm.pymkmapi import PyMkmApi
 
 
 class TestCommon(unittest.TestCase):
+    class MockResponse:
+        def __init__(self, json_data, status_code, content):
+            self.json_data = json_data
+            self.status_code = status_code
+            self.content = content
+            # TODO: write a test for these
+            self.headers = {
+                "X-Request-Limit-Count": 1234,
+                "X-Request-Limit-Max": 5000,
+                "Content-Range": "/100",
+            }
+
+        def json(self):
+            return self.json_data
+
 
     cardmarket_get_stock_result = {
         "article": [
@@ -448,6 +463,19 @@ Dragon Breath,Scourge,1,Foil,French"""
         }
     ]
 
+    cardmarket_example_error_message = {
+        "mkm_error_description": "Provide a search string for non-exact searches with at least 4 characters.",
+        "internal_error_code": "null",
+        "post_data_field": "null",
+        "http_status_code": "400",
+        "http_status_code_description": "Bad Request",
+    }
+    bad_request_response = MockResponse(
+        cardmarket_example_error_message, 400, "Bad request"
+    )
+    ok_response = MockResponse("test", 200, "testing ok")
+    fake_github_releases = MockResponse({"tag_name": "1.0.0"}, 200, "ok")
+
     def setUp(self):
         self.config = json.loads(
             """
@@ -486,21 +514,6 @@ Dragon Breath,Scourge,1,Foil,French"""
 
     def tearDown(self):
         self.patcher.stop()
-
-    class MockResponse:
-        def __init__(self, json_data, status_code, content):
-            self.json_data = json_data
-            self.status_code = status_code
-            self.content = content
-            # TODO: write a test for these
-            self.headers = {
-                "X-Request-Limit-Count": 1234,
-                "X-Request-Limit-Max": 5000,
-                "Content-Range": "/100",
-            }
-
-        def json(self):
-            return self.json_data
 
 
 if __name__ == "__main__":
