@@ -342,6 +342,12 @@ class TestPyMkmApp(TestCommon):
         list = app.select_from_list_of_wantslists(TestCommon.cardmarket_get_wantslists)
         self.assertEqual(list["idWantslist"], 2789285)
 
+    @patch("builtins.input", side_effect=["1"])
+    def test_select_from_list_of_articles(self, *args):
+        app = PyMkmApp(self.config)
+        article = app.select_from_list_of_articles(TestCommon.get_stock_result)
+        self.assertEqual(article["idArticle"], 410480091)
+
 
 if __name__ == "__main__":
     unittest.main()
