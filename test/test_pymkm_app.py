@@ -41,6 +41,7 @@ class TestPyMkmApp(TestCommon):
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_1(self, mock_open, mock_stdout, *args):
+        # update_stock_prices_to_trend
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level="DEBUG") as cm:
@@ -57,12 +58,34 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkmapi.PyMkmApi.set_stock", return_value=TestCommon.ok_response)
     @patch(
         "pymkm.pymkmapi.PyMkmApi.find_stock_article",
+        return_value=TestCommon.fake_find_product_result_one_match_only,
+    )
+    @patch("builtins.input", side_effect=["2", "words", "n", "0"])
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
+    def test_menu_option_2_1(self, mock_open, mock_stdout, *args):
+        # update_product_to_trend
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level="DEBUG") as cm:
+            app.start()
+            log_record = cm.records[len(cm.records) - 1]
+            self.assertRegex(log_record.message, r">> Exited update_product_to_trend")
+
+    @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
+    @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result
+    )
+    @patch("pymkm.pymkmapi.PyMkmApi.set_stock", return_value=TestCommon.ok_response)
+    @patch(
+        "pymkm.pymkmapi.PyMkmApi.find_stock_article",
         return_value=TestCommon.get_stock_result,
     )
     @patch("builtins.input", side_effect=["2", "words", "1", "n", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_2(self, mock_open, mock_stdout, *args):
+        # update_product_to_trend
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level="DEBUG") as cm:
@@ -88,7 +111,7 @@ class TestPyMkmApp(TestCommon):
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_3(self, mock_stdout, *args):
-
+        # list_competition_for_product
         app = PyMkmApp(self.config)
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
@@ -119,7 +142,7 @@ class TestPyMkmApp(TestCommon):
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_4(self, mock_stdout, *args):
-
+        # find_deals_from_user
         app = PyMkmApp(self.config)
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
@@ -133,7 +156,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_menu_option_5(self, mock_stdout, *args):
-
+        # show_top_expensive_articles_in_stock
         app = PyMkmApp(self.config)
         app.start()
         text = mock_stdout.getvalue()
@@ -158,7 +181,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_menu_option_6(self, mock_stdout, *args):
-
+        # clean_purchased_from_wantslists
         app = PyMkmApp(self.config)
         app.start()
         print(mock_stdout.getvalue())
@@ -171,7 +194,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_menu_option_7(self, mock_stdout, *args):
-
+        # show_account_info
         app = PyMkmApp(self.config)
         app.start()
         print(mock_stdout.getvalue())
@@ -184,8 +207,8 @@ class TestPyMkmApp(TestCommon):
     @patch("builtins.input", side_effect=["8", "y", "0"])
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_8(self, *args):
+        # clear_entire_stock
         app = PyMkmApp(self.config)
-
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
@@ -207,6 +230,7 @@ class TestPyMkmApp(TestCommon):
     )
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_9(self, mock_open, mock_stdout, *args):
+        # import_from_csv
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level="DEBUG") as cm:
