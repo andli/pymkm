@@ -336,6 +336,12 @@ class TestPyMkmApp(TestCommon):
             log_record = cm.records[len(cm.records) - 1]
             self.assertRegex(log_record.message, r"Connection error to stats server.")
 
+    @patch("builtins.input", side_effect=["1"])
+    def test_select_from_list_of_wantslists(self, *args):
+        app = PyMkmApp(self.config)
+        list = app.select_from_list_of_wantslists(TestCommon.cardmarket_get_wantslists)
+        self.assertEqual(list["idWantslist"], 2789285)
+
 
 if __name__ == "__main__":
     unittest.main()

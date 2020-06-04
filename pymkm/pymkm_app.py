@@ -716,7 +716,7 @@ class PyMkmApp:
             print(f"{index}: {wl['name']} [{wl['itemCount']}]")
             index += 1
         choice = int(input("Choose wantslist: "))
-        return wantslists[choice - 1]
+        return wantslists["wantslist"][choice - 1]
 
     def select_from_list_of_products(self, products):
         index = 1
