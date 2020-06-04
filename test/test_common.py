@@ -80,7 +80,7 @@ class TestCommon(unittest.TestCase):
                 "idProduct": 1079,
                 "isFoil": False,
                 "isPlayset": False,
-                "comments": "",
+                "comments": "!",
                 "isSigned": False,
                 "language": {"idLanguage": 1, "languageName": "English"},
                 "price": 0.5,
@@ -217,7 +217,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                 },
             },
             {
-                "comments": "x",
+                "comments": "!x",
                 "condition": "EX",
                 "count": 1,
                 "idArticle": 406723464,

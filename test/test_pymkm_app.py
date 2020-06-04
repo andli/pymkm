@@ -58,7 +58,7 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkmapi.PyMkmApi.set_stock", return_value=TestCommon.ok_response)
     @patch(
         "pymkm.pymkmapi.PyMkmApi.find_stock_article",
-        return_value=TestCommon.fake_find_product_result_one_match_only,
+        return_value=TestCommon.get_stock_result,
     )
     @patch("builtins.input", side_effect=["2", "words", "n", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
