@@ -76,12 +76,13 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
         )
 
     @patch("sys.stdout", new_callable=io.StringIO)
-    @patch("builtins.input", side_effect=["y", "n", "p", "n"])
+    @patch("builtins.input", side_effect=["y", "n", "p", "n", ""])
     def test_prompt_bool(self, mock_input, mock_stdout):
         self.assertTrue(self.helper.prompt_bool("test_y"))
         self.assertFalse(self.helper.prompt_bool("test_n"))
         self.helper.prompt_bool("test_error")
         self.assertRegex(mock_stdout.getvalue(), r"\nPlease answer with y\/n\n")
+        self.assertFalse(self.helper.prompt_bool("test_empty"))
 
     @patch("builtins.input", side_effect=["y"])
     def test_prompt_string(self, mock_input):
