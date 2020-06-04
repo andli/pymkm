@@ -28,7 +28,6 @@ class TestCommon(unittest.TestCase):
         def json(self):
             return self.json_data
 
-
     cardmarket_get_stock_result = {
         "article": [
             {
@@ -504,7 +503,8 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "search_filters": {
                     "language": ""
                 },
-                "sticky_price_char": "!"
+                "sticky_price_char": "!",
+                "uuid": "xxx"
             }
             """
         )

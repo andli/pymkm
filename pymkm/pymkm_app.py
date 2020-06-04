@@ -66,6 +66,7 @@ class PyMkmApp:
                     json={"command": command, "uuid": uuid, "version": __version__},
                 )
             except Exception as err:
+                logging.error("Connection error to stats server.")
                 pass
 
     def check_latest_version(self):

@@ -325,6 +325,17 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         self.assertIsNone(app.check_latest_version())
 
+    @patch("requests.post", side_effect=requests.exceptions.Timeout())
+    def test_report(self, mock_post):
+        app = PyMkmApp(self.config)
+
+        with self.assertLogs(level="ERROR") as cm:
+            self.patcher.stop()
+            app.report("testcommand")
+            self.patcher.start()
+            log_record = cm.records[len(cm.records) - 1]
+            self.assertRegex(log_record.message, r"Connection error to stats server.")
+
 
 if __name__ == "__main__":
     unittest.main()
