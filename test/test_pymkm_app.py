@@ -60,7 +60,7 @@ class TestPyMkmApp(TestCommon):
         "pymkm.pymkmapi.PyMkmApi.find_stock_article",
         return_value=TestCommon.get_stock_result,
     )
-    @patch("builtins.input", side_effect=["2", "words", "n", "0"])
+    @patch("builtins.input", side_effect=["2", "words", "y", "y", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_2_1(self, mock_open, mock_stdout, *args):
