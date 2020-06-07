@@ -8,7 +8,7 @@ __pycache__/
 
 config.json
 data.json
-price_changes.json
+partial_stock_update.txt
 
 failed_imports.csv
 list.csv
