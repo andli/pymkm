@@ -9,7 +9,7 @@ Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/docume
 The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
-The app also keeps track of how many API requests your have left each day.
+The app also keeps track of how many API requests your have left each day, and can do partial updates if you have more than 5000 articles to update.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 

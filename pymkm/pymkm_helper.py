@@ -63,3 +63,15 @@ class PyMkmHelper:
         print("{}: ".format(prompt_string))
         val = input()
         return val
+
+    @staticmethod
+    def write_list(file_name, list_data):
+        with open(file_name, "a") as f:
+            for item in list_data:
+                f.write(str(item) + "\n")
+
+    @staticmethod
+    def read_list(file_name, list_data):
+        with open(file_name, "r") as f:
+            for line in f:
+                list_data.append(int(line.strip()))

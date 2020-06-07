@@ -7,6 +7,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "1.7.0"
 __license__ = "MIT"
 
+import os
 import csv
 import json
 import logging
@@ -24,6 +25,7 @@ from .pymkm_helper import PyMkmHelper
 from .pymkmapi import PyMkmApi, api_wrapper, CardmarketError
 
 ALLOW_REPORTING = True
+PARTIAL_UPDATE_FILE = "partial_stock_update.txt"
 
 
 class PyMkmApp:
@@ -131,13 +133,31 @@ class PyMkmApp:
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
 
+        partial_stock = PyMkmHelper.prompt_string(
+            "Partial update? If so, enter number of cards (or press Enter to update all)"
+        )
+        if partial_stock != "":
+            partial_stock = int(partial_stock)
+        if os.path.exists(PARTIAL_UPDATE_FILE):
+            already_checked_articles = []
+            PyMkmHelper.read_list(PARTIAL_UPDATE_FILE, already_checked_articles)
+            print(
+                f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {PARTIAL_UPDATE_FILE} if you want to clear the list."
+            )
+
         undercut_local_market = PyMkmHelper.prompt_bool(
             "Try to undercut local market? (slower, more requests)"
         )
 
-        uploadable_json = self.calculate_new_prices_for_stock(
-            undercut_local_market, api=self.api
+        uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
+            undercut_local_market, partial_stock, already_checked_articles, api=self.api
         )
+
+        if partial_stock and len(checked_articles) > 0:
+            PyMkmHelper.write_list(PARTIAL_UPDATE_FILE, checked_articles)
+            print(
+                f"Partial stock update saved, next update will disregard articles in {PARTIAL_UPDATE_FILE}."
+            )
 
         if len(uploadable_json) > 0:
 
@@ -145,7 +165,7 @@ class PyMkmApp:
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                 print("Updating prices...")
-                api.set_stock(uploadable_json)
+                # api.set_stock(uploadable_json)
                 print("Prices updated.")
             else:
                 print("Prices not updated.")
@@ -807,22 +827,41 @@ class PyMkmApp:
             )
         )
 
-    def calculate_new_prices_for_stock(self, undercut_local_market, api):
+    def calculate_new_prices_for_stock(
+        self, undercut_local_market, partial_stock, already_checked_articles, api
+    ):
         stock_list = self.get_stock_as_array(api=self.api)
-        # HACK: filter out a foil product
+
         sticky_price_char = self.config["sticky_price_char"]
         # if we find the sticky price marker, filter out articles
         def filtered(stock_item):
             return stock_item["comments"].startswith(sticky_price_char)
 
         filtered_stock_list = [x for x in stock_list if not filtered(x)]
+        sticky_count = len(stock_list) - len(filtered_stock_list)
+
+        if already_checked_articles:
+            filtered_stock_list = [
+                x
+                for x in filtered_stock_list
+                if x["idArticle"] not in already_checked_articles
+            ]
+            if len(filtered_stock_list) == 0:
+                print(
+                    f"Entire stock updated in partial updates. Delete {PARTIAL_UPDATE_FILE} to reset."
+                )
+                return [], []
+        if partial_stock:
+            filtered_stock_list = filtered_stock_list[:partial_stock]
 
         result_json = []
+        checked_articles = []
         total_price = 0
         index = 0
 
         bar = progressbar.ProgressBar(max_value=len(filtered_stock_list))
         for article in filtered_stock_list:
+            checked_articles.append(article.get("idArticle"))
             updated_article = self.get_article_with_updated_price(
                 article, undercut_local_market, api=self.api
             )
@@ -837,10 +876,8 @@ class PyMkmApp:
 
         print("Total stock value: {}".format(str(round(total_price, 2))))
         if len(stock_list) != len(filtered_stock_list):
-            print(
-                f"Note: {len(stock_list) - len(filtered_stock_list)} items filtered out because of sticky prices."
-            )
-        return result_json
+            print(f"Note: {sticky_count} items filtered out because of sticky prices.")
+        return result_json, checked_articles
 
     def get_article_with_updated_price(
         self, article, undercut_local_market=False, api=None
