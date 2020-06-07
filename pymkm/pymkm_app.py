@@ -133,13 +133,13 @@ class PyMkmApp:
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
 
+        already_checked_articles = []
         partial_stock = PyMkmHelper.prompt_string(
             "Partial update? If so, enter number of cards (or press Enter to update all)"
         )
         if partial_stock != "":
             partial_stock = int(partial_stock)
         if os.path.exists(PARTIAL_UPDATE_FILE):
-            already_checked_articles = []
             PyMkmHelper.read_list(PARTIAL_UPDATE_FILE, already_checked_articles)
             print(
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {PARTIAL_UPDATE_FILE} if you want to clear the list."
@@ -165,7 +165,7 @@ class PyMkmApp:
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                 print("Updating prices...")
-                # api.set_stock(uploadable_json)
+                api.set_stock(uploadable_json)
                 print("Prices updated.")
             else:
                 print("Prices not updated.")
