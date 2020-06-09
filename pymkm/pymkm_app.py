@@ -81,51 +81,63 @@ class PyMkmApp:
             return None
 
     def start(self):
-        message = self.check_latest_version()
+        while True:
+            top_message = self.check_latest_version()
 
-        if hasattr(self, "DEV_MODE") and self.DEV_MODE:
-            message = "dev mode"
-        menu = micromenu.Menu(f"PyMKM {__version__}", message)
+            if hasattr(self, "DEV_MODE") and self.DEV_MODE:
+                top_message = "dev mode"
+            menu = micromenu.Menu(
+                f"PyMKM {__version__}",
+                top_message,
+                f"Remaining API calls today: {self.api.requests_count}/{self.api.requests_max}",
+                cycle=False,
+            )
 
-        menu.add_function_item(
-            "Update stock prices", self.update_stock_prices_to_trend, {"api": self.api}
-        )
-        menu.add_function_item(
-            "Update price for a product",
-            self.update_product_to_trend,
-            {"api": self.api},
-        )
-        menu.add_function_item(
-            "List competition for a product",
-            self.list_competition_for_product,
-            {"api": self.api},
-        )
-        menu.add_function_item(
-            "Find deals from a user", self.find_deals_from_user, {"api": self.api}
-        )
-        menu.add_function_item(
-            "Show top 20 expensive items in stock",
-            self.show_top_expensive_articles_in_stock,
-            {"num_articles": 20, "api": self.api},
-        )
-        menu.add_function_item(
-            "Wantslists cleanup suggestions",
-            self.clean_purchased_from_wantslists,
-            {"api": self.api},
-        )
-        menu.add_function_item(
-            "Show account info", self.show_account_info, {"api": self.api}
-        )
-        menu.add_function_item(
-            "Clear entire stock (WARNING)", self.clear_entire_stock, {"api": self.api}
-        )
-        menu.add_function_item(
-            f"Import stock from .\{self.config['csv_import_filename']}",
-            self.import_from_csv,
-            {"api": self.api},
-        )
+            menu.add_function_item(
+                "Update stock prices",
+                self.update_stock_prices_to_trend,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                "Update price for a product",
+                self.update_product_to_trend,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                "List competition for a product",
+                self.list_competition_for_product,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                "Find deals from a user", self.find_deals_from_user, {"api": self.api}
+            )
+            menu.add_function_item(
+                "Show top 20 expensive items in stock",
+                self.show_top_expensive_articles_in_stock,
+                {"num_articles": 20, "api": self.api},
+            )
+            menu.add_function_item(
+                "Wantslists cleanup suggestions",
+                self.clean_purchased_from_wantslists,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                "Show account info", self.show_account_info, {"api": self.api}
+            )
+            menu.add_function_item(
+                "Clear entire stock (WARNING)",
+                self.clear_entire_stock,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                f"Import stock from .\{self.config['csv_import_filename']}",
+                self.import_from_csv,
+                {"api": self.api},
+            )
 
-        menu.show()
+            break_signal = menu.show()
+            if break_signal:
+                break
 
     @api_wrapper
     def update_stock_prices_to_trend(self, api):

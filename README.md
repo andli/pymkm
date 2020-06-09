@@ -16,7 +16,7 @@ The app also keeps track of how many API requests your have left each day, and c
 **NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `"reporting": true` to `false` in `config.json`.
 
 ```
-╭─── PyMKM 1.6.5 ────────────────────────────────────────╮
+╭─── PyMKM 1.7.0 ────────────────────────────────────────╮
 │ 1: Update stock prices                                 │
 │ 2: Update price for a product                          │
 │ 3: List competition for a product                      │
@@ -27,6 +27,8 @@ The app also keeps track of how many API requests your have left each day, and c
 │ 8: Clear entire stock (WARNING)                        │
 │ 9: Import stock from .\list.csv                        │
 │ 0: Exit                                                │
+├────────────────────────────────────────────────────────┤
+│ Remaining API calls today: 66/5000                     │
 ╰────────────────────────────────────────────────────────╯
 Action number: 1
 Try to undercut local market? (slower, more requests) [y/N]:
@@ -113,7 +115,7 @@ Local competition:
 Username     Country    Condition      Count    Price
 -----------  ---------  -----------  -------  -------
 Karand       SE         NM                 1        6
--> andli826  SE         NM                 1       13
+-> testuser  SE         NM                 1       13
 ----------------------------------------------------------------------
 Total average price: 9.5, Total median price: 9.5, Total # of articles: 2
 

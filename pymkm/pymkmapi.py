@@ -25,10 +25,8 @@ def api_wrapper(func):
         if "api" in kwargs:
             api = kwargs["api"]
             if int(api.requests_max) > 0:
-                print(
-                    "\n>> Cardmarket.com requests used today: {}/{}\n".format(
-                        api.requests_count, api.requests_max
-                    )
+                logging.info(
+                    f">> Cardmarket.com requests used today: {api.requests_count}/{api.requests_max}"
                 )
         logging.debug(">> Exited {}".format(func.__name__))
         return return_value
@@ -70,10 +68,11 @@ class PyMkmApi:
         "Czech",
         "Hungarian",
     ]
-    requests_max = 0
-    requests_count = 0
 
     def __init__(self, config=None):
+        self.requests_max = 0
+        self.requests_count = 0
+
         if config is None:
             logging.debug(">> Loading config file")
             try:
@@ -86,6 +85,8 @@ class PyMkmApi:
         else:
             self.config = config
 
+        self.__get_api_call_quota()
+
     def __handle_response(self, response):
         handled_codes = (
             requests.codes.ok,
@@ -93,11 +94,7 @@ class PyMkmApi:
             requests.codes.temporary_redirect,
         )
         if response.status_code in handled_codes:
-            try:
-                self.requests_count = response.headers["X-Request-Limit-Count"]
-                self.requests_max = response.headers["X-Request-Limit-Max"]
-            except (AttributeError, KeyError) as err:
-                logging.debug(">> Attribute not found in header: {}".format(err))
+            self.__read_request_limits_from_header(response)
 
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
@@ -110,6 +107,13 @@ class PyMkmApi:
             return False
         else:
             raise requests.exceptions.ConnectionError(response)
+
+    def __read_request_limits_from_header(self, response):
+        try:
+            self.requests_count = response.headers["X-Request-Limit-Count"]
+            self.requests_max = response.headers["X-Request-Limit-Max"]
+        except (AttributeError, KeyError) as err:
+            logging.debug(">> Attribute not found in header: {}".format(err))
 
     def __setup_service(self, url, provided_oauth):
         oauth = None
@@ -150,6 +154,16 @@ class PyMkmApi:
         except KeyError as err:
             logging.debug(">>> Header error finding content-range")
         return max_items
+
+    def __get_api_call_quota(self, provided_oauth=None):
+        # Use a 400 to get the response headers
+        url = "{}/games".format(self.base_url)
+        mkm_oauth = self.__setup_service(url, provided_oauth)
+
+        logging.debug(">> Getting request quotas")
+        r = self.mkm_request(mkm_oauth, url)
+
+        self.__read_request_limits_from_header(r)
 
     def get_language_code_from_string(self, language_string):
         if language_string in self.languages:
