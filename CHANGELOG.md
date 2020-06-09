@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactored test file structure
 - Refactored card matching code in csv import to make it more robust and less messy
+- More config parameters moved to config.json
 
 ## [1.6.4]
 
