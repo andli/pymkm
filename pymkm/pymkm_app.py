@@ -847,7 +847,7 @@ class PyMkmApp:
             ]
             if len(filtered_stock_list) == 0:
                 print(
-                    f"Entire stock updated in partial updates. Delete {self.config["partial_update_filename"]} to reset."
+                    f"Entire stock updated in partial updates. Delete {self.config['partial_update_filename']} to reset."
                 )
                 return [], []
         if partial_stock:

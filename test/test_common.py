@@ -506,7 +506,6 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "sticky_price_char": "!",
                 "uuid": "xxx",
                 "reporting": true,
-                "sticky_price_char": "!",
                 "partial_update_filename": "partial_stock_update.txt",
                 "csv_import_filename": "list.csv",
                 "csv_import_condition": "NM"
