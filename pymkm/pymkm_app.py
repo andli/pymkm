@@ -619,7 +619,6 @@ class PyMkmApp:
         print(
             "Note the required format: Card, Set name, Quantity, Foil, Language (with header row)."
         )
-        print("Cards are added in condition NM.")
         problem_cards = []
         with open(self.config["csv_import_filename"], newline="") as csvfile:
             csv_reader = csvfile.readlines()
@@ -687,7 +686,7 @@ class PyMkmApp:
                     price = self.get_price_for_product(
                         product_match[0]["idProduct"],
                         product_match[0]["rarity"],
-                        product_match[0].get("condition"),
+                        self.config["csv_import_condition"],
                         foil,
                         False,
                         language_id=language_id,
@@ -698,7 +697,7 @@ class PyMkmApp:
                         "idLanguage": language_id,
                         "count": count,
                         "price": str(price),
-                        "condition": "NM",
+                        "condition": self.config["csv_import_condition"],
                         "isFoil": ("true" if foil else "false"),
                     }
                     api.add_stock([card])
