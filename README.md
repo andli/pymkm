@@ -13,7 +13,7 @@ The app also keeps track of how many API requests your have left each day, and c
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
-**NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `ALLOW_REPORTING = True` to `False` in `pymkm_app.py`.
+**NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `"reporting": true` to `false` in `config.json`.
 
 ```
 ╭─── PyMKM 1.6.5 ────────────────────────────────────────╮

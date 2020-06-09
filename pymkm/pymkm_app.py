@@ -24,9 +24,6 @@ from pkg_resources import parse_version
 from .pymkm_helper import PyMkmHelper
 from .pymkmapi import PyMkmApi, api_wrapper, CardmarketError
 
-ALLOW_REPORTING = True
-PARTIAL_UPDATE_FILE = "partial_stock_update.txt"
-
 
 class PyMkmApp:
     logging.basicConfig(stream=sys.stderr, level=logging.WARN)
@@ -61,7 +58,7 @@ class PyMkmApp:
     def report(self, command):
         uuid = self.config["uuid"]
 
-        if ALLOW_REPORTING and not self.DEV_MODE:
+        if self.config["reporting"] and not self.DEV_MODE:
             try:
                 r = requests.post(
                     "https://andli-stats-server.herokuapp.com/pymkm",
@@ -123,7 +120,9 @@ class PyMkmApp:
             "Clear entire stock (WARNING)", self.clear_entire_stock, {"api": self.api}
         )
         menu.add_function_item(
-            "Import stock from .\list.csv", self.import_from_csv, {"api": self.api}
+            f"Import stock from .\{self.config['csv_import_filename']}",
+            self.import_from_csv,
+            {"api": self.api},
         )
 
         menu.show()
@@ -132,6 +131,7 @@ class PyMkmApp:
     def update_stock_prices_to_trend(self, api):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
+        partial_update_file = self.config["partial_update_filename"]
 
         already_checked_articles = []
         partial_stock = PyMkmHelper.prompt_string(
@@ -139,10 +139,10 @@ class PyMkmApp:
         )
         if partial_stock != "":
             partial_stock = int(partial_stock)
-        if os.path.exists(PARTIAL_UPDATE_FILE):
-            PyMkmHelper.read_list(PARTIAL_UPDATE_FILE, already_checked_articles)
+        if os.path.exists(partial_update_file):
+            PyMkmHelper.read_list(partial_update_file, already_checked_articles)
             print(
-                f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {PARTIAL_UPDATE_FILE} if you want to clear the list."
+                f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
 
         undercut_local_market = PyMkmHelper.prompt_bool(
@@ -154,9 +154,9 @@ class PyMkmApp:
         )
 
         if partial_stock and len(checked_articles) > 0:
-            PyMkmHelper.write_list(PARTIAL_UPDATE_FILE, checked_articles)
+            PyMkmHelper.write_list(partial_update_file, checked_articles)
             print(
-                f"Partial stock update saved, next update will disregard articles in {PARTIAL_UPDATE_FILE}."
+                f"Partial stock update saved, next update will disregard articles in {partial_update_file}."
             )
 
         if len(uploadable_json) > 0:
@@ -621,7 +621,7 @@ class PyMkmApp:
         )
         print("Cards are added in condition NM.")
         problem_cards = []
-        with open("list.csv", newline="") as csvfile:
+        with open(self.config["csv_import_filename"], newline="") as csvfile:
             csv_reader = csvfile.readlines()
             index = 0
             bar = progressbar.ProgressBar(max_value=(sum(1 for row in csv_reader)) - 1)
