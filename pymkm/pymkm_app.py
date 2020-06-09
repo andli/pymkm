@@ -134,16 +134,16 @@ class PyMkmApp:
         partial_update_file = self.config["partial_update_filename"]
 
         already_checked_articles = []
-        partial_stock = PyMkmHelper.prompt_string(
-            "Partial update? If so, enter number of cards (or press Enter to update all)"
-        )
-        if partial_stock != "":
-            partial_stock = int(partial_stock)
         if os.path.exists(partial_update_file):
             PyMkmHelper.read_list(partial_update_file, already_checked_articles)
             print(
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
+        partial_stock = PyMkmHelper.prompt_string(
+            "Partial update? If so, enter number of cards (or press Enter to update all)"
+        )
+        if partial_stock != "":
+            partial_stock = int(partial_stock)
 
         undercut_local_market = PyMkmHelper.prompt_bool(
             "Try to undercut local market? (slower, more requests)"
