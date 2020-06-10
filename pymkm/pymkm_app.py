@@ -89,7 +89,7 @@ class PyMkmApp:
             menu = micromenu.Menu(
                 f"PyMKM {__version__}",
                 top_message,
-                f"Remaining API calls today: {self.api.requests_count}/{self.api.requests_max}",
+                f"Used API calls today: {self.api.requests_count}/{self.api.requests_max}",
                 cycle=False,
             )
 
@@ -130,7 +130,7 @@ class PyMkmApp:
                 {"api": self.api},
             )
             menu.add_function_item(
-                f"Import stock from .\{self.config['csv_import_filename']}",
+                f"Import stock from {self.config['csv_import_filename']}",
                 self.import_from_csv,
                 {"api": self.api},
             )
