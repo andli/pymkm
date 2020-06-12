@@ -685,8 +685,10 @@ class PyMkmApp:
                 product_match = [
                     x
                     for x in possible_products
-                    if self.card_equals(x["enName"], x["expansionName"], name, set_name)
-                    and x["categoryName"] == "Magic Single"
+                    if x["categoryName"] == "Magic Single"
+                    and self.card_equals(
+                        x["enName"], x["expansionName"], name, set_name
+                    )
                 ]
                 if len(product_match) == 0:
                     # no viable match
