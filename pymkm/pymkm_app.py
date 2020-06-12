@@ -89,7 +89,7 @@ class PyMkmApp:
             menu = micromenu.Menu(
                 f"PyMKM {__version__}",
                 top_message,
-                f"Used API calls today: {self.api.requests_count}/{self.api.requests_max}",
+                f"API calls used today: {self.api.requests_count}/{self.api.requests_max}",
                 cycle=False,
             )
 
