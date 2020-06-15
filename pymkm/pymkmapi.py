@@ -9,29 +9,13 @@ __license__ = "MIT"
 
 import sys
 import logging
+import logging.handlers
 import re
 import requests
 import json
 import urllib.parse
 from requests_oauthlib import OAuth1Session
 from requests import ConnectionError
-
-
-def api_wrapper(func):
-    def wrapper(*arg, **kwargs):
-        logging.debug(f">> Entering {func.__name__}")
-
-        return_value = func(*arg, **kwargs)
-        if "api" in kwargs:
-            api = kwargs["api"]
-            if int(api.requests_max) > 0:
-                logging.info(
-                    f">> Cardmarket.com requests used today: {api.requests_count}/{api.requests_max}"
-                )
-        logging.debug(">> Exited {}".format(func.__name__))
-        return return_value
-
-    return wrapper
 
 
 class CardmarketError(Exception):
@@ -71,15 +55,14 @@ class PyMkmApi:
 
     def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
-        self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        fh = logging.FileHandler(f"pymkm.log")
+        fh = logging.handlers.RotatingFileHandler(f"pymkm.log", maxBytes=2000000)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
-        # self.logger.addHandler(fh)
+        self.logger.addHandler(fh)
         sh = logging.StreamHandler()
         sh.setLevel(logging.ERROR)
         sh.setFormatter(formatter)
@@ -100,7 +83,7 @@ class PyMkmApi:
         else:
             self.config = config
 
-        self.__get_api_call_quota()
+        self.set_api_quota_attributes()
 
     def __handle_response(self, response):
         handled_codes = (
@@ -170,15 +153,13 @@ class PyMkmApi:
             self.logger.debug(">>> Header error finding content-range")
         return max_items
 
-    def __get_api_call_quota(self, provided_oauth=None):
+    def set_api_quota_attributes(self, provided_oauth=None):
         # Use a 400 to get the response headers
         url = "{}/games".format(self.base_url)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         self.logger.debug(">> Getting request quotas")
         r = self.mkm_request(mkm_oauth, url)
-
-        self.__read_request_limits_from_header(r)
 
     def get_language_code_from_string(self, language_string):
         if language_string in self.languages:
@@ -211,8 +192,8 @@ class PyMkmApi:
             return r
         # except requests.exceptions.ConnectionError as err:
         except Exception as err:
-            print(f"\n>> Cardmarket connection error: {err}")
-            self.logger.error(err)
+            print(f"\n>> Cardmarket connection error: {err} for {url}")
+            self.logger.error(f"{err} for {url}")
             # sys.exit(0)
 
     def get_expansions(self, game_id, provided_oauth=None):
@@ -309,7 +290,6 @@ class PyMkmApi:
             url = url + "/" + str(start)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
-        self.logger.debug(">> Getting stock")
         r = self.mkm_request(mkm_oauth, url)
 
         if r.status_code == requests.codes.temporary_redirect:
@@ -327,7 +307,10 @@ class PyMkmApi:
 
             if r.status_code == requests.codes.partial_content:
                 # print('> ' + r.headers['Content-Range'])
-                # print('# articles in response: ' + str(len(r.json()['article'])))
+                self.logger.debug(
+                    "-> get_stock # articles in response: "
+                    + str(len(r.json()["article"]))
+                )
                 return r.json()["article"] + self.get_stock(start + 100)
 
         if r:
@@ -409,6 +392,9 @@ class PyMkmApi:
             else:
                 next_start = start + INCREMENT
                 params.update({"start": next_start, "maxResults": INCREMENT})
+                self.logger.debug(
+                    f"-> get_articles recurring to next_start={next_start}"
+                )
                 return r.json()["article"] + self.get_articles(product_id, **kwargs)
         elif r.status_code == requests.codes.no_content:
             raise CardmarketError("No products found in stock.")
@@ -487,6 +473,9 @@ class PyMkmApi:
             else:
                 next_start = start + INCREMENT
                 params.update({"start": next_start, "maxResults": INCREMENT})
+                self.logger.debug(
+                    f"-> find_user_articles recurring to next_start={next_start}"
+                )
                 return r.json()["article"] + self.find_user_articles(
                     user_id, game_id, **kwargs
                 )
@@ -552,6 +541,7 @@ class PyMkmApi:
 
             if r.status_code == requests.codes.partial_content:
                 # print('> ' + r.headers['Content-Range'])
+                self.logger.debug(f"-> get_orders recurring to start={start + 100}")
                 return r.json()["order"] + self.get_orders(actor, state, start + 100)
 
         if self.__handle_response(r):

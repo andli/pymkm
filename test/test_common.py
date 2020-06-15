@@ -12,6 +12,7 @@ from pymkm.pymkm_app import PyMkmApp
 from pymkm.pymkmapi import PyMkmApi
 
 
+@patch("pymkm.pymkmapi.PyMkmApi.set_api_quota_attributes", new_callable=MagicMock())
 class TestCommon(unittest.TestCase):
     class MockResponse:
         def __init__(self, json_data, status_code, content):
@@ -516,8 +517,12 @@ Dragon Breath,Scourge,1,Foil,French"""
         self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
         self.mock_report = self.patcher.start()
 
+        self.patcher2 = patch("pymkm.pymkmapi.PyMkmApi.set_api_quota_attributes")
+        self.patcher2.start()
+
     def tearDown(self):
         self.patcher.stop()
+        self.patcher2.stop()
 
 
 if __name__ == "__main__":

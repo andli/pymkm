@@ -11,6 +11,7 @@ import os
 import csv
 import json
 import logging
+import logging.handlers
 import pprint
 import uuid
 import sys
@@ -22,7 +23,7 @@ import tabulate as tb
 from pkg_resources import parse_version
 
 from .pymkm_helper import PyMkmHelper
-from .pymkmapi import PyMkmApi, api_wrapper, CardmarketError
+from .pymkmapi import PyMkmApi, CardmarketError
 
 
 class PyMkmApp:
@@ -30,15 +31,14 @@ class PyMkmApp:
 
     def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
-        self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        fh = logging.FileHandler(f"pymkm.log")
+        fh = logging.handlers.RotatingFileHandler(f"pymkm.log", maxBytes=2000000)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
-        # self.logger.addHandler(fh)
+        self.logger.addHandler(fh)
         sh = logging.StreamHandler()
         sh.setLevel(logging.ERROR)
         sh.setFormatter(formatter)
@@ -155,7 +155,6 @@ class PyMkmApp:
             if break_signal:
                 break
 
-    @api_wrapper
     def update_stock_prices_to_trend(self, api):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
@@ -200,7 +199,8 @@ class PyMkmApp:
         else:
             print("No prices to update.")
 
-    @api_wrapper
+        self.logger.debug("-> update_stock_prices_to_trend: Done")
+
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
         self.report("update product price to trend")
@@ -270,7 +270,8 @@ class PyMkmApp:
             else:
                 print("No prices to update.")
 
-    @api_wrapper
+        self.logger.debug("-> update_product_to_trend: Done")
+
     def list_competition_for_product(self, api):
         self.report("list competition for product")
         print("Note: does not support playsets, booster displays etc (yet).")
@@ -318,8 +319,8 @@ class PyMkmApp:
                     )
             else:
                 print("No results found.")
+        self.logger.debug("-> list_competition_for_product: Done")
 
-    @api_wrapper
     def find_deals_from_user(self, api):
         self.report("find deals from user")
 
@@ -426,8 +427,8 @@ class PyMkmApp:
                     print("Found no deals. :(")
             else:
                 print("Invalid number.")
+        self.logger.debug("-> find_deals_from_user: Done")
 
-    @api_wrapper
     def show_top_expensive_articles_in_stock(self, num_articles, api):
         self.report("show top expensive in stock")
 
@@ -475,7 +476,6 @@ class PyMkmApp:
             print("\nTotal stock value: {}".format(str(total_price)))
         return None
 
-    @api_wrapper
     def clean_purchased_from_wantslists(self, api):
         self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
@@ -611,14 +611,13 @@ class PyMkmApp:
                 )
             )
 
-    @api_wrapper
     def show_account_info(self, api):
         self.report("show account info")
 
         pp = pprint.PrettyPrinter()
         pp.pprint(self.account)
+        self.logger.debug("-> show_account_info: Done")
 
-    @api_wrapper
     def clear_entire_stock(self, api):
         self.report("clear entire stock")
 
@@ -636,11 +635,11 @@ class PyMkmApp:
             ]
 
             api.delete_stock(delete_list)
+            self.logger.debug("-> clear_entire_stock: done")
             print("Stock cleared.")
         else:
             print("Aborted.")
 
-    @api_wrapper
     def import_from_csv(self, api):
         self.report("import from csv")
 
@@ -677,7 +676,9 @@ class PyMkmApp:
                 ) as csvfile:
                     csv_writer = csv.writer(csvfile)
                     csv_writer.writerows(problem_cards)
-                self.logger.info(f"CSV: {len(problem_cards)} failed imports.")
+                self.logger.info(
+                    f"import_from_csv:: {len(problem_cards)} failed imports."
+                )
                 print(
                     f"Wrote {len(problem_cards)} failed imports to failed_imports.csv"
                 )
@@ -1078,6 +1079,7 @@ class PyMkmApp:
             d = api.get_stock()
         except Exception as err:
             print("No response from API.")
+            self.logger.error("No response from API, exiting.")
             sys.exit(0)
         else:
             keys = [

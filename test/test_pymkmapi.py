@@ -13,12 +13,12 @@ from pymkm.pymkm_app import PyMkmApp
 from test.test_common import TestCommon
 
 
-class TestPyMkmApiCalls(TestCommon):
+class TestPyMkmApi(TestCommon):
 
     api = None
 
     def setUp(self):
-        super(TestPyMkmApiCalls, self).setUp()
+        super(TestPyMkmApi, self).setUp()
 
         self.api = PyMkmApi(self.config)
 
@@ -29,8 +29,8 @@ class TestPyMkmApiCalls(TestCommon):
         )
         with self.assertLogs(level="ERROR") as cm:
             empty_response = self.api.get_expansions(1, mock_oauth)
-            log_record_message = cm.records[0].message
-            self.assertEqual(log_record_message, "No results found.")
+            log_record_message = cm.records[len(cm.records) - 1].message
+            self.assertRegex(log_record_message, r"^No results found.")
 
     def test_get_language_code_from_string(self):
         language_code = self.api.get_language_code_from_string("English")
@@ -39,9 +39,15 @@ class TestPyMkmApiCalls(TestCommon):
             self.api.get_language_code_from_string("Elvish")
 
     def test_file_not_found2(self):
-        open_name = "%s.open" % __name__
-        with patch("builtins.open", mock_open(read_data="data")) as mocked_open:
-            mocked_open.side_effect = FileNotFoundError
+        def myfileopener(*args, **kwargs):
+            if args[0] == "config.json":
+                raise FileNotFoundError()
+            else:
+                return mock_open(read_data="data")(*args, **kwargs)
+
+        with patch(
+            "builtins.open", new_callable=lambda: myfileopener, create=True
+        ) as mocked_open:
 
             # Assert that an error is logged
             with self.assertRaises(SystemExit):

@@ -13,6 +13,7 @@ from pymkm.pymkm_app import PyMkmApp
 from test.test_common import TestCommon
 
 
+@patch("pymkm.pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
 class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -47,9 +48,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(
-                log_record.message, r">> Exited update_stock_prices_to_trend"
-            )
+            self.assertRegex(log_record.message, r"update_stock_prices_to_trend")
 
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch(
@@ -70,7 +69,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited update_product_to_trend")
+            self.assertRegex(log_record.message, r"update_product_to_trend")
 
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch(
@@ -91,7 +90,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited update_product_to_trend")
+            self.assertRegex(log_record.message, r"update_product_to_trend")
 
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_articles",
@@ -116,9 +115,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(
-                log_record.message, r">> Exited list_competition_for_product"
-            )
+            self.assertRegex(log_record.message, r"list_competition_for_product")
 
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_product",
@@ -147,7 +144,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited find_deals_from_user")
+            self.assertRegex(log_record.message, r"find_deals_from_user")
 
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result
@@ -184,7 +181,6 @@ class TestPyMkmApp(TestCommon):
         # clean_purchased_from_wantslists
         app = PyMkmApp(self.config)
         app.start()
-        print(mock_stdout.getvalue())
         self.assertRegex(mock_stdout.getvalue(), r"This will show items in your ")
 
     @patch(
@@ -196,9 +192,12 @@ class TestPyMkmApp(TestCommon):
     def test_menu_option_7(self, mock_stdout, *args):
         # show_account_info
         app = PyMkmApp(self.config)
-        app.start()
-        print(mock_stdout.getvalue())
-        self.assertRegex(mock_stdout.getvalue(), r"{'account':")
+        # app.start()
+        # self.assertRegex(mock_stdout.getvalue(), r"{'account':")
+        with self.assertLogs(level="DEBUG") as cm:
+            app.start()
+            log_record = cm.records[len(cm.records) - 1]
+            self.assertRegex(log_record.message, r"show_account_info")
 
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result
@@ -212,7 +211,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited clear_entire_stock")
+            self.assertRegex(log_record.message, r"clear_entire_stock")
 
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
@@ -236,7 +235,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited import_from_csv")
+            self.assertRegex(log_record.message, r"import_from_csv:")
 
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
@@ -259,7 +258,7 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited import_from_csv")
+            self.assertRegex(log_record.message, r"import_from_csv:")
 
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
@@ -282,15 +281,15 @@ class TestPyMkmApp(TestCommon):
         with self.assertLogs(level="DEBUG") as cm:
             app.start()
             log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r">> Exited import_from_csv")
+            self.assertRegex(log_record.message, r"import_from_csv:")
 
-    def test_get_rounding_limit_for_rarity(self):
+    def test_get_rounding_limit_for_rarity(self, mock_account):
         app = PyMkmApp(self.config)
         self.assertEqual(app.get_rounding_limit_for_rarity("rare"), 1.0)
         self.assertEqual(app.get_rounding_limit_for_rarity("time shifted"), 0.25)
         self.assertEqual(app.get_rounding_limit_for_rarity("XX"), 0.25)
 
-    def test_get_discount_for_condition(self):
+    def test_get_discount_for_condition(self, mock_account):
         app = PyMkmApp(self.config)
         self.assertEqual(app.get_discount_for_condition("MT"), 1.5)
         self.assertEqual(app.get_discount_for_condition("LP"), 0.6)
@@ -304,7 +303,7 @@ class TestPyMkmApp(TestCommon):
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result
     )
-    def test_get_price_for_product(self, mock_response, mock_get_stock):
+    def test_get_price_for_product(self, mock_response, *args):
         self.api = PyMkmApi(self.config)
         app = PyMkmApp(self.config)
 
@@ -326,7 +325,7 @@ class TestPyMkmApp(TestCommon):
         self.assertIsNone(app.check_latest_version())
 
     @patch("requests.post", side_effect=requests.exceptions.Timeout())
-    def test_report(self, mock_post):
+    def test_report(self, mock_post, *args):
         app = PyMkmApp(self.config)
 
         with self.assertLogs(level="ERROR") as cm:
