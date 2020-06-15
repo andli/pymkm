@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.7.3"
+__version__ = "1.7.4"
 __license__ = "MIT"
 
 import os
@@ -69,6 +69,7 @@ class PyMkmApp:
             pass
 
         self.api = PyMkmApi(config=self.config)
+        self.account = self.api.get_account()["account"]
 
     def report(self, command):
         uuid = self.config["uuid"]
@@ -615,7 +616,7 @@ class PyMkmApp:
         self.report("show account info")
 
         pp = pprint.PrettyPrinter()
-        pp.pprint(api.get_account())
+        pp.pprint(self.account)
 
     @api_wrapper
     def clear_entire_stock(self, api):
@@ -808,7 +809,7 @@ class PyMkmApp:
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
         # TODO: Add support for card condition
-        account = api.get_account()["account"]
+        account = self.account
         country_code = account["country"]
         articles = api.get_articles(
             product_id,
