@@ -12,3 +12,4 @@ partial_stock_update.txt
 
 failed_imports.csv
 list.csv
+*.log

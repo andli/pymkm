@@ -26,15 +26,30 @@ from .pymkmapi import PyMkmApi, api_wrapper, CardmarketError
 
 
 class PyMkmApp:
-    logging.basicConfig(stream=sys.stderr, level=logging.WARN)
+    logger = None
 
     def __init__(self, config=None):
+        self.logger = logging.getLogger(__name__)
+        self.logger.propagate = False
+        self.logger.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        fh = logging.FileHandler(f"pymkm.log")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(formatter)
+        # self.logger.addHandler(fh)
+        sh = logging.StreamHandler()
+        sh.setLevel(logging.ERROR)
+        sh.setFormatter(formatter)
+        self.logger.addHandler(sh)
+
         if config is None:
-            logging.debug(">> Loading config file")
+            self.logger.debug(">> Loading config file")
             try:
                 self.config = json.load(open("config.json"))
             except FileNotFoundError:
-                logging.error(
+                self.logger.error(
                     "You must copy config_template.json to config.json and populate the fields."
                 )
                 sys.exit(0)
@@ -65,7 +80,7 @@ class PyMkmApp:
                     json={"command": command, "uuid": uuid, "version": __version__},
                 )
             except Exception as err:
-                logging.error("Connection error to stats server.")
+                self.logger.error("Connection error to stats server.")
                 pass
 
     def check_latest_version(self):
@@ -74,7 +89,7 @@ class PyMkmApp:
             r = requests.get("https://api.github.com/repos/andli/pymkm/releases/latest")
             latest_version = r.json()["tag_name"]
         except Exception as err:
-            logging.error("Connection error with github.com")
+            self.logger.error("Connection error with github.com")
         if parse_version(__version__) < parse_version(latest_version):
             return f"Go to Github and download version {latest_version}! It's better!"
         else:
@@ -275,7 +290,7 @@ class PyMkmApp:
             )
         except CardmarketError as err:
             print(err.mkm_msg())
-            logging.debug(err.mkm_msg())
+            self.logger.debug(err.mkm_msg())
         else:
             if result:
                 products = result["product"]
@@ -313,7 +328,7 @@ class PyMkmApp:
             result = api.find_user_articles(search_string)
         except CardmarketError as err:
             print(err.mkm_msg())
-            logging.debug(err.mkm_msg())
+            self.logger.debug(err.mkm_msg())
         else:
             filtered_articles = [x for x in result if x.get("price") > 1]
             # language from configured filter
@@ -635,7 +650,9 @@ class PyMkmApp:
         with open(self.config["csv_import_filename"], newline="") as csvfile:
             csv_reader = csvfile.readlines()
             index = 0
-            bar = progressbar.ProgressBar(max_value=(sum(1 for row in csv_reader)) - 1)
+            card_rows = (sum(1 for row in csv_reader)) - 1
+            bar = progressbar.ProgressBar(max_value=card_rows)
+            self.logger.info(f"-> import_from_csv: {card_rows} cards in csv file.")
             csvfile.seek(0)
             for row in csv_reader:
                 row = row.rstrip()
@@ -659,6 +676,7 @@ class PyMkmApp:
                 ) as csvfile:
                     csv_writer = csv.writer(csvfile)
                     csv_writer.writerows(problem_cards)
+                self.logger.info(f"CSV: {len(problem_cards)} failed imports.")
                 print(
                     f"Wrote {len(problem_cards)} failed imports to failed_imports.csv"
                 )
@@ -678,7 +696,7 @@ class PyMkmApp:
                 possible_products = api.find_product(name, idGame="1")["product"]
             except CardmarketError as err:
                 print(err.mkm_msg())
-                logging.debug(err.mkm_msg())
+                self.logger.debug(err.mkm_msg())
             except Exception as err:
                 return False
             else:
