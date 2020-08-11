@@ -26,12 +26,12 @@ jobs:
       - name: PyInstaller Windows
         uses: JackMcKew/pyinstaller-action-windows@main
         with:
-          path: $GITHUB_WORKSPACE
+          path: .
 
       - uses: actions/upload-artifact@v2
         with:
           name: pymkm.exe
-          path: $GITHUB_WORKSPACE #src/dist/windows # or path/to/artifact
+          path: . #src/dist/windows # or path/to/artifact
 
       - name: Get release
         id: get_release
