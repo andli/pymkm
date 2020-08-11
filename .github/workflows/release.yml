@@ -28,11 +28,6 @@ jobs:
         with:
           path: .
 
-      #- uses: actions/upload-artifact@v2
-      #  with:
-      #    name: pymkm.exe
-      #    path: . #src/dist/windows # or path/to/artifact
-
       - name: Get release
         id: get_release
         uses: bruceadams/get-release@v1.2.0
