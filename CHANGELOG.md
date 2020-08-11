@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Save a lot of requests by caching account info
+- Renamed `main.py` to `pymkm.py`
 
 ## [1.7.3]
 
