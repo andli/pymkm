@@ -22,25 +22,31 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
           python-version: 3.7
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
+
       - name: build with pyinstaller
         run: |
           pyinstaller pymkm.py
+          zip --junk-paths pymkm README.md
+
       - name: Get release
         id: get_release
         uses: bruceadams/get-release@v1.2.0
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }} #${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: pymkm.exe
-          asset_name: pymkm.exe #pymkm-${{ github.event.release.tag_name }}.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
+          asset_path: ./pymkm.zip
+          asset_name: pymkm.zip
+          asset_content_type: application/zip
