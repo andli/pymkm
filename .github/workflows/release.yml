@@ -28,10 +28,10 @@ jobs:
         with:
           path: .
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: pymkm.exe
-          path: . #src/dist/windows # or path/to/artifact
+      #- uses: actions/upload-artifact@v2
+      #  with:
+      #    name: pymkm.exe
+      #    path: . #src/dist/windows # or path/to/artifact
 
       - name: Get release
         id: get_release
@@ -41,6 +41,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./pymkm/pymkm.exe
+          file: ./dist/windows/pymkm/
           tag: ${{ github.ref }}
           #body: "This is my release text"
