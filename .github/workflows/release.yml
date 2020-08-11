@@ -30,6 +30,9 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
+          run: |
+            pwd
+            ls
           name: pymkm.exe
           path: ./pymkm.exe #src/dist/windows # or path/to/artifact
 
