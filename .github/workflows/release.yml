@@ -21,16 +21,17 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      #- uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+
       - name: PyInstaller Windows
         uses: JackMcKew/pyinstaller-action-windows@main
         with:
-          path: ./
+          path: $GITHUB_WORKSPACE
 
       - uses: actions/upload-artifact@v2
         with:
           name: pymkm.exe
-          path: ./ #src/dist/windows # or path/to/artifact
+          path: $GITHUB_WORKSPACE #src/dist/windows # or path/to/artifact
 
       - name: Get release
         id: get_release
