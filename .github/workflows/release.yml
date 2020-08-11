@@ -29,10 +29,10 @@ jobs:
           path: .
 
       - uses: actions/upload-artifact@v2
+        run: |
+          pwd
+          ls
         with:
-          run: |
-            pwd
-            ls
           name: pymkm.exe
           path: ./pymkm.exe #src/dist/windows # or path/to/artifact
 
@@ -43,10 +43,10 @@ jobs:
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
+        run: |
+          pwd
+          ls
         with:
-          run: |
-            pwd
-            ls
           upload_url: ${{ github.event.release.upload_url }} #${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: pymkm/pymkm.exe
           asset_name: pymkm.exe
