@@ -85,6 +85,7 @@ Should you want to avoid updating certain articles in your stock, set the starti
 ## ⚙️ Config parameters
 | Variable     | Value                                                                                                        |
 |--------------|--------------------------------------------------------------------------------------------------------------|
+| language     | Specify a language to find deals from a specific user\.                                                                          |
 | isAltered    | Determines if the card is altered\.                                                                          |
 | isSigned     | Determines if the card is signed\.                                                                           |
 | minCondition | Determines the minimal condition of a card\. \(see below for additional information\)                        |
@@ -101,7 +102,6 @@ Should you want to avoid updating certain articles in your stock, set the starti
 | LP           | Light\-played                                  |
 | PL           | Played                                         |
 | PO           | Poor                                           |
-
 
 #### idLanguage
 | ID | Language            |

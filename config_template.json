@@ -23,6 +23,7 @@
     "PO": "1"
   },
   "search_filters": {
+    "language": "",
     "isAltered": false,
     "isSigned": false,
     "minCondition": "EX",

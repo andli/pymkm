@@ -334,7 +334,7 @@ class PyMkmApp:
         else:
             filtered_articles = [x for x in result if x.get("price") > 1]
             # language from configured filter
-            language_filter_string = self.config["search_filters"]["idLanguage"]
+            language_filter_string = self.config["search_filters"]["language"]
             if language_filter_string:
                 language_filter_code = api.get_language_code_from_string(
                     language_filter_string
