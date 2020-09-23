@@ -82,6 +82,43 @@ Base prices (€) and discounts for lower grading (decimal %) can be set in `con
 
 Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
 
+## ⚙️ Config parameters
+| Variable     | Value                                                                                                        |
+|--------------|--------------------------------------------------------------------------------------------------------------|
+| language     | Specify a language to find deals from a specific user\.                                                                          |
+| isAltered    | Determines if the card is altered\.                                                                          |
+| isSigned     | Determines if the card is signed\.                                                                           |
+| minCondition | Determines the minimal condition of a card\. \(see below for additional information\)                        |
+| userType     | Only articles from sellers with the specified user type are returned\. \(private, commercial, powerseller\)  |
+| idLanguage   | Only articles that match the given language are returned\. \(see below for additional information\)          |
+
+#### minCondition
+| Abbreviation | Condition                                      |
+|--------------|------------------------------------------------|
+| MT           | Mint                                           |
+| NM           | Near Mint \(default value when not specified\) |
+| EX           | Excellent                                      |
+| GD           | Good                                           |
+| LP           | Light\-played                                  |
+| PL           | Played                                         |
+| PO           | Poor                                           |
+
+#### idLanguage
+| ID | Language            |
+|----|---------------------|
+| 1  | English             |
+| 2  | French              |
+| 3  | German              |
+| 4  | Spanish             |
+| 5  | Italian             |
+| 6  | Simplified Chinese  |
+| 7  | Japanese            |
+| 8  | Portuguese          |
+| 9  | Russian             |
+| 10 | Korean              |
+| 11 | Traditional Chinese |
+
+
 ## 📄 CSV importing
 
 If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.

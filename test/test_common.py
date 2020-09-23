@@ -502,7 +502,12 @@ Dragon Breath,Scourge,1,Foil,French"""
                     "PO": "0.4"
                 },
                 "search_filters": {
-                    "language": ""
+                    "language": "",
+                    "isAltered": false,
+                    "isSigned": false,
+                    "minCondition": "EX",
+                    "userType": "",
+                    "idLanguage": 1
                 },
                 "sticky_price_char": "!",
                 "uuid": "xxx",
