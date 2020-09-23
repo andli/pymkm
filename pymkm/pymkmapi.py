@@ -43,7 +43,7 @@ class PyMkmApi:
         "Italian",
         "S-Chinese",
         "Japanese",
-        "Portugese",
+        "Portuguese",
         "Russian",
         "Korean",
         "T-Chinese",
