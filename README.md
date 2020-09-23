@@ -92,26 +92,32 @@ Should you want to avoid updating certain articles in your stock, set the starti
 | idLanguage   | Only articles that match the given language are returned\. \(see below for additional information\)          |
 
 #### minCondition
-* MT - Mint
-* NM - Near Mint (default value when not specified)
-* EX - Excellent
-* GD - Good
-* LP - Light-played
-* PL - Played
-* PO - Poor
+| Abbreviation | Condition                                      |
+|--------------|------------------------------------------------|
+| MT           | Mint                                           |
+| NM           | Near Mint \(default value when not specified\) |
+| EX           | Excellent                                      |
+| GD           | Good                                           |
+| LP           | Light\-played                                  |
+| PL           | Played                                         |
+| PO           | Poor                                           |
+
 
 #### idLanguage
-* 1 - English
-* 2 - French
-* 3 - German
-* 4 - Spanish
-* 5 - Italian
-* 6 - Simplified Chinese
-* 7 - Japanese
-* 8 - Portuguese
-* 9 - Russian
-* 10 - Korean
-* 11 - Traditional Chinese
+| ID | Language            |
+|----|---------------------|
+| 1  | English             |
+| 2  | French              |
+| 3  | German              |
+| 4  | Spanish             |
+| 5  | Italian             |
+| 6  | Simplified Chinese  |
+| 7  | Japanese            |
+| 8  | Portuguese          |
+| 9  | Russian             |
+| 10 | Korean              |
+| 11 | Traditional Chinese |
+
 
 ## 📄 CSV importing
 
