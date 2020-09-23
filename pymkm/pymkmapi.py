@@ -114,7 +114,6 @@ class PyMkmApi:
             self.logger.debug(">> Attribute not found in header: {}".format(err))
 
     def __setup_service(self, url, provided_oauth):
-        oauth = None
         if provided_oauth is not None:
             return provided_oauth
         else:
@@ -173,7 +172,7 @@ class PyMkmApi:
         # For item i in a range that is a length of l,
         for i in range(0, len(l), n):
             # Create an index range for l of n items:
-            yield l[i : i + n]
+            yield l[i: i + n]
 
     def get_games(self, provided_oauth=None):
         url = "{}/games".format(self.base_url)
@@ -271,13 +270,13 @@ class PyMkmApi:
         if self.__handle_response(r):
             return r.json()
 
-    def set_display_language(self, display_langauge=1, provided_oauth=None):
+    def set_display_language(self, display_language=1, provided_oauth=None):
         # 1: English, 2: French, 3: German, 4: Spanish, 5: Italian
         url = "{}/account/language".format(self.base_url)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
-        self.logger.debug(">> Setting display language to: " + str(display_langauge))
-        r = mkm_oauth.put(url, params={"idDisplayLanguage": display_langauge})
+        self.logger.debug(">> Setting display language to: " + str(display_language))
+        r = mkm_oauth.put(url, params={"idDisplayLanguage": display_language})
 
         if self.__handle_response(r):
             return r.json()
