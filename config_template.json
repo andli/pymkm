@@ -9,7 +9,9 @@
     "uncommon": "0.25",
     "rare": "0.25",
     "mythic": "0.25",
-    "time shifted": "0.25"
+    "time shifted": "0.25",
+    "ultra rare": "0.25",
+    "ghost rare": "0.25"
   },
   "discount_by_condition": {
     "MT": "1",
@@ -21,7 +23,12 @@
     "PO": "1"
   },
   "search_filters": {
-    "language": ""
+    "language": "",
+    "isAltered": false,
+    "isSigned": false,
+    "minCondition": "EX",
+    "userType": "",
+    "idLanguage": 1
   },
   "reporting": true,
   "sticky_price_char": "!",

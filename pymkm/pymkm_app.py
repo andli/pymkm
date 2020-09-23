@@ -812,15 +812,24 @@ class PyMkmApp:
         # TODO: Add support for card condition
         account = self.account
         country_code = account["country"]
+
+        config = self.config
+        is_altered = config["search_filters"]["isAltered"]
+        is_signed = config["search_filters"]["isSigned"]
+        min_condition = config["search_filters"]["minCondition"]
+        user_type = config["search_filters"]["userType"]
+        id_language = config["search_filters"]["idLanguage"]
+
         articles = api.get_articles(
             product_id,
             **{
                 "isFoil": str(is_foil).lower(),
-                "isAltered": "false",
-                "isSigned": "false",
-                "minCondition": "EX",
+                "isAltered": is_altered,
+                "isSigned": is_signed,
+                "minCondition": min_condition,
                 "country": country_code,
-                "idLanguage": 1,
+                "userType": user_type,
+                "idLanguage": id_language,
             },
         )
         table_data = []
