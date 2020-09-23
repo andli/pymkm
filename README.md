@@ -83,18 +83,32 @@ Base prices (€) and discounts for lower grading (decimal %) can be set in `con
 Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
 
 ## ⚙️ Config parameters
-| Variable     | Value                                                                                                        |
-|--------------|--------------------------------------------------------------------------------------------------------------|
-| language     | Specify a language to find deals from a specific user\.                                                                          |
-| isAltered    | Determines if the card is altered\.                                                                          |
-| isSigned     | Determines if the card is signed\.                                                                           |
-| minCondition | Determines the minimal condition of a card\. \(see below for additional information\)                        |
-| userType     | Only articles from sellers with the specified user type are returned\. \(private, commercial, powerseller\)  |
-| idLanguage   | Only articles that match the given language are returned\. \(see below for additional information\)          |
 
-#### minCondition
+### `price_limit_by_rarity`
+
+Set a lower price limit (and also rounding target) for different rarities.
+_Example_: `"mythic": "1.0"` would set the lowest price Mythic rarity cards to €1, and would set prices to round to nearest €1.
+
+### `discount_by_condition`
+
+Set a decimal multiplier on each card condition level.
+_Example_: `"PL": "0.5"` would set the price for Played cards to 50% off the trend price.
+
+### `search_filters`
+
+| Variable     | Value                                                                                                       |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| language     | Specify a language to find deals from a specific user\.                                                     |
+| isAltered    | Determines if the card is altered\.                                                                         |
+| isSigned     | Determines if the card is signed\.                                                                          |
+| minCondition | Determines the minimal condition of a card\. \(see below for additional information\)                       |
+| userType     | Only articles from sellers with the specified user type are returned\. \(private, commercial, powerseller\) |
+| idLanguage   | Only articles that match the given language are returned\. \(see below for additional information\)         |
+
+#### `minCondition`
+
 | Abbreviation | Condition                                      |
-|--------------|------------------------------------------------|
+| ------------ | ---------------------------------------------- |
 | MT           | Mint                                           |
 | NM           | Near Mint \(default value when not specified\) |
 | EX           | Excellent                                      |
@@ -103,21 +117,21 @@ Should you want to avoid updating certain articles in your stock, set the starti
 | PL           | Played                                         |
 | PO           | Poor                                           |
 
-#### idLanguage
-| ID | Language            |
-|----|---------------------|
-| 1  | English             |
-| 2  | French              |
-| 3  | German              |
-| 4  | Spanish             |
-| 5  | Italian             |
-| 6  | Simplified Chinese  |
-| 7  | Japanese            |
-| 8  | Portuguese          |
-| 9  | Russian             |
-| 10 | Korean              |
-| 11 | Traditional Chinese |
+#### `idLanguage`
 
+| ID  | Language            |
+| --- | ------------------- |
+| 1   | English             |
+| 2   | French              |
+| 3   | German              |
+| 4   | Spanish             |
+| 5   | Italian             |
+| 6   | Simplified Chinese  |
+| 7   | Japanese            |
+| 8   | Portuguese          |
+| 9   | Russian             |
+| 10  | Korean              |
+| 11  | Traditional Chinese |
 
 ## 📄 CSV importing
 

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0]
+
+Pull request from @distrustME, thank you!
+
+### Added
+
+- Added 2 new Yu-Gi-Oh!-Rarities
+
+### Changed
+
+- Improved search filters
+- Config parameters explanation in README
+- Added parameter to undercut commercial sellers only
+
+### Fixed
+
+- Typos
+
 ## [1.7.4]
 
 ### Added
