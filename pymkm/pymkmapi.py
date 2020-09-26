@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.7.4"
+__version__ = "1.8.1"
 __license__ = "MIT"
 
 import sys
@@ -172,7 +172,7 @@ class PyMkmApi:
         # For item i in a range that is a length of l,
         for i in range(0, len(l), n):
             # Create an index range for l of n items:
-            yield l[i: i + n]
+            yield l[i : i + n]
 
     def get_games(self, provided_oauth=None):
         url = "{}/games".format(self.base_url)
