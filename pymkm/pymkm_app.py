@@ -167,7 +167,7 @@ class PyMkmApp:
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
         partial_stock = PyMkmHelper.prompt_string(
-            "Partial update? If so, enter number of cards (or press Enter to update all)"
+            "Partial update? If so, enter number of cards (or press Enter all remaining stock)"
         )
         if partial_stock != "":
             partial_stock = int(partial_stock)
@@ -176,7 +176,7 @@ class PyMkmApp:
             "Try to undercut local market? (slower, more requests)"
         )
 
-        uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
+        not_uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
             undercut_local_market, partial_stock, already_checked_articles, api=self.api
         )
 
@@ -186,13 +186,13 @@ class PyMkmApp:
                 f"Partial stock update saved, next update will disregard articles in {partial_update_file}."
             )
 
-        if len(uploadable_json) > 0:
+        if len(not_uploadable_json) > 0:
 
-            self.display_price_changes_table(uploadable_json)
+            self.display_price_changes_table(not_uploadable_json)
 
             if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                 print("Updating prices...")
-                api.set_stock(uploadable_json)
+                api.set_stock(self.clean_json_for_upload(not_uploadable_json))
                 print("Prices updated.")
             else:
                 print("Prices not updated.")
@@ -200,6 +200,14 @@ class PyMkmApp:
             print("No prices to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
+
+    def clean_json_for_upload(self, not_uploadable_json):
+        for entry in not_uploadable_json:
+            test = True
+            del entry["price_diff"]
+            del entry["old_price"]
+            del entry["name"]
+        return not_uploadable_json
 
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
@@ -231,7 +239,7 @@ class PyMkmApp:
                 if article["product"].get("expansion"):
                     found_string += f"[{article['product'].get('expansion')}]."
                 if article["isFoil"]:
-                    found_string += f"[foil: {article['isFoil']}]."
+                    found_string += f"[isFoil: {article['isFoil']}]."
                 if article["comments"]:
                     found_string += f"[comment: {article['comments']}]."
                 else:
@@ -508,7 +516,7 @@ class PyMkmApp:
                 purchased_products.extend(
                     {
                         "id": i["idProduct"],
-                        "foil": i.get("isFoil"),
+                        "isFoil": i.get("isFoil"),
                         "count": i["count"],
                         "date": order["state"]["dateReceived"],
                     }
@@ -539,14 +547,14 @@ class PyMkmApp:
                             i
                             for i in purchased_products
                             if i["id"] in metaproduct_product_ids
-                            and i["foil"] == a_foil
+                            and i["isFoil"] == a_foil
                         ]
                     else:
                         a_product_id = article.get("idProduct")
                         product_matches = [
                             i
                             for i in purchased_products
-                            if i["id"] == a_product_id and i["foil"] == a_foil
+                            if i["id"] == a_product_id and i["isFoil"] == a_foil
                         ]
 
                     if product_matches:
@@ -939,8 +947,8 @@ class PyMkmApp:
             if price_diff != 0:
                 return {
                     "name": article["product"]["enName"],
-                    "foil": article.get("isFoil", False),
-                    "playset": article.get("isPlayset"),
+                    "isFoil": article.get("isFoil", False),
+                    "isPlayset": article.get("isPlayset"),
                     "old_price": article["price"],
                     "price": new_price,
                     "price_diff": price_diff,
@@ -1062,8 +1070,8 @@ class PyMkmApp:
                     [
                         item["count"],
                         item["name"],
-                        "\u2713" if item["foil"] else "",
-                        "\u2713" if item["playset"] else "",
+                        "\u2713" if item["isFoil"] else "",
+                        "\u2713" if item["isPlayset"] else "",
                         item["old_price"],
                         item["price"],
                         item["price_diff"],
