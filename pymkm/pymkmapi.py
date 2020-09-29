@@ -319,6 +319,11 @@ class PyMkmApi:
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = "{}/stock".format(self.base_url)
 
+        # clean data because the API treats "False" as true, must be "false".
+        for entry in payload:
+            for key, value in entry.items():
+                entry[key] = str.lower(str(value))
+
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         self.logger.debug(">> Adding stock")
@@ -334,6 +339,11 @@ class PyMkmApi:
     def set_stock(self, payload=None, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = "{}/stock".format(self.base_url)
+
+        # clean data because the API treats "False" as true, must be "false".
+        for entry in payload:
+            for key, value in entry.items():
+                entry[key] = str.lower(str(value))
 
         mkm_oauth = self.__setup_service(url, provided_oauth)
 

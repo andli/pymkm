@@ -167,7 +167,7 @@ class PyMkmApp:
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
         partial_stock = PyMkmHelper.prompt_string(
-            "Partial update? If so, enter number of cards (or press Enter to update all)"
+            "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
         )
         if partial_stock != "":
             partial_stock = int(partial_stock)
@@ -200,6 +200,13 @@ class PyMkmApp:
             print("No prices to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
+
+    def clean_json_for_upload(self, not_uploadable_json):
+        for entry in not_uploadable_json:
+            del entry["price_diff"]
+            del entry["old_price"]
+            del entry["name"]
+        return not_uploadable_json
 
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
@@ -263,7 +270,7 @@ class PyMkmApp:
                 if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
                     # Update articles on MKM
                     print("Updating prices...")
-                    api.set_stock([r])
+                    api.set_stock(self.clean_json_for_upload([r]))
                     print("Price updated.")
                 else:
                     print("Prices not updated.")
@@ -929,7 +936,7 @@ class PyMkmApp:
             article["product"].get("rarity"),
             article.get("condition"),
             article.get("isFoil", False),
-            article.get("isPlayset"),
+            article.get("isPlayset", False),
             language_id=article["language"]["idLanguage"],
             undercut_local_market=undercut_local_market,
             api=self.api,
@@ -939,8 +946,8 @@ class PyMkmApp:
             if price_diff != 0:
                 return {
                     "name": article["product"]["enName"],
-                    "foil": article.get("isFoil", False),
-                    "playset": article.get("isPlayset"),
+                    "isFoil": article.get("isFoil", False),
+                    "isPlayset": article.get("isPlayset", False),
                     "old_price": article["price"],
                     "price": new_price,
                     "price_diff": price_diff,
