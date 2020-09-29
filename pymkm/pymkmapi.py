@@ -7,19 +7,19 @@ __author__ = "Andreas Ehrlund"
 __version__ = "1.8.1"
 __license__ = "MIT"
 
-import sys
+import asyncio
+import copy
+import json
 import logging
 import logging.handlers
 import re
-import copy
-import requests
-import json
+import sys
 import urllib.parse
-from requests_oauthlib import OAuth1Session
-from requests import ConnectionError
-import asyncio
-import aiohttp
+
+import requests
 from authlib.integrations.httpx_client import AsyncOAuth1Client, OAuth1Auth
+from requests import ConnectionError
+from requests_oauthlib import OAuth1Session
 
 
 class CardmarketError(Exception):

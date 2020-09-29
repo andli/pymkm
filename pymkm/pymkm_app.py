@@ -382,6 +382,11 @@ class PyMkmApp:
                 products = api.get_products_async(products_to_get)
 
                 for article in sorted_articles[:num_searches]:
+                    p = next(
+                        x
+                        for x in products
+                        if x["product"]["idProduct"] == article["idProduct"]
+                    )
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
                     if expansion:
