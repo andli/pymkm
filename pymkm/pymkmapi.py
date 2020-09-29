@@ -234,7 +234,7 @@ class PyMkmApi:
         client_auth = copy.copy(client.auth)
         client_auth.realm = url
         resp = await client.get(url, auth=client_auth)
-        return resp.json()
+        return resp.json()  # TODO: handle non-good responses...
 
     async def get_products(self, product_id_list):
         async with AsyncOAuth1Client(
@@ -252,7 +252,7 @@ class PyMkmApi:
                         f"{self.base_url}/products/",
                     )
                 )
-            responses = await asyncio.gather(*tasks)
+            responses = await asyncio.gather(*tasks, return_exceptions=True)
             return responses
 
     def get_products_async(self, product_id_list):
