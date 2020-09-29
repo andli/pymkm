@@ -230,11 +230,12 @@ class PyMkmApi:
         if r:
             return r.json()
 
-    async def fetch(self, client, url, uri):
-        client_auth = copy.copy(client.auth)
-        client_auth.realm = url
-        resp = await client.get(url, auth=client_auth)
-        return resp.json()  # TODO: handle non-good responses...
+    async def fetch(self, sem, client, url, uri):
+        async with sem:
+            client_auth = copy.copy(client.auth)
+            client_auth.realm = url
+            resp = await client.get(url, auth=client_auth)
+            return resp.json()  # TODO: handle non-good responses...
 
     async def get_products(self, product_id_list):
         async with AsyncOAuth1Client(
@@ -244,19 +245,25 @@ class PyMkmApi:
             token_secret=self.config["access_token_secret"],
         ) as client:
             tasks = []
+            sem = asyncio.Semaphore(100)
             for product_id in product_id_list:
                 tasks.append(
-                    self.fetch(
-                        client,
-                        f"{self.base_url}/products/{str(product_id)}",
-                        f"{self.base_url}/products/",
+                    asyncio.ensure_future(
+                        self.fetch(
+                            sem,
+                            client,
+                            f"{self.base_url}/products/{str(product_id)}",
+                            f"{self.base_url}/products/",
+                        )
                     )
                 )
             responses = await asyncio.gather(*tasks, return_exceptions=True)
             return responses
 
     def get_products_async(self, product_id_list):
-        return asyncio.run(self.get_products(product_id_list))
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.get_products(product_id_list))
+        # return asyncio.run(self.get_products(product_id_list))
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
