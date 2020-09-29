@@ -1069,8 +1069,8 @@ class PyMkmApp:
                     [
                         item["count"],
                         item["name"],
-                        "\u2713" if item["foil"] else "",
-                        "\u2713" if item["playset"] else "",
+                        "\u2713" if item["isFoil"] else "",
+                        "\u2713" if item["isPlayset"] else "",
                         item["old_price"],
                         item["price"],
                         item["price_diff"],
