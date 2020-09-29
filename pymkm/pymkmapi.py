@@ -11,11 +11,15 @@ import sys
 import logging
 import logging.handlers
 import re
+import copy
 import requests
 import json
 import urllib.parse
 from requests_oauthlib import OAuth1Session
 from requests import ConnectionError
+import asyncio
+import aiohttp
+from authlib.integrations.httpx_client import AsyncOAuth1Client, OAuth1Auth
 
 
 class CardmarketError(Exception):
@@ -225,6 +229,34 @@ class PyMkmApi:
 
         if r:
             return r.json()
+
+    async def fetch(self, client, url, uri):
+        client_auth = copy.copy(client.auth)
+        client_auth.realm = url
+        resp = await client.get(url, auth=client_auth)
+        return resp.json()
+
+    async def get_products(self, product_id_list):
+        async with AsyncOAuth1Client(
+            client_id=self.config["app_token"],
+            client_secret=self.config["app_secret"],
+            token=self.config["access_token"],
+            token_secret=self.config["access_token_secret"],
+        ) as client:
+            tasks = []
+            for product_id in product_id_list:
+                tasks.append(
+                    self.fetch(
+                        client,
+                        f"{self.base_url}/products/{str(product_id)}",
+                        f"{self.base_url}/products/",
+                    )
+                )
+            responses = await asyncio.gather(*tasks)
+            return responses
+
+    def get_products_async(self, product_id_list):
+        return asyncio.run(self.get_products(product_id_list))
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct

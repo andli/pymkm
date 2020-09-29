@@ -367,6 +367,7 @@ class PyMkmApp:
             if 1 <= num_searches <= len(sorted_articles):
                 table_data = []
 
+                products_to_get = []
                 index = 0
                 bar = progressbar.ProgressBar(max_value=num_searches)
                 for article in sorted_articles[:num_searches]:
@@ -376,7 +377,11 @@ class PyMkmApp:
                     playset = article.get("isPlayset")
                     price = float(article["price"])
 
-                    p = api.get_product(article["idProduct"])
+                    products_to_get.append(article["idProduct"])
+
+                products = api.get_products_async(products_to_get)
+
+                for article in sorted_articles[:num_searches]:
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
                     if expansion:
