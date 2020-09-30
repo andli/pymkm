@@ -544,7 +544,12 @@ class PyMkmApp:
             matches = []
             for key, articles in wantslists_lists.items():
 
-                metaproducts_to_get = [x["product"]["idMetaproduct"] for x in articles]
+                metaproducts_article_list = [
+                    x for x in articles if x.get("type") == "metaproduct"
+                ]
+                metaproducts_to_get = [
+                    x["idMetaproduct"] for x in metaproducts_article_list
+                ]
                 metaproduct_list = api.get_items_async(
                     "metaproducts", metaproducts_to_get
                 )
@@ -555,7 +560,12 @@ class PyMkmApp:
                     product_matches = []
 
                     if a_type == "metaproduct":
-                        metaproduct = api.get_metaproduct(article.get("idMetaproduct"))
+                        metaproduct = next(
+                            x
+                            for x in metaproduct_list
+                            if x["metaproduct"]["idMetaproduct"]
+                            == article["idMetaproduct"]
+                        )
                         metaproduct_product_ids = [
                             i["idProduct"] for i in metaproduct["product"]
                         ]
@@ -610,30 +620,33 @@ class PyMkmApp:
                     bar.update(index)
             bar.finish()
 
-            print(
-                tb.tabulate(
-                    [
+            if matches:
+                print(
+                    tb.tabulate(
                         [
-                            item["wantlist_name"],
-                            item["count"],
-                            "\u2713" if item["is_foil"] else "",
-                            item["product_name"],
-                            item["expansion_name"],
-                            item["date"],
-                        ]
-                        for item in matches
-                    ],
-                    headers=[
-                        "Wantlist",
-                        "# bought",
-                        "Foil",
-                        "Name",
-                        "Expansion",
-                        "Date (last) received",
-                    ],
-                    tablefmt="simple",
+                            [
+                                item["wantlist_name"],
+                                item["count"],
+                                "\u2713" if item["is_foil"] else "",
+                                item["product_name"],
+                                item["expansion_name"],
+                                item["date"],
+                            ]
+                            for item in matches
+                        ],
+                        headers=[
+                            "Wantlist",
+                            "# bought",
+                            "Foil",
+                            "Name",
+                            "Expansion",
+                            "Date (last) received",
+                        ],
+                        tablefmt="simple",
+                    )
                 )
-            )
+            else:
+                print("No cleanup needed.")
         else:
             print("No wantslists or received orders.")
 
