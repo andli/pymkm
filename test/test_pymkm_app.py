@@ -105,7 +105,7 @@ class TestPyMkmApp(TestCommon):
     )
     @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_of_3,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3["product"],
     )
     @patch("builtins.input", side_effect=["3", "words", "n", "1", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)

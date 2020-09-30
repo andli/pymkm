@@ -93,16 +93,16 @@ class PyMkmApi:
         handled_codes = (
             requests.codes.ok,
             requests.codes.partial_content,
-            requests.codes.temporary_redirect,
+            # requests.codes.temporary_redirect,
         )
         if response.status_code in handled_codes:
             self.__read_request_limits_from_header(response)
 
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
-        # elif response.status_code == requests.codes.temporary_redirect:
-        # raise CardmarketError(response.json())
-        # return False
+        elif response.status_code == requests.codes.temporary_redirect:
+            # raise CardmarketError(response.json())
+            return False
         elif response.status_code == requests.codes.no_content:
             raise CardmarketError("No results found.")
         elif response.status_code == requests.codes.bad_request:
@@ -410,10 +410,10 @@ class PyMkmApi:
     def handle_partial_content(self, item_name, mkm_oauth, url, start=0, **kwargs):
         INCREMENT = 100
         params = kwargs
-        if start > 0:
-            params.update({"start": start, "maxResults": INCREMENT})
+        params.update({"start": start, "maxResults": INCREMENT})
 
         r = self.mkm_request(mkm_oauth, url, params=params)
+
         max_items = 0
         if r.status_code == requests.codes.partial_content:
             max_items = self.__get_max_items_from_header(r)
@@ -430,7 +430,7 @@ class PyMkmApi:
                     f"-> get {item_name}s recurring to next_start={next_start}"
                 )
                 return r.json()[item_name] + self.handle_partial_content(
-                    item_name, url, **kwargs
+                    item_name, mkm_oauth, url, **kwargs
                 )
         elif r.status_code == requests.codes.no_content:
             raise CardmarketError(f"No {item_name}s found.")

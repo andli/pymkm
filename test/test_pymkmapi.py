@@ -149,7 +149,10 @@ class TestPyMkmApi(TestCommon):
         )
         search_string = "test"
         result = self.api.find_product(search_string, mock_oauth)
-        self.assertEqual(result, TestCommon.fake_product_response["product"])
+        self.assertEqual(
+            result["idProduct"],
+            TestCommon.fake_product_response["product"]["idProduct"],
+        )
 
     def test_find_stock_article(self):
         mock_oauth = Mock(spec=OAuth1Session)

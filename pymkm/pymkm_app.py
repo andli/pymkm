@@ -308,7 +308,7 @@ class PyMkmApp:
             self.logger.debug(err.mkm_msg())
         else:
             if result:
-                products = result["product"]
+                products = result
 
                 stock_list_products = [
                     x["idProduct"] for x in self.get_stock_as_array(api=self.api)
