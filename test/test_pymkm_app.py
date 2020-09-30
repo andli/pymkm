@@ -163,7 +163,7 @@ class TestPyMkmApp(TestCommon):
         )
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_orders,
+        "pymkm.pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_order_items,
     )
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_wantslist_items",
