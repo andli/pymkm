@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.8.1"
+__version__ = "2.0.0"
 __license__ = "MIT"
 
 import asyncio
@@ -148,13 +148,14 @@ class PyMkmApi:
 
     def __get_max_items_from_header(self, response):
         max_items = 0
-        try:
-            max_items = int(
-                re.search("\/(\d+)", response.headers["Content-Range"]).group(1)
-            )
-        except KeyError as err:
-            self.logger.debug(">>> Header error finding content-range")
-        return max_items
+        if not response.status_code == requests.codes.no_content:
+            try:
+                max_items = int(
+                    re.search("\/(\d+)", response.headers["Content-Range"]).group(1)
+                )
+            except KeyError as err:
+                self.logger.debug(">>> Header error finding content-range")
+            return max_items
 
     def set_api_quota_attributes(self, provided_oauth=None):
         # Use a 400 to get the response headers
