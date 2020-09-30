@@ -380,7 +380,7 @@ class PyMkmApp:
                 products_to_get = [
                     x["idProduct"] for x in sorted_articles[:num_searches]
                 ]
-                products = api.get_products_async(products_to_get)
+                products = api.get_items_async("products", products_to_get)
 
                 for article in sorted_articles[:num_searches]:
                     p = next(
@@ -922,7 +922,7 @@ class PyMkmApp:
         bar.update(index)
 
         products_to_get = [x["idProduct"] for x in filtered_stock_list]
-        product_list = api.get_products_async(products_to_get)
+        product_list = api.get_items_async("products", products_to_get)
 
         for article in filtered_stock_list:
             product = next(

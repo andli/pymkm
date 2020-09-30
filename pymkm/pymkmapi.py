@@ -241,9 +241,9 @@ class PyMkmApi:
             client_auth = copy.copy(client.auth)
             client_auth.realm = url
             resp = await client.get(url, auth=client_auth)
-            return resp.json()  # TODO: handle non-good responses...
+            return resp.json()  # TODO: handle non-good responses...?
 
-    async def get_products(self, product_id_list):
+    async def get_items(self, item_type, item_id_list):
         async with AsyncOAuth1Client(
             client_id=self.config["app_token"],
             client_secret=self.config["app_secret"],
@@ -252,24 +252,23 @@ class PyMkmApi:
         ) as client:
             tasks = []
             sem = asyncio.Semaphore(100)
-            for product_id in product_id_list:
+            for item_id in item_id_list:
                 tasks.append(
                     asyncio.ensure_future(
                         self.fetch(
                             sem,
                             client,
-                            f"{self.base_url}/products/{str(product_id)}",
-                            f"{self.base_url}/products/",
+                            f"{self.base_url}/{item_type}/{str(product_id)}",
+                            f"{self.base_url}/{item_type}/",
                         )
                     )
                 )
             responses = await asyncio.gather(*tasks, return_exceptions=True)
             return responses
 
-    def get_products_async(self, product_id_list):
+    def get_items_async(self, item_type, item_id_list):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.get_products(product_id_list))
-        # return asyncio.run(self.get_products(product_id_list))
+        return loop.run_until_complete(self.get_items(item_id_list))
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct

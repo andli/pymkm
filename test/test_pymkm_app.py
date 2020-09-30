@@ -24,7 +24,7 @@ class TestPyMkmApp(TestCommon):
         self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_products_async",
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
         return_value=TestCommon.fake_product_list_response,
     )
     @patch("pymkm.pymkmapi.PyMkmApi.set_stock", return_value=TestCommon.ok_response)
@@ -119,7 +119,7 @@ class TestPyMkmApp(TestCommon):
             self.assertRegex(log_record.message, r"list_competition_for_product")
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_products_async",
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
         return_value=TestCommon.fake_product_list_response,
     )
     @patch(
