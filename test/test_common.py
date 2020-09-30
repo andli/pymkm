@@ -130,6 +130,42 @@ class TestCommon(unittest.TestCase):
         }
     }
 
+    fake_product_list_response = [
+        {
+            "product": {
+                "idProduct": 363551,
+                "categoryName": "Magic Single",
+                "enName": "Temple Garden",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 8115,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+        {
+            "product": {
+                "idProduct": 363554,
+                "categoryName": "Magic Single",
+                "enName": "Overgrown Tomb",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 8044,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+        {
+            "product": {
+                "idProduct": 1692,
+                "categoryName": "Magic Single",
+                "enName": "Yidaro, Wandering Mo...ster (V.2)",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 300608,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+    ]
+
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
@@ -172,7 +208,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "categoryName": "Magic Single",
                 "enName": "Dragon Breath",
                 "expansionName": "ScourgeXX",
-                "idProduct": 9145,
+                "idProduct": 1692,
                 "rarity": "Rare",
             },
         ]
@@ -514,7 +550,8 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "reporting": true,
                 "partial_update_filename": "partial_stock_update.txt",
                 "csv_import_filename": "list.csv",
-                "csv_import_condition": "NM"
+                "csv_import_condition": "NM",
+                "dev_mode": false
             }
             """
         )

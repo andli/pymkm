@@ -155,6 +155,13 @@ class PyMkmApp:
             if break_signal:
                 break
 
+    def clean_json_for_upload(self, not_uploadable_json):
+        for entry in not_uploadable_json:
+            del entry["price_diff"]
+            del entry["old_price"]
+            del entry["name"]
+        return not_uploadable_json
+
     def update_stock_prices_to_trend(self, api):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
@@ -200,13 +207,6 @@ class PyMkmApp:
             print("No prices to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
-
-    def clean_json_for_upload(self, not_uploadable_json):
-        for entry in not_uploadable_json:
-            del entry["price_diff"]
-            del entry["old_price"]
-            del entry["name"]
-        return not_uploadable_json
 
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
@@ -370,15 +370,10 @@ class PyMkmApp:
                 products_to_get = []
                 index = 0
                 bar = progressbar.ProgressBar(max_value=num_searches)
-                for article in sorted_articles[:num_searches]:
-                    condition = article.get("condition")
-                    language = article.get("language").get("languageName")
-                    foil = article.get("isFoil")
-                    playset = article.get("isPlayset")
-                    price = float(article["price"])
-
-                    products_to_get.append(article["idProduct"])
-
+                bar.update(index)
+                products_to_get = [
+                    x["idProduct"] for x in sorted_articles[:num_searches]
+                ]
                 products = api.get_products_async(products_to_get)
 
                 for article in sorted_articles[:num_searches]:
@@ -389,11 +384,12 @@ class PyMkmApp:
                     )
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
+                    price = float(article["price"])
                     if expansion:
                         expansion_name = expansion.get("enName")
                     else:
                         expansion_name = "N/A"
-                    if foil:
+                    if article.get("isFoil"):
                         market_price = p["product"]["priceGuide"]["TRENDFOIL"]
                     else:
                         market_price = p["product"]["priceGuide"]["TREND"]
@@ -405,10 +401,10 @@ class PyMkmApp:
                                 [
                                     name,
                                     expansion_name,
-                                    condition,
-                                    language,
-                                    "\u2713" if foil else "",
-                                    "\u2713" if playset else "",
+                                    article.get("condition"),
+                                    article.get("language").get("languageName"),
+                                    "\u2713" if article.get("isFoil") else "",
+                                    "\u2713" if article.get("isPlayset") else "",
                                     price,
                                     market_price,
                                     price_diff,
