@@ -208,24 +208,30 @@ class PyMkmApp:
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
 
+    def __filter(self, article_list):
+        sticky_price_char = self.config["sticky_price_char"]
+        # if we find the sticky price marker, filter out articles
+        def filtered(stock_item):
+            return stock_item["comments"].startswith(sticky_price_char)
+
+        filtered_articles = []
+        filtered_articles = [x for x in article_list if not filtered(x)]
+        return filtered_articles
+
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string("Search product name")
-        sticky_price_char = self.config["sticky_price_char"]
 
-        def filtered(stock_item):
-            return stock_item["comments"].startswith(sticky_price_char)
-
-        # if we find the sticky price marker, filter out articles
-
-        filtered_articles = []
         try:
             articles = api.find_stock_article(search_string, 1)
-            filtered_articles = [x for x in articles if not filtered(x)]
         except Exception as err:
             print(err)
+
+        filtered_articles = self.__filter(articles)
+
+        ### --- refactor?
 
         if not filtered_articles:
             print(f"{len(articles)} articles found, no editable prices.")
