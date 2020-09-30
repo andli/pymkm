@@ -93,7 +93,6 @@ class PyMkmApi:
         handled_codes = (
             requests.codes.ok,
             requests.codes.partial_content,
-            # requests.codes.temporary_redirect,
         )
         if response.status_code in handled_codes:
             self.__read_request_limits_from_header(response)
@@ -101,14 +100,13 @@ class PyMkmApi:
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif response.status_code == requests.codes.temporary_redirect:
-            # raise CardmarketError(response.json())
-            return False
+            raise CardmarketError(response.json())
         elif response.status_code == requests.codes.no_content:
             raise CardmarketError("No results found.")
         elif response.status_code == requests.codes.bad_request:
             raise CardmarketError(response.json())
         elif response.status_code == requests.codes.not_found:
-            return False
+            raise CardmarketError(response.json())
         else:
             raise requests.exceptions.ConnectionError(response)
 
@@ -199,7 +197,9 @@ class PyMkmApi:
             # header needs to be compiled for the redirected resource. (MKM API docs)
             self.__handle_response(r)
             return r
-        # except requests.exceptions.ConnectionError as err:
+        except CardmarketError as err:
+            print(err.mkm_msg())
+            sys.exit(0)
         except Exception as err:
             print(f"\n>> Cardmarket connection error: {err} for {url}")
             self.logger.error(f"{err} for {url}")
@@ -433,6 +433,7 @@ class PyMkmApi:
                 )
         elif r.status_code == requests.codes.no_content:
             raise CardmarketError(f"No {item_name}s found.")
+            return False
         elif r.status_code == requests.codes.ok:
             return r.json()[item_name]
         else:
