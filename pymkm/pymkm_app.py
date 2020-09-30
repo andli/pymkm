@@ -629,6 +629,8 @@ class PyMkmApp:
                     tablefmt="simple",
                 )
             )
+        else:
+            print("No wantslists or received orders.")
 
     def show_account_info(self, api):
         self.report("show account info")
