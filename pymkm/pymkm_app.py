@@ -893,12 +893,8 @@ class PyMkmApp:
     ):
         stock_list = self.get_stock_as_array(api=self.api)
 
-        sticky_price_char = self.config["sticky_price_char"]
-        # if we find the sticky price marker, filter out articles
-        def filtered(stock_item):
-            return stock_item["comments"].startswith(sticky_price_char)
+        filtered_stock_list = self.__filter(stock_list)
 
-        filtered_stock_list = [x for x in stock_list if not filtered(x)]
         sticky_count = len(stock_list) - len(filtered_stock_list)
 
         if already_checked_articles:
