@@ -309,7 +309,7 @@ class TestPyMkmApp(TestCommon):
 
         fake_product = app.get_stock_as_array(self.api)[0]
         price = app.get_price_for_product(
-            fake_product["idProduct"],
+            TestCommon.fake_product_response,
             fake_product["product"]["rarity"],
             fake_product["condition"],
             fake_product["isFoil"],
