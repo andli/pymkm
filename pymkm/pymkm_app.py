@@ -1012,7 +1012,7 @@ class PyMkmApp:
         # Set competitive price for region
         if undercut_local_market:
             table_data_local, table_data = self.get_competition(
-                api, product_id, is_foil
+                api, product["product"]["idProduct"], is_foil
             )
 
             if len(table_data_local) > 0:
