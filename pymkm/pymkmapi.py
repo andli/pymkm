@@ -258,7 +258,7 @@ class PyMkmApi:
                         self.fetch(
                             sem,
                             client,
-                            f"{self.base_url}/{item_type}/{str(product_id)}",
+                            f"{self.base_url}/{item_type}/{str(item_id)}",
                             f"{self.base_url}/{item_type}/",
                         )
                     )
@@ -268,7 +268,7 @@ class PyMkmApi:
 
     def get_items_async(self, item_type, item_id_list):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.get_items(item_id_list))
+        return loop.run_until_complete(self.get_items(item_type, item_id_list))
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct

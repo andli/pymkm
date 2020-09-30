@@ -166,6 +166,20 @@ class TestCommon(unittest.TestCase):
         },
     ]
 
+    cardmarket_metaproduct_list_response = [
+        {
+            "metaproduct": {"enName": "Balthor the Defiled", "idMetaproduct": 429},
+            "product": [{"idProduct": 2187, "idMetaproduct": 429}],
+        },
+        {
+            "metaproduct": {
+                "enName": "'Chainer, Nightmare Adept'",
+                "idMetaproduct": 278802,
+            },
+            "product": [{"idProduct": 392362, "idMetaproduct": 278802}],
+        },
+    ]
+
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 

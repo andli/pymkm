@@ -163,6 +163,10 @@ class TestPyMkmApp(TestCommon):
         )
 
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
+        return_value=TestCommon.cardmarket_metaproduct_list_response,
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_order_items,
     )
     @patch(

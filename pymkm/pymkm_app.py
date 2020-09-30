@@ -544,6 +544,11 @@ class PyMkmApp:
             matches = []
             for key, articles in wantslists_lists.items():
 
+                metaproducts_to_get = [x["product"]["idMetaproduct"] for x in articles]
+                metaproduct_list = api.get_items_async(
+                    "metaproducts", metaproducts_to_get
+                )
+
                 for article in articles:
                     a_type = article.get("type")
                     a_foil = article.get("isFoil") == True
