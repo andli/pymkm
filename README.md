@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm) [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm) [![Known Vulnerabilities](https://snyk.io/test/github/andli/pymkm/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/andli/pymkm?targetFile=requirements.txt) ![.github/workflows/main.yml](https://github.com/andli/pymkm/workflows/.github/workflows/main.yml/badge.svg?branch=master)
+[![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm) [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm) [![Known Vulnerabilities](https://snyk.io/test/github/andli/pymkm/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/andli/pymkm?targetFile=requirements.txt)
 
 See the [Changelog](CHANGELOG.md) for what's new.
 
@@ -16,7 +16,7 @@ The app also keeps track of how many API requests your have left each day, and c
 **NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `"reporting": true` to `false` in `config.json`.
 
 ```
-╭─── PyMKM 1.7.0 ────────────────────────────────────────╮
+╭─── PyMKM 2.0.0 ────────────────────────────────────────╮
 │ 1: Update stock prices                                 │
 │ 2: Update price for a product                          │
 │ 3: List competition for a product                      │
@@ -183,24 +183,3 @@ finespoo         FI         NM                 2     5.98
 ----------------------------------------------------------------------
 Total average price: 9.82, Total median price: 7.79, Total # of articles: 320
 ```
-
-## ✔️ Supported calls
-
-These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
-
-- `get_games`
-- `get_expansions`
-- `get_cards_in_expansion`
-- `get_product`
-- `get_account`
-- `get_articles_in_shoppingcarts`
-- `set_vacation_status`
-- `set_display_language`
-- `get_stock`
-- `set_stock`
-- `add_stock`
-- `delete_stock`
-- `get_articles`
-- `find_product`
-- `find_stock_article`
-- `find_user_articles`
