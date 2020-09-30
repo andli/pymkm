@@ -255,8 +255,9 @@ class PyMkmApp:
                 "Try to undercut local market? (slower, more requests)"
             )
 
+            product = self.api.get_product(article["idProduct"])
             r = self.update_price_for_article(
-                article, undercut_local_market, api=self.api
+                article, product, undercut_local_market, api=self.api
             )
 
             if r:
@@ -299,7 +300,6 @@ class PyMkmApp:
                     # 'exact ': 'true',
                     "idGame": 1,
                     "idLanguage": 1,
-                    # TODO: Add Partial Content support
                     # TODO: Add language support
                 },
             )

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Refactored a lot of code.
+- Refactored a lot of tests.
 - Added asynchronous api calls, speeding up product lookups A LOT.
 
 ## [1.8.1]

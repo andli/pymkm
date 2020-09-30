@@ -100,11 +100,13 @@ class PyMkmApi:
 
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
+        # elif response.status_code == requests.codes.temporary_redirect:
+        # raise CardmarketError(response.json())
+        # return False
         elif response.status_code == requests.codes.no_content:
             raise CardmarketError("No results found.")
         elif response.status_code == requests.codes.bad_request:
             raise CardmarketError(response.json())
-            return False
         elif response.status_code == requests.codes.not_found:
             return False
         else:
@@ -189,9 +191,12 @@ class PyMkmApi:
         if r:
             return r.json()
 
-    def mkm_request(self, mkm_oauth, url):
+    def mkm_request(self, mkm_oauth, url, params=None):
         try:
-            r = mkm_oauth.get(url, allow_redirects=False)
+            r = mkm_oauth.get(url, params=params, allow_redirects=False)
+            # However, you should switch off the behaviour to automatically
+            # redirect to the given request URI, because a new Authorization
+            # header needs to be compiled for the redirected resource. (MKM API docs)
             self.__handle_response(r)
             return r
         # except requests.exceptions.ConnectionError as err:
@@ -403,12 +408,12 @@ class PyMkmApi:
         return self.handle_partial_content("article", mkm_oauth, url, **kwargs)
 
     def handle_partial_content(self, item_name, mkm_oauth, url, start=0, **kwargs):
-        INCREMENT = 1000
+        INCREMENT = 100
         params = kwargs
         if start > 0:
             params.update({"start": start, "maxResults": INCREMENT})
 
-        r = mkm_oauth.get(url, params=params)
+        r = self.mkm_request(mkm_oauth, url, params=params)
         max_items = 0
         if r.status_code == requests.codes.partial_content:
             max_items = self.__get_max_items_from_header(r)
@@ -442,20 +447,12 @@ class PyMkmApi:
 
         self.logger.debug(">> Finding product for search string: " + str(search))
 
-        params = kwargs
         if "search" not in kwargs:
-            params["search"] = search
-
+            kwargs["search"] = search
         if len(search) < 4:
-            params["exact"] = "true"
+            kwargs["exact"] = "true"
 
-        r = mkm_oauth.get(url, params=params)
-
-        if self.__handle_response(r):
-            try:
-                return r.json()
-            except json.decoder.JSONDecodeError:
-                self.logger.error(">> Error parsing json: " + r.text)
+        return self.handle_partial_content("product", mkm_oauth, url, **kwargs)
 
     def find_stock_article(self, name, game_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Articles
@@ -495,10 +492,8 @@ class PyMkmApi:
 
         self.logger.debug(">> Getting all wants lists")
 
-        r = mkm_oauth.get(url)
-
-        if self.__handle_response(r):
-            return r.json()["wantslist"]
+        r = self.mkm_request(mkm_oauth, url)
+        return r.json()["wantslist"]
 
     def get_wantslist_items(self, idWantsList, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist_Item
@@ -508,10 +503,8 @@ class PyMkmApi:
 
         self.logger.debug(">> Getting wants list items")
 
-        r = mkm_oauth.get(url)
-
-        if self.__handle_response(r):
-            return r.json()["wantslist"]
+        r = self.mkm_request(mkm_oauth, url)
+        return r.json()["wantslist"]
 
     def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders

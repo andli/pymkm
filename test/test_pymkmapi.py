@@ -149,7 +149,7 @@ class TestPyMkmApi(TestCommon):
         )
         search_string = "test"
         result = self.api.find_product(search_string, mock_oauth)
-        self.assertEqual(result, TestCommon.fake_product_response)
+        self.assertEqual(result, TestCommon.fake_product_response["product"])
 
     def test_find_stock_article(self):
         mock_oauth = Mock(spec=OAuth1Session)
@@ -306,7 +306,7 @@ class TestPyMkmApi(TestCommon):
             )
         )
         product_name = "testnameplsignore"
-        with self.assertRaises(CardmarketError):
+        with self.assertRaises((CardmarketError, AttributeError)):
             result = self.api.find_product(product_name, mock_oauth)
 
 
