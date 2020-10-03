@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.0 rc2"
+__version__ = "2.0.0"
 __license__ = "MIT"
 
 import os
@@ -214,7 +214,10 @@ class PyMkmApp:
         sticky_price_char = self.config["sticky_price_char"]
         # if we find the sticky price marker, filter out articles
         def filtered(stock_item):
-            return stock_item["comments"].startswith(sticky_price_char)
+            if stock_item.get("comments"):
+                return stock_item.get("comments").startswith(sticky_price_char)
+            else:
+                return False
 
         filtered_articles = []
         filtered_articles = [x for x in article_list if not filtered(x)]
