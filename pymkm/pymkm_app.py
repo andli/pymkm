@@ -1124,10 +1124,13 @@ class PyMkmApp:
     def get_stock_as_array(self, api):
         try:
             d = api.get_stock()
+        except CardmarketError as err:
+            print(err.mkm_msg())
+            self.logger.debug(err.mkm_msg())
         except Exception as err:
             print("No response from API.")
             self.logger.error("No response from API, exiting.")
-            sys.exit(0)
+            # sys.exit(0)
         else:
             keys = [
                 "idArticle",
