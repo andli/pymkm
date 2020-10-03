@@ -36,7 +36,7 @@ class PyMkmApp:
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         fh = logging.handlers.RotatingFileHandler(
-            f"pymkm.log", maxBytes=500000, backupCount=2
+            f"log_pymkm.log", maxBytes=500000, backupCount=2
         )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
