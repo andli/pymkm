@@ -23,15 +23,22 @@ from requests_oauthlib import OAuth1Session
 
 
 class CardmarketError(Exception):
-    def __init__(self, message, errors=None):
+    def __init__(self, message, url=None, errors=None):
         if message is None:
             message = "No results found."
         super().__init__(message)
 
         self.errors = errors
+        self.url = url
 
     def mkm_msg(self):
-        return "\n[Cardmarket error] " + self.args[0].get("mkm_error_description")
+        prefix_string = "[Cardmarket API] "
+        error_string = ""
+        if isinstance(self.args[0], str):
+            error_string = self.args[0]
+        else:
+            error_string = self.args[0].get("mkm_error_description")
+        return prefix_string + error_string
 
 
 class PyMkmApi:
@@ -57,20 +64,26 @@ class PyMkmApi:
         "Hungarian",
     ]
 
-    def __init__(self, config=None):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        fh = logging.handlers.RotatingFileHandler(f"pymkm.log", maxBytes=2000000)
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
-        sh = logging.StreamHandler()
-        sh.setLevel(logging.ERROR)
-        sh.setFormatter(formatter)
-        self.logger.addHandler(sh)
+    def __init__(self, config=None, logger=None):
+
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            fh = logging.handlers.RotatingFileHandler(
+                f"log_pymkm.log", maxBytes=500000, backupCount=2
+            )
+            fh.setLevel(logging.DEBUG)
+            fh.setFormatter(formatter)
+            self.logger.addHandler(fh)
+            sh = logging.StreamHandler()
+            sh.setLevel(logging.ERROR)
+            sh.setFormatter(formatter)
+            self.logger.addHandler(sh)
 
         self.requests_max = 0
         self.requests_count = 0
@@ -102,7 +115,7 @@ class PyMkmApi:
         elif response.status_code == requests.codes.temporary_redirect:
             raise CardmarketError(response.json())
         elif response.status_code == requests.codes.no_content:
-            raise CardmarketError("No results found.")
+            raise CardmarketError("No results found.", url=response.request.url)
         elif response.status_code == requests.codes.bad_request:
             raise CardmarketError(response.json())
         elif response.status_code == requests.codes.not_found:
@@ -162,7 +175,7 @@ class PyMkmApi:
         url = "{}/games".format(self.base_url)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
-        self.logger.debug(">> Getting request quotas")
+        self.logger.info(">> Getting request quotas")
         r = self.mkm_request(mkm_oauth, url)
 
     def get_language_code_from_string(self, language_string):
@@ -199,7 +212,7 @@ class PyMkmApi:
             return r
         except CardmarketError as err:
             print(err.mkm_msg())
-            sys.exit(0)
+            # sys.exit(0)
         except Exception as err:
             print(f"\n>> Cardmarket connection error: {err} for {url}")
             self.logger.error(f"{err} for {url}")
@@ -344,16 +357,32 @@ class PyMkmApi:
         # clean data because the API treats "False" as true, must be "false".
         for entry in payload:
             for key, value in entry.items():
-                entry[key] = str.lower(str(value))
+                if isinstance(value, bool):
+                    entry[key] = str.lower(str(value))
 
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         self.logger.debug(">> Adding stock")
         chunked_list = list(self.__chunks(payload, 100))
         for chunk in chunked_list:
-            xml_payload = self.__json_to_xml(chunk)
-            r = mkm_oauth.post(url, data=xml_payload)
-
+            chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
+            try:
+                xml_payload = self.__json_to_xml(chunk)
+                r = mkm_oauth.post(url, data=xml_payload)
+                inserted = r.json()
+                for item in inserted["inserted"]:
+                    if not item["success"]:
+                        raise CardmarketError(
+                            f"{item['error']}: {item['tried']}"  # , url=r.request.url
+                        )
+                    else:
+                        self.logger.debug(
+                            f">> Added {item['idArticle']['product']['enName']}."
+                        )
+                #'{"inserted":[{"success":false,"tried":{"idProduct":"12636","idLanguage":"1","count":"1","price":"0.75","condition":"nm","isFoil":"false","amount":"1"},"error":"An error has ocurred, the card has NOT been listed."}]}'
+            except CardmarketError as err:
+                self.logger.error(f"{err.mkm_msg()} {err.url}")
+                print(err.mkm_msg())
         # TODO: Only considers the last response.
         if self.__handle_response(r):
             return r.json()
@@ -416,7 +445,7 @@ class PyMkmApi:
         max_items = 0
         if r.status_code == requests.codes.partial_content:
             max_items = self.__get_max_items_from_header(r)
-            self.logger.debug(f"> Content-Range header: {r.headers['Content-Range']}")
+            self.logger.info(f"> Content-Range header: {r.headers['Content-Range']}")
             self.logger.debug(
                 f"> # {item_name}s in response: {str(len(r.json()[item_name]))}"
             )

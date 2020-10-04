@@ -47,7 +47,7 @@ class PyMkmApp:
         self.logger.addHandler(sh)
 
         if config is None:
-            self.logger.debug(">> Loading config file")
+            self.logger.info(">> Loading config file")
             try:
                 self.config = json.load(open("config.json"))
             except FileNotFoundError:
@@ -219,7 +219,6 @@ class PyMkmApp:
             else:
                 return False
 
-        filtered_articles = []
         filtered_articles = [x for x in article_list if not filtered(x)]
         return filtered_articles
 
@@ -309,8 +308,8 @@ class PyMkmApp:
                 },
             )
         except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
-            self.logger.debug(err.mkm_msg())
         else:
             if result:
                 products = result
@@ -347,8 +346,8 @@ class PyMkmApp:
         try:
             result = api.find_user_articles(search_string)
         except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
-            self.logger.debug(err.mkm_msg())
         else:
             filtered_articles = [x for x in result if x.get("price") > 1]
             # language from configured filter
@@ -703,12 +702,16 @@ class PyMkmApp:
                 row_array = row.split(",")
                 if index > 0:
                     row_array = [x.strip('"') for x in row_array]
-                    (name, set_name, count, foil, language, *other) = row_array
-                    foil = True if foil.lower() == "foil" else False
-                    if not self.match_card_and_add_stock(
-                        api, name, set_name, count, foil, language, *other
-                    ):
+                    try:
+                        (name, set_name, count, foil, language, *other) = row_array
+                    except Exception as err:
                         problem_cards.append(row_array)
+                    else:
+                        foil = True if foil.lower() == "foil" else False
+                        if not self.match_card_and_add_stock(
+                            api, name, set_name, count, foil, language, *other
+                        ):
+                            problem_cards.append(row_array)
 
                 bar.update(index)
                 index += 1
@@ -739,10 +742,10 @@ class PyMkmApp:
     ):
         if all(v != "" for v in [name, set_name, count]):
             try:
-                possible_products = api.find_product(name, idGame="1")["product"]
+                possible_products = api.find_product(name, idGame="1")  # ["product"]
             except CardmarketError as err:
+                self.logger.error(err.mkm_msg())
                 print(err.mkm_msg())
-                self.logger.debug(err.mkm_msg())
             except Exception as err:
                 return False
             else:
@@ -761,8 +764,9 @@ class PyMkmApp:
                     language_id = (
                         1 if language == "" else api.languages.index(language) + 1
                     )
+                    product = api.get_product(product_match[0]["idProduct"])
                     price = self.get_price_for_product(
-                        product_match[0]["idProduct"],
+                        product,
                         product_match[0]["rarity"],
                         self.config["csv_import_condition"],
                         foil,
@@ -1086,7 +1090,7 @@ class PyMkmApp:
         self.draw_price_changes_table(i for i in sorted_worst if i["price_diff"] < 0)
 
         print(
-            "\nTotal price difference: {}.".format(
+            "\nTotal price difference: {}.".format(  # TODO: fix bug where summary is wrong
                 str(
                     round(
                         sum(item["price_diff"] * item["count"] for item in sorted_best),
@@ -1128,8 +1132,8 @@ class PyMkmApp:
         try:
             d = api.get_stock()
         except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
-            self.logger.debug(err.mkm_msg())
         except Exception as err:
             print("No response from API.")
             self.logger.error("No response from API, exiting.")
