@@ -749,44 +749,45 @@ class PyMkmApp:
             except Exception as err:
                 return False
             else:
-                product_match = [
-                    x
-                    for x in possible_products
-                    if x["categoryName"] == "Magic Single"
-                    and self.card_equals(
-                        x["enName"], x["expansionName"], name, set_name
-                    )
-                ]
-                if len(product_match) == 0:
+                if len(possible_products) == 0:
                     # no viable match
                     return False
-                elif len(product_match) == 1:
-                    language_id = (
-                        1 if language == "" else api.languages.index(language) + 1
-                    )
-                    product = api.get_product(product_match[0]["idProduct"])
-                    price = self.get_price_for_product(
-                        product,
-                        product_match[0]["rarity"],
-                        self.config["csv_import_condition"],
-                        foil,
-                        False,
-                        language_id=language_id,
-                        api=self.api,
-                    )
-                    card = {
-                        "idProduct": product_match[0]["idProduct"],
-                        "idLanguage": language_id,
-                        "count": count,
-                        "price": str(price),
-                        "condition": self.config["csv_import_condition"],
-                        "isFoil": ("true" if foil else "false"),
-                    }
-                    api.add_stock([card])
-                    return True
                 else:
-                    # no single matching card
-                    return False
+                    product_match = [
+                        x
+                        for x in possible_products
+                        if x["categoryName"] == "Magic Single"
+                        and self.card_equals(
+                            x["enName"], x["expansionName"], name, set_name
+                        )
+                    ]
+                    if len(product_match) == 1:
+                        language_id = (
+                            1 if language == "" else api.languages.index(language) + 1
+                        )
+                        product = api.get_product(product_match[0]["idProduct"])
+                        price = self.get_price_for_product(
+                            product,
+                            product_match[0]["rarity"],
+                            self.config["csv_import_condition"],
+                            foil,
+                            False,
+                            language_id=language_id,
+                            api=self.api,
+                        )
+                        card = {
+                            "idProduct": product_match[0]["idProduct"],
+                            "idLanguage": language_id,
+                            "count": count,
+                            "price": str(price),
+                            "condition": self.config["csv_import_condition"],
+                            "isFoil": ("true" if foil else "false"),
+                        }
+                        api.add_stock([card])
+                        return True
+                    else:
+                        # no single matching card
+                        return False
         else:
             # incomplete data from card scanner
             return False

@@ -221,8 +221,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_product_list_response,
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_of_3,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -245,8 +249,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_product_list_response,
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_no_match,
+        return_value=TestCommon.fake_find_product_result_no_match["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -268,8 +276,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_find_product_result_one_match_only["product"],
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_only,
+        return_value=TestCommon.fake_find_product_result_one_match_only["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)

@@ -365,7 +365,7 @@ class PyMkmApi:
         self.logger.debug(">> Adding stock")
         chunked_list = list(self.__chunks(payload, 100))
         for chunk in chunked_list:
-            chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
+            # chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
             try:
                 xml_payload = self.__json_to_xml(chunk)
                 r = mkm_oauth.post(url, data=xml_payload)

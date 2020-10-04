@@ -251,12 +251,21 @@ class TestPyMkmApi(TestCommon):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.post = MagicMock(
             return_value=self.MockResponse(
-                TestCommon.get_stock_result, 200, "testing ok"
+                {
+                    "inserted": [
+                        {
+                            "success": "true",
+                            "idArticle": {"product": {"enName": "test"}},
+                        }
+                    ]
+                },
+                200,
+                "testing ok",
             )
         )
 
         result = self.api.add_stock(TestCommon.get_stock_result, mock_oauth)
-        self.assertEqual(len(result), 3)
+        self.assertEqual(result["inserted"][0]["success"], "true")
 
     def test_set_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
