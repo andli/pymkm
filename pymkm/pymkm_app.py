@@ -832,7 +832,12 @@ class PyMkmApp:
                 )
             )
             index += 1
-        choice = int(input("Choose card: "))
+        choice = ""
+        while not isinstance(choice, int) or choice > len(products):
+            try:
+                choice = int(input("Choose card: "))
+            except ValueError as err:
+                print("Not a number.")
         return products[choice - 1]
 
     def select_from_list_of_articles(self, articles):
@@ -847,7 +852,7 @@ class PyMkmApp:
         return articles[choice - 1]
 
     def show_competition_for_product(self, product_id, product_name, is_foil, api):
-        print("Found product: {}".format(product_name))
+        print("Selected product: {}".format(product_name))
         table_data_local, table_data = self.get_competition(api, product_id, is_foil)
         if table_data_local:
             self.print_product_top_list("Local competition:", table_data_local, 4, 20)
