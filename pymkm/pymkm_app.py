@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.8.1"
+__version__ = "1.8.2"
 __license__ = "MIT"
 
 import os
@@ -816,7 +816,6 @@ class PyMkmApp:
 
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
-        # TODO: Add support for card condition
         account = self.account
         country_code = account["country"]
 

@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.8.1"
+__version__ = "1.8.2"
 __license__ = "MIT"
 
 import sys
@@ -322,7 +322,9 @@ class PyMkmApi:
         # clean data because the API treats "False" as true, must be "false".
         for entry in payload:
             for key, value in entry.items():
-                entry[key] = str.lower(str(value))
+                lower_value = str.lower(str(value))
+                if lower_value == "true" or lower_value == "false":
+                    entry[key] = lower_value
 
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
