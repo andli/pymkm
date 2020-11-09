@@ -347,6 +347,7 @@ class PyMkmApi:
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
         r = self.mkm_request(mkm_oauth, url)
+        self.logger.warning(f"-> get_stock TMP {r.status_code}: {r.text}")
 
         return self.handle_partial_content("article", mkm_oauth, url, **kwargs)
 
