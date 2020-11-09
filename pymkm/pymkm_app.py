@@ -1142,9 +1142,9 @@ class PyMkmApp:
             print(err.mkm_msg())
             sys.exit(0)
         except Exception as err:
-            print("No response from API.")
-            print(err)
-            self.logger.error("No response from API, exiting.")
+            msg = f"No response from API. Error: {err}"
+            print(msg)
+            self.logger.error(msg)
             sys.exit(0)
         else:
             keys = [
