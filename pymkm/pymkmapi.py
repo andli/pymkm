@@ -113,7 +113,8 @@ class PyMkmApi:
             # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif response.status_code == requests.codes.temporary_redirect:
-            raise CardmarketError(response.json())
+            pass
+            # raise CardmarketError(response.json())
         elif response.status_code == requests.codes.no_content:
             raise CardmarketError("No results found.", url=response.request.url)
         elif response.status_code == requests.codes.bad_request:
@@ -338,16 +339,13 @@ class PyMkmApi:
         if self.__handle_response(r):
             return r.json()
 
-    def get_stock(self, start=None, provided_oauth=None, **kwargs):
+    def get_stock(self, start=1, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock start={start}")
         url = "{}/stock".format(self.base_url)
         if start:
             url = url + "/" + str(start)
         mkm_oauth = self.__setup_service(url, provided_oauth)
-
-        r = self.mkm_request(mkm_oauth, url)
-        self.logger.warning(f"-> get_stock TMP {r.status_code}: {r.text}")
 
         return self.handle_partial_content("article", mkm_oauth, url, **kwargs)
 
