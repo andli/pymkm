@@ -339,7 +339,7 @@ class PyMkmApi:
         if self.__handle_response(r):
             return r.json()
 
-    def get_stock(self, start=1, provided_oauth=None, **kwargs):
+    def get_stock(self, start=None, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock start={start}")
         url = "{}/stock".format(self.base_url)
@@ -347,7 +347,9 @@ class PyMkmApi:
             url = url + "/" + str(start)
         mkm_oauth = self.__setup_service(url, provided_oauth)
 
-        return self.handle_partial_content("article", mkm_oauth, url, **kwargs)
+        return self.handle_partial_content(
+            "article", mkm_oauth, url, is_initial_get_stock=True, **kwargs
+        )
 
     def add_stock(self, payload=None, provided_oauth=None):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
@@ -433,9 +435,13 @@ class PyMkmApi:
 
         return self.handle_partial_content("article", mkm_oauth, url, **kwargs)
 
-    def handle_partial_content(self, item_name, mkm_oauth, url, start=0, **kwargs):
+    def handle_partial_content(
+        self, item_name, mkm_oauth, url, start=0, is_initial_get_stock=False, **kwargs
+    ):
         INCREMENT = 100
         params = kwargs
+        if is_initial_get_stock:
+            start = 1
         params.update({"start": start, "maxResults": INCREMENT})
 
         r = self.mkm_request(mkm_oauth, url, params=params)
