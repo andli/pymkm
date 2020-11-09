@@ -340,7 +340,7 @@ class PyMkmApi:
 
     def get_stock(self, start=None, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
-        # self.logger.debug(f"-> get_stock start={start}")
+        self.logger.debug(f"-> get_stock start={start}")
         url = "{}/stock".format(self.base_url)
         if start:
             url = url + "/" + str(start)
