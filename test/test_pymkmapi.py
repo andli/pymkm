@@ -89,7 +89,7 @@ class TestPyMkmApi(TestCommon):
                 TestCommon.cardmarket_get_order_items, 200, "testing ok"
             )
         )
-        orders = self.api.get_orders("buyer", "received", 1, mock_oauth)
+        orders = self.api.get_orders("buyer", "received", 0, mock_oauth)
         self.assertEqual(orders[0]["idOrder"], 22935635)
 
     def test_get_games(self):

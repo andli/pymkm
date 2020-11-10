@@ -1135,6 +1135,7 @@ class PyMkmApp:
         )
 
     def get_stock_as_array(self, api):
+        print("Getting stock from Cardmarket...")
         try:
             d = api.get_stock()
         except CardmarketError as err:
@@ -1163,4 +1164,5 @@ class PyMkmApp:
             stock_list = [
                 {x: y for x, y in article.items() if x in keys} for article in d
             ]
+            print("Stock fetched.")
             return stock_list
