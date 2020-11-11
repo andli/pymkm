@@ -1021,6 +1021,9 @@ class PyMkmApp:
                 )
             except StopIteration:
                 # Stock item not found in update batch, continuing
+                self.logger.error(
+                    f"aid {article['idArticle']} pid {article['idProduct']} - {article['product']['enName']} {article['product']['expansion']} failed to find a product"
+                )
                 continue
 
             checked_articles.append(article.get("idArticle"))
@@ -1195,6 +1198,8 @@ class PyMkmApp:
         )
 
     def get_stock_as_array(self, api):
+        # Check for cached stock
+
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
         )
