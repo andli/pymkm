@@ -250,12 +250,16 @@ class PyMkmApi:
         if r:
             return r.json()
 
-    async def fetch(self, sem, client, url, uri):
+    async def fetch(self, sem, client, url, uri, item_type, item_id):
         async with sem:
             client_auth = copy.copy(client.auth)
             client_auth.realm = url
-            resp = await client.get(url, auth=client_auth)
-            return resp.json()  # TODO: handle non-good responses...?
+            try:
+                resp = await client.get(url, auth=client_auth)
+            except Exception as err:
+                self.logger.error(f"Timeout on {item_type} {item_id}")
+            else:
+                return resp.json()
 
     async def get_items(self, item_type, item_id_list):
         async with AsyncOAuth1Client(
@@ -274,10 +278,12 @@ class PyMkmApi:
                             client,
                             f"{self.base_url}/{item_type}/{str(item_id)}",
                             f"{self.base_url}/{item_type}/",
+                            item_type,
+                            item_id,
                         )
                     )
                 )
-            responses = await asyncio.gather(*tasks, return_exceptions=True)
+            responses = await asyncio.gather(*tasks, return_exceptions=False)
             return responses
 
     def get_items_async(self, item_type, item_id_list):

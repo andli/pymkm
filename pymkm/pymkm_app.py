@@ -415,11 +415,15 @@ class PyMkmApp:
                 products = api.get_items_async("products", products_to_get)
 
                 for article in sorted_articles[:num_searches]:
-                    p = next(
-                        x
-                        for x in products
-                        if x["product"]["idProduct"] == article["idProduct"]
-                    )
+                    try:
+                        p = next(
+                            x
+                            for x in products
+                            if x["product"]["idProduct"] == article["idProduct"]
+                        )
+                        except StopIteration:
+                    # Stock item not found in update batch, continuing
+                    continue
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
                     price = float(article["price"])
@@ -592,12 +596,17 @@ class PyMkmApp:
                     product_matches = []
 
                     if a_type == "metaproduct":
-                        metaproduct = next(
-                            x
-                            for x in metaproduct_list
-                            if x["metaproduct"]["idMetaproduct"]
-                            == article["idMetaproduct"]
-                        )
+                        try:
+                            metaproduct = next(
+                                x
+                                for x in metaproduct_list
+                                if x["metaproduct"]["idMetaproduct"]
+                                == article["idMetaproduct"]
+                            )
+                        except StopIteration:
+                            # Stock item not found in update batch, continuing
+                            continue
+                        
                         metaproduct_product_ids = [
                             i["idProduct"] for i in metaproduct["product"]
                         ]
@@ -987,13 +996,20 @@ class PyMkmApp:
 
         products_to_get = [x["idProduct"] for x in filtered_stock_list]
         product_list = api.get_items_async("products", products_to_get)
+        product_list = [x for x in product_list if x]
+        # TODO: save articles that we know WERE updated to partial..txt
 
         for article in filtered_stock_list:
-            product = next(
-                x
-                for x in product_list
-                if x["product"]["idProduct"] == article["idProduct"]
-            )
+            try:
+                product = next(
+                    x
+                    for x in product_list
+                    if x["product"]["idProduct"] == article["idProduct"]
+                )
+            except StopIteration:
+                # Stock item not found in update batch, continuing
+                continue
+
             checked_articles.append(article.get("idArticle"))
             updated_article = self.update_price_for_article(
                 article, product, undercut_local_market, api=self.api
