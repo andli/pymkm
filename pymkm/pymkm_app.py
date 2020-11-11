@@ -10,6 +10,7 @@ __license__ = "MIT"
 import os
 import csv
 import json
+import shelve
 import logging
 import logging.handlers
 import pprint
@@ -1199,6 +1200,22 @@ class PyMkmApp:
 
     def get_stock_as_array(self, api):
         # Check for cached stock
+        CACHE_FILENAME = "local_pymkm_data.db"
+        local_stock_cache = None
+        s = shelve.open(CACHE_FILENAME)
+        try:
+            local_stock_cache = s["stock"]
+        except KeyError as ke:
+            pass
+        finally:
+            s.close()
+
+        if local_stock_cache:
+            print("we have a cache")
+            if PyMkmHelper.prompt_bool(
+                f"Cached stock found, use it? (to clear, delete {CACHE_FILENAME})"
+            ):
+                return local_stock_cache
 
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
@@ -1232,4 +1249,12 @@ class PyMkmApp:
                 {x: y for x, y in article.items() if x in keys} for article in d
             ]
             print("Stock fetched.")
+
+            s = shelve.open(CACHE_FILENAME)
+            try:
+                s["stock"] = stock_list
+            finally:
+                print("Stock cached.")
+                s.close()
+
             return stock_list
