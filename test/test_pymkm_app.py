@@ -341,16 +341,16 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         self.assertIsNone(app.check_latest_version())
 
-    @patch("requests.post", side_effect=requests.exceptions.Timeout())
-    def test_report(self, mock_post, *args):
-        app = PyMkmApp(self.config)
-
-        with self.assertLogs(level="ERROR") as cm:
-            self.patcher.stop()
-            app.report("testcommand")
-            self.patcher.start()
-            log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r"Connection error to stats server.")
+    # @patch("requests.post", side_effect=requests.exceptions.Timeout())
+    # def test_report(self, mock_post, *args):
+    #    app = PyMkmApp(self.config)
+    #
+    #    with self.assertLogs(level="ERROR") as cm:
+    #        self.patcher.stop()
+    #        app.report("testcommand")
+    #        self.patcher.start()
+    #        log_record = cm.records[len(cm.records) - 1]
+    #        self.assertRegex(log_record.message, r"Connection error to stats server.")
 
     @patch("builtins.input", side_effect=["1"])
     def test_select_from_list_of_wantslists(self, *args):

@@ -76,7 +76,7 @@ class PyMkmApp:
     def report(self, command):
         uuid = self.config["uuid"]
 
-        #if self.config["reporting"] and not self.DEV_MODE:
+        # if self.config["reporting"] and not self.DEV_MODE:
         #    try:
         #        r = requests.post(
         #            "https://andli-stats-server.herokuapp.com/pymkm",
@@ -85,6 +85,7 @@ class PyMkmApp:
         #    except Exception as err:
         #        self.logger.error("Connection error to stats server.")
         #        pass
+        pass
 
     def check_latest_version(self):
         latest_version = None
@@ -421,9 +422,9 @@ class PyMkmApp:
                             for x in products
                             if x["product"]["idProduct"] == article["idProduct"]
                         )
-                        except StopIteration:
-                    # Stock item not found in update batch, continuing
-                    continue
+                    except StopIteration:
+                        # Stock item not found in update batch, continuing
+                        continue
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
                     price = float(article["price"])
@@ -606,7 +607,7 @@ class PyMkmApp:
                         except StopIteration:
                             # Stock item not found in update batch, continuing
                             continue
-                        
+
                         metaproduct_product_ids = [
                             i["idProduct"] for i in metaproduct["product"]
                         ]
