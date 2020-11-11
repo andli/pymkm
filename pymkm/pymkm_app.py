@@ -155,11 +155,23 @@ class PyMkmApp:
             )
             if self.DEV_MODE:
                 menu.add_function_item(
-                    f"Beef your stock up", self.add_fake_stock, {"api": self.api},
+                    f"⚠ Check product id", self.check_product_id, {"api": self.api},
+                )
+                menu.add_function_item(
+                    f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
                 )
             break_signal = menu.show()
             if break_signal:
                 break
+
+    def check_product_id(self, api):
+        """ Dev function check on a product id. """
+        pid = int(PyMkmHelper.prompt_string("pid"))
+        product_json = api.get_product(pid)
+        del product_json["product"]["reprint"]
+        del product_json["product"]["links"]
+        pp = pprint.PrettyPrinter()
+        pp.pprint(product_json)
 
     def add_fake_stock(self, api):
         """ Dev function to add fake stock. """

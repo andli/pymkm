@@ -241,10 +241,10 @@ class PyMkmApi:
             return r.json()
 
     def get_product(self, product_id, provided_oauth=None):
-        url = "{self.base_url}/products/{str(product_id)}"
+        url = f"{self.base_url}/products/{str(product_id)}"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
-        self.logger.debug(">> Getting data for product id " + str(product_id))
+        self.logger.debug(f">> Getting data for product id {str(product_id)}")
         r = self.mkm_request(mkm_oauth, url)
 
         if r:
