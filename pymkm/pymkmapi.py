@@ -386,15 +386,30 @@ class PyMkmApi:
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = f"{self.base_url}/stock"
 
+        allowed_items = [
+            "idArticle",
+            "idLanguage",
+            "comments",
+            "count",
+            "price",
+            "condition",
+            "isFoil",
+            "isSigned",
+            "isPlayset",
+        ]
         # clean data because the API treats "False" as true, must be "false".
+        clean_payload = []
         for entry in payload:
-            for key, value in entry.items():
-                entry[key] = str.lower(str(value))
+            clean_entry = {k: v for k, v in entry.items() if k in allowed_items}
+
+            for key, value in clean_entry.items():
+                clean_entry[key] = str.lower(str(value))
+            clean_payload.append(clean_entry)
 
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
         self.logger.debug(">> Updating stock")
-        chunked_list = list(self.__chunks(payload, 100))
+        chunked_list = list(self.__chunks(clean_payload, 100))
         for chunk in chunked_list:
             xml_payload = self.__json_to_xml(chunk)
             r = mkm_oauth.put(url, data=xml_payload)

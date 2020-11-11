@@ -51,6 +51,9 @@ class PyMkmApp:
             self.logger.info(">> Loading config file")
             try:
                 self.config = json.load(open("config.json"))
+
+                # Sync missing attributes to active config
+                template_config = json.load(open("config_template.json"))
             except FileNotFoundError:
                 self.logger.error(
                     "You must copy config_template.json to config.json and populate the fields."
@@ -223,9 +226,12 @@ class PyMkmApp:
         if partial_stock_update_size != "":
             partial_stock_update_size = int(partial_stock_update_size)
 
-        undercut_local_market = PyMkmHelper.prompt_bool(
-            "Try to undercut local market? (slower, more requests)"
-        )
+        if self.config["never_undercut_local_market"]:
+            undercut_local_market = False
+        else:
+            undercut_local_market = PyMkmHelper.prompt_bool(
+                "Try to undercut local market? (slower, more requests)"
+            )
         uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
             stock_list,
             undercut_local_market,
@@ -1158,14 +1164,15 @@ class PyMkmApp:
             return new_price
 
     def display_price_changes_table(self, changes_json):
-        # table breaks because of progress bar rendering
+        num_items = self.config["show_num_best_worst_items"]
+
         print("\nBest diffs:\n")
         sorted_best = sorted(changes_json, key=lambda x: x["price_diff"], reverse=True)[
-            :10
+            :num_items
         ]
         self.draw_price_changes_table(i for i in sorted_best if i["price_diff"] > 0)
         print("\nWorst diffs:\n")
-        sorted_worst = sorted(changes_json, key=lambda x: x["price_diff"])[:10]
+        sorted_worst = sorted(changes_json, key=lambda x: x["price_diff"])[:num_items]
         self.draw_price_changes_table(i for i in sorted_worst if i["price_diff"] < 0)
 
         print(
@@ -1213,9 +1220,8 @@ class PyMkmApp:
 
     def get_stock_as_array(self, api):
         # Check for cached stock
-        CACHE_FILENAME = "local_pymkm_data.db"
         local_stock_cache = None
-        s = shelve.open(CACHE_FILENAME)
+        s = shelve.open(self.config["local_cache_filename"])
         try:
             local_stock_cache = s["stock"]
         except KeyError as ke:
@@ -1229,7 +1235,7 @@ class PyMkmApp:
             ):
                 return local_stock_cache
             else:
-                s = shelve.open(CACHE_FILENAME)
+                s = shelve.open(self.config["local_cache_filename"])
                 try:
                     del s["stock"]
                 finally:
@@ -1269,7 +1275,7 @@ class PyMkmApp:
             ]
             print("Stock fetched.")
 
-            s = shelve.open(CACHE_FILENAME)
+            s = shelve.open(self.config["local_cache_filename"])
             if len(stock_list) > 0:
                 try:
                     s["stock"] = stock_list
