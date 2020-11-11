@@ -76,15 +76,15 @@ class PyMkmApp:
     def report(self, command):
         uuid = self.config["uuid"]
 
-        if self.config["reporting"] and not self.DEV_MODE:
-            try:
-                r = requests.post(
-                    "https://andli-stats-server.herokuapp.com/pymkm",
-                    json={"command": command, "uuid": uuid, "version": __version__},
-                )
-            except Exception as err:
-                self.logger.error("Connection error to stats server.")
-                pass
+        #if self.config["reporting"] and not self.DEV_MODE:
+        #    try:
+        #        r = requests.post(
+        #            "https://andli-stats-server.herokuapp.com/pymkm",
+        #            json={"command": command, "uuid": uuid, "version": __version__},
+        #        )
+        #    except Exception as err:
+        #        self.logger.error("Connection error to stats server.")
+        #        pass
 
     def check_latest_version(self):
         latest_version = None
