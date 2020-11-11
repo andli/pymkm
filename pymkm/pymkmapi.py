@@ -425,7 +425,7 @@ class PyMkmApi:
             "article", url, provided_oauth=provided_oauth, **kwargs
         )
 
-    def get_stock_file(self, start=None, provided_oauth=None, **kwargs):
+    def get_stock_file(self, start=0, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock_file")
         url = f"{self.base_url}/stock/file"
@@ -434,24 +434,35 @@ class PyMkmApi:
             "article", url, start, provided_oauth=provided_oauth, **kwargs
         )
 
-    def get_stock(self, start=None, provided_oauth=None, **kwargs):
+    def get_stock(self, start=1, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock start={start}")
         url = f"{self.base_url}/stock"
 
         return self.handle_partial_content(
-            "article", url, start, provided_oauth=provided_oauth, **kwargs
+            "article",
+            url,
+            start,
+            avoid_redirect=True,
+            provided_oauth=provided_oauth,
+            **kwargs,
         )
 
     def handle_partial_content(
-        self, item_name, url, start=0, provided_oauth=None, **kwargs
+        self,
+        item_name,
+        url,
+        start=0,
+        avoid_redirect=False,
+        provided_oauth=None,
+        **kwargs,
     ):
         INCREMENT = 100
         params = kwargs.copy()
         params.update({"start": start, "maxResults": INCREMENT})
 
-        if start == 0:
-            tmp_url = f"{url}/1"
+        if avoid_redirect:
+            tmp_url = f"{url}/{start}"
         else:
             tmp_url = url
 
@@ -472,11 +483,13 @@ class PyMkmApi:
                 self.logger.debug(
                     f"-> get {item_name}s recurring to next_start={next_start}"
                 )
+                # item_name,url,start=0,avoid_redirect=False,provided_oauth=None,**kwargs,
                 return r.json()[item_name] + self.handle_partial_content(
                     item_name,
-                    mkm_oauth,
                     url,
+                    # mkm_oauth,
                     next_start,
+                    avoid_redirect=avoid_redirect,
                     provided_oauth=provided_oauth,
                     **kwargs,
                 )
@@ -557,7 +570,7 @@ class PyMkmApi:
         r = self.mkm_request(mkm_oauth, url)
         return r.json()["wantslist"]
 
-    def get_orders(self, actor, state, start=None, provided_oauth=None, **kwargs):
+    def get_orders(self, actor, state, start=0, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
         self.logger.debug(f"-> get_orders start={start}")
         url = f"{self.base_url}/orders/{actor}/{state}"
