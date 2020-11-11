@@ -54,6 +54,8 @@ class PyMkmApp:
 
                 # Sync missing attributes to active config
                 template_config = json.load(open("config_template.json"))
+                template_config.update(self.config)
+                self.config = template_config
             except FileNotFoundError:
                 self.logger.error(
                     "You must copy config_template.json to config.json and populate the fields."
@@ -63,8 +65,9 @@ class PyMkmApp:
             # if no UUID is present, generate one and add it to the file
             if "uuid" not in self.config:
                 self.config["uuid"] = str(uuid.uuid4())
-                with open("config.json", "w") as json_config_file:
-                    json.dump(self.config, json_config_file, indent=2)
+
+            with open("config.json", "w") as json_config_file:
+                json.dump(self.config, json_config_file, indent=2)
         else:
             self.config = config
 
