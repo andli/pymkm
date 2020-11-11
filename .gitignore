@@ -17,4 +17,6 @@ failed_imports.csv
 list.csv
 *.log
 *.log.*
-*.db*
+*.db.dir
+*.db.dat
+*.db.bak
