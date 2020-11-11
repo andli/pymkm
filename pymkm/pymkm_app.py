@@ -176,9 +176,12 @@ class PyMkmApp:
 
     def add_fake_stock(self, api):
         """ Dev function to add fake stock. """
+        range_start = int(PyMkmHelper.prompt_string("Range pid start"))
+        range_end = int(PyMkmHelper.prompt_string("Range pid end"))
         if PyMkmHelper.prompt_bool("Sure?"):
+            print("Adding fake stock...")
             product_list = []
-            for product_no in range(16000, 16500):
+            for product_no in range(range_start, range_end):
                 product_list.append(
                     {
                         "idProduct": product_no,
@@ -510,6 +513,7 @@ class PyMkmApp:
             expansion = article.get("product").get("expansion")
             foil = article.get("isFoil")
             playset = article.get("isPlayset")
+            condition = article.get("condition")
             language_code = article.get("language")
             language_name = language_code.get("languageName")
             price = article.get("price")
@@ -519,12 +523,13 @@ class PyMkmApp:
                     expansion,
                     "\u2713" if foil else "",
                     "\u2713" if playset else "",
-                    language_name if language_code != 1 else "",
+                    language_name,
+                    condition,
                     price,
                 ]
             )
             total_price += price
-        if len(stock_list) > 0:
+        if len(table_data) > 0:
             print(
                 "Top {} most expensive articles in stock:\n".format(str(num_articles))
             )
@@ -537,6 +542,7 @@ class PyMkmApp:
                         "Foil",
                         "Playset",
                         "Language",
+                        "Condition",
                         "Price",
                     ],
                     tablefmt="simple",
@@ -728,6 +734,7 @@ class PyMkmApp:
                 {"count": x["count"], "idArticle": x["idArticle"]} for x in stock_list
             ]
 
+            print("Clearing stock...")
             api.delete_stock(delete_list)
             self.logger.debug("-> clear_entire_stock: done")
             print("Stock cleared.")
@@ -1065,6 +1072,8 @@ class PyMkmApp:
                     "name": article["product"]["enName"],
                     "isFoil": article.get("isFoil", False),
                     "isPlayset": article.get("isPlayset", False),
+                    "language": article["language"]["languageName"],
+                    "condition": article["condition"],
                     "old_price": article["price"],
                     "price": new_price,
                     "price_diff": price_diff,
@@ -1179,6 +1188,8 @@ class PyMkmApp:
                         item["name"],
                         "\u2713" if item["isFoil"] else "",
                         "\u2713" if item["isPlayset"] else "",
+                        item["condition"],
+                        item["language"],
                         item["old_price"],
                         item["price"],
                         item["price_diff"],
@@ -1190,6 +1201,8 @@ class PyMkmApp:
                     "Name",
                     "Foil",
                     "Playset",
+                    "Condition",
+                    "Language",
                     "Old price",
                     "New price",
                     "Diff",
@@ -1212,9 +1225,16 @@ class PyMkmApp:
 
         if local_stock_cache:
             if PyMkmHelper.prompt_bool(
-                f"Cached stock ({len(local_stock_cache)} items) found, use it? (to clear, delete {CACHE_FILENAME}.*)"
+                f"Cached stock ({len(local_stock_cache)} items) found, use it? (if not, then it will be cleared)"
             ):
                 return local_stock_cache
+            else:
+                s = shelve.open(CACHE_FILENAME)
+                try:
+                    del s["stock"]
+                finally:
+                    print("Stock cleared.")
+                    s.close()
 
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
@@ -1243,17 +1263,18 @@ class PyMkmApp:
                 "isPlayset",
                 "isSigned",
                 "language",
-            ]  # TODO: [language][languageId]
+            ]
             stock_list = [
                 {x: y for x, y in article.items() if x in keys} for article in d
             ]
             print("Stock fetched.")
 
             s = shelve.open(CACHE_FILENAME)
-            try:
-                s["stock"] = stock_list
-            finally:
-                print("Stock cached.")
-                s.close()
+            if len(stock_list) > 0:
+                try:
+                    s["stock"] = stock_list
+                finally:
+                    print("Stock cached.")
+                    s.close()
 
             return stock_list
