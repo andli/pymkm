@@ -152,10 +152,32 @@ class PyMkmApp:
                 self.import_from_csv,
                 {"api": self.api},
             )
-
+            if self.DEV_MODE:
+                menu.add_function_item(
+                    f"Beef your stock up", self.add_fake_stock, {"api": self.api},
+                )
             break_signal = menu.show()
             if break_signal:
                 break
+
+    def add_fake_stock(self, api):
+        """ Dev function to add fake stock. """
+        if PyMkmHelper.prompt_bool("Sure?"):
+            product_list = []
+            for product_no in range(16000, 16500):
+                product_list.append(
+                    {
+                        "idProduct": product_no,
+                        "idLanguage": 1,
+                        "count": 1,
+                        "price": 1,
+                        "comments": "TEST ARTICLE DO NOT BUY",
+                        "condition": "PO",
+                        "isFoil": "false",
+                    }
+                )
+
+            api.add_stock(product_list)
 
     def clean_json_for_upload(self, not_uploadable_json):
         for entry in not_uploadable_json:
@@ -167,6 +189,9 @@ class PyMkmApp:
     def update_stock_prices_to_trend(self, api):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
+
+        stock_list = self.get_stock_as_array(api=self.api)
+
         partial_update_file = self.config["partial_update_filename"]
 
         already_checked_articles = []
@@ -175,21 +200,24 @@ class PyMkmApp:
             print(
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
-        partial_stock = PyMkmHelper.prompt_string(
+        partial_stock_update_size = PyMkmHelper.prompt_string(
             "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
         )
-        if partial_stock != "":
-            partial_stock = int(partial_stock)
+        if partial_stock_update_size != "":
+            partial_stock_update_size = int(partial_stock_update_size)
 
         undercut_local_market = PyMkmHelper.prompt_bool(
             "Try to undercut local market? (slower, more requests)"
         )
-
         uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
-            undercut_local_market, partial_stock, already_checked_articles, api=self.api
+            stock_list,
+            undercut_local_market,
+            partial_stock_update_size,
+            already_checked_articles,
+            api=self.api,
         )
 
-        if partial_stock and len(checked_articles) > 0:
+        if partial_stock_update_size and len(checked_articles) > 0:
             PyMkmHelper.write_list(partial_update_file, checked_articles)
             print(
                 f"Partial stock update saved, next update will disregard articles in {partial_update_file}."
@@ -924,10 +952,13 @@ class PyMkmApp:
         )
 
     def calculate_new_prices_for_stock(
-        self, undercut_local_market, partial_stock, already_checked_articles, api
+        self,
+        stock_list,
+        undercut_local_market,
+        partial_stock_update_size,
+        already_checked_articles,
+        api,
     ):
-        stock_list = self.get_stock_as_array(api=self.api)
-
         filtered_stock_list = self.__filter(stock_list)
 
         sticky_count = len(stock_list) - len(filtered_stock_list)
@@ -943,8 +974,8 @@ class PyMkmApp:
                     f"Entire stock updated in partial updates. Delete {self.config['partial_update_filename']} to reset."
                 )
                 return [], []
-        if partial_stock:
-            filtered_stock_list = filtered_stock_list[:partial_stock]
+        if partial_stock_update_size:
+            filtered_stock_list = filtered_stock_list[:partial_stock_update_size]
 
         result_json = []
         checked_articles = []
@@ -1135,7 +1166,9 @@ class PyMkmApp:
         )
 
     def get_stock_as_array(self, api):
-        print("Getting stock from Cardmarket...")
+        print(
+            "Getting your stock from Cardmarket (the API can be slow for large stock)..."
+        )
         try:
             d = api.get_stock()
         except CardmarketError as err:
