@@ -1211,9 +1211,8 @@ class PyMkmApp:
             s.close()
 
         if local_stock_cache:
-            print("we have a cache")
             if PyMkmHelper.prompt_bool(
-                f"Cached stock found, use it? (to clear, delete {CACHE_FILENAME})"
+                f"Cached stock ({len(local_stock_cache)} items) found, use it? (to clear, delete {CACHE_FILENAME}.*)"
             ):
                 return local_stock_cache
 
