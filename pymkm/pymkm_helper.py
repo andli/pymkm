@@ -4,7 +4,7 @@ Helper functions for the PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.8.2"
+__version__ = "2.0.0"
 __license__ = "MIT"
 
 import math
@@ -48,7 +48,7 @@ class PyMkmHelper:
 
     @staticmethod
     def prompt_bool(prompt_string):
-        print("{} [y/N]: ".format(prompt_string))
+        print("> {} [y/N]: ".format(prompt_string))
         val = input()
         if val == "":
             return False
@@ -60,7 +60,7 @@ class PyMkmHelper:
 
     @staticmethod
     def prompt_string(prompt_string):
-        print("{}: ".format(prompt_string))
+        print("> {}: ".format(prompt_string))
         val = input()
         return val
 

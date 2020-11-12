@@ -4,3 +4,6 @@ requests_oauthlib
 tabulate
 dicttoxml
 micromenu~=1.0.3
+httpx
+authlib
+asyncio

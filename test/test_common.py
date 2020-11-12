@@ -130,6 +130,56 @@ class TestCommon(unittest.TestCase):
         }
     }
 
+    fake_product_list_response = [
+        {
+            "product": {
+                "idProduct": 363551,
+                "categoryName": "Magic Single",
+                "enName": "Temple Garden",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 8115,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+        {
+            "product": {
+                "idProduct": 363554,
+                "categoryName": "Magic Single",
+                "enName": "Overgrown Tomb",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 8044,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+        {
+            "product": {
+                "idProduct": 1692,
+                "categoryName": "Magic Single",
+                "enName": "Yidaro, Wandering Mo...ster (V.2)",
+                "gameName": "Magic the Gathering",
+                "idGame": 1,
+                "idMetaproduct": 300608,
+                "priceGuide": {"TREND": 1},
+            }
+        },
+    ]
+
+    cardmarket_metaproduct_list_response = [
+        {
+            "metaproduct": {"enName": "Balthor the Defiled", "idMetaproduct": 429},
+            "product": [{"idProduct": 2187, "idMetaproduct": 429}],
+        },
+        {
+            "metaproduct": {
+                "enName": "'Chainer, Nightmare Adept'",
+                "idMetaproduct": 278802,
+            },
+            "product": [{"idProduct": 392362, "idMetaproduct": 278802}],
+        },
+    ]
+
     fake_list_csv = """Card,Set Name,Quantity,Foil,Language
 Dragon Breath,Scourge,1,Foil,French"""
 
@@ -172,7 +222,7 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "categoryName": "Magic Single",
                 "enName": "Dragon Breath",
                 "expansionName": "ScourgeXX",
-                "idProduct": 9145,
+                "idProduct": 1692,
                 "rarity": "Rare",
             },
         ]
@@ -371,97 +421,99 @@ Dragon Breath,Scourge,1,Foil,French"""
     }
 
     get_wantslist_items = cardmarket_get_wantslist_items["wantslist"]
-
-    get_orders = [
-        {
-            "idOrder": 22935635,
-            "isBuyer": True,
-            "seller": {"idUser": 764949, "username": "Versus-GC",},
-            "buyer": {"idUser": 787453, "username": "andli826",},
-            "state": {
-                "state": "evaluated",
-                "dateBought": "2020-05-16T00:49:51+0200",
-                "datePaid": "2020-05-16T00:49:58+0200",
-                "dateSent": "2020-05-18T18:11:48+0200",
-                "dateReceived": "2020-06-01T15:48:58+0200",
-            },
-            "shippingMethod": {
-                "idShippingMethod": 11425980,
-                "name": "Letter (Correio Normal)",
-                "price": 1.7,
-                "isLetter": True,
-                "isInsured": False,
-            },
-            "trackingNumber": "",
-            "temporaryEmail": "",
-            "isPresale": False,
-            "shippingAddress": {"name": "Andreas Ehrlund",},
-            "note": "",
-            "articleCount": 4,
-            "evaluation": {
-                "evaluationGrade": 1,
-                "itemDescription": 1,
-                "packaging": 1,
-                "comment": "Very nice quality cards!",
-            },
-            "article": [
-                {
-                    "idArticle": 778922254,
-                    "idProduct": 1637,
-                    "language": {"idLanguage": 1, "languageName": "English"},
-                    "comments": "",
-                    "price": 1.5,
-                    "count": 1,
-                    "inShoppingCart": False,
-                    "priceEUR": 1.5,
-                    "priceGBP": 1.5,
-                    "product": {
-                        "idGame": 1,
-                        "enName": "Aurification",
-                        "locName": "Aurification",
-                        "image": "//static.cardmarket.com/img/c21340a8e384bef0513bfcc9dbdf37e5/items/1/KTK/269545.jpg",
-                        "expansion": "Onslaught",
-                        "nr": "6",
-                        "expIcon": 39,
-                        "rarity": "Rare",
-                    },
-                    "condition": "EX",
-                    "isFoil": False,
-                    "isSigned": False,
-                    "isPlayset": False,
-                    "isAltered": False,
+    cardmarket_get_order_items = {
+        "order": [
+            {
+                "idOrder": 22935635,
+                "isBuyer": True,
+                "seller": {"idUser": 764949, "username": "Versus-GC",},
+                "buyer": {"idUser": 787453, "username": "andli826",},
+                "state": {
+                    "state": "evaluated",
+                    "dateBought": "2020-05-16T00:49:51+0200",
+                    "datePaid": "2020-05-16T00:49:58+0200",
+                    "dateSent": "2020-05-18T18:11:48+0200",
+                    "dateReceived": "2020-06-01T15:48:58+0200",
                 },
-                {
-                    "idArticle": 778922259,
-                    "idProduct": 296748,
-                    "language": {"idLanguage": 1, "languageName": "English"},
-                    "comments": "",
-                    "price": 1.5,
-                    "count": 1,
-                    "inShoppingCart": False,
-                    "priceEUR": 1.5,
-                    "priceGBP": 1.5,
-                    "product": {
-                        "idGame": 1,
-                        "enName": "Throne of the God-Pharaoh",
-                        "locName": "Throne of the God-Pharaoh",
-                        "image": "//static.cardmarket.com/img/aac5e13f076472092ab1297934042e21/items/1/AKH/296748.jpg",
-                        "expansion": "Amonkhet",
-                        "nr": "237",
-                        "expIcon": 396,
-                        "rarity": "Rare",
-                    },
-                    "condition": "EX",
-                    "isFoil": False,
-                    "isSigned": False,
-                    "isPlayset": False,
-                    "isAltered": False,
+                "shippingMethod": {
+                    "idShippingMethod": 11425980,
+                    "name": "Letter (Correio Normal)",
+                    "price": 1.7,
+                    "isLetter": True,
+                    "isInsured": False,
                 },
-            ],
-            "articleValue": 11,
-            "totalValue": 12.7,
-        }
-    ]
+                "trackingNumber": "",
+                "temporaryEmail": "",
+                "isPresale": False,
+                "shippingAddress": {"name": "Andreas Ehrlund",},
+                "note": "",
+                "articleCount": 4,
+                "evaluation": {
+                    "evaluationGrade": 1,
+                    "itemDescription": 1,
+                    "packaging": 1,
+                    "comment": "Very nice quality cards!",
+                },
+                "article": [
+                    {
+                        "idArticle": 778922254,
+                        "idProduct": 1637,
+                        "language": {"idLanguage": 1, "languageName": "English"},
+                        "comments": "",
+                        "price": 1.5,
+                        "count": 1,
+                        "inShoppingCart": False,
+                        "priceEUR": 1.5,
+                        "priceGBP": 1.5,
+                        "product": {
+                            "idGame": 1,
+                            "enName": "Aurification",
+                            "locName": "Aurification",
+                            "image": "//static.cardmarket.com/img/c21340a8e384bef0513bfcc9dbdf37e5/items/1/KTK/269545.jpg",
+                            "expansion": "Onslaught",
+                            "nr": "6",
+                            "expIcon": 39,
+                            "rarity": "Rare",
+                        },
+                        "condition": "EX",
+                        "isFoil": False,
+                        "isSigned": False,
+                        "isPlayset": False,
+                        "isAltered": False,
+                    },
+                    {
+                        "idArticle": 778922259,
+                        "idProduct": 296748,
+                        "language": {"idLanguage": 1, "languageName": "English"},
+                        "comments": "",
+                        "price": 1.5,
+                        "count": 1,
+                        "inShoppingCart": False,
+                        "priceEUR": 1.5,
+                        "priceGBP": 1.5,
+                        "product": {
+                            "idGame": 1,
+                            "enName": "Throne of the God-Pharaoh",
+                            "locName": "Throne of the God-Pharaoh",
+                            "image": "//static.cardmarket.com/img/aac5e13f076472092ab1297934042e21/items/1/AKH/296748.jpg",
+                            "expansion": "Amonkhet",
+                            "nr": "237",
+                            "expIcon": 396,
+                            "rarity": "Rare",
+                        },
+                        "condition": "EX",
+                        "isFoil": False,
+                        "isSigned": False,
+                        "isPlayset": False,
+                        "isAltered": False,
+                    },
+                ],
+                "articleValue": 11,
+                "totalValue": 12.7,
+            }
+        ]
+    }
+    get_order_items = cardmarket_get_order_items["order"]
 
     cardmarket_example_error_message = {
         "mkm_error_description": "Provide a search string for non-exact searches with at least 4 characters.",
@@ -512,9 +564,15 @@ Dragon Breath,Scourge,1,Foil,French"""
                 "sticky_price_char": "!",
                 "uuid": "xxx",
                 "reporting": true,
+                "never_undercut_local_market": false,
+                "local_cache_filename": "local_pymkm_data.db",
+                "show_num_best_worst_items": 20,
+                "show_top_x_expensive_items": 20,
+                "log_level": "WARNING",
                 "partial_update_filename": "partial_stock_update.txt",
                 "csv_import_filename": "list.csv",
-                "csv_import_condition": "NM"
+                "csv_import_condition": "NM",
+                "dev_mode": false
             }
             """
         )

@@ -1,22 +1,23 @@
 [![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm) [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm) [![Known Vulnerabilities](https://snyk.io/test/github/andli/pymkm/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/andli/pymkm?targetFile=requirements.txt)
 
 See the [Changelog](CHANGELOG.md) for what's new.
+See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
 
 # 📙 PyMKM
 
+> _NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT._
+
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
-The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
+The included sample app can update your stock prices to trend, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
 The app also keeps track of how many API requests your have left each day, and can do partial updates if you have more than 5000 articles to update.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
-**NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `"reporting": true` to `false` in `config.json`.
-
 ```
-╭─── PyMKM 1.7.0 ────────────────────────────────────────╮
+╭─── PyMKM 2.0.0 ────────────────────────────────────────╮
 │ 1: Update stock prices                                 │
 │ 2: Update price for a product                          │
 │ 3: List competition for a product                      │
@@ -133,6 +134,51 @@ _Example_: `"PL": "0.5"` would set the price for Played cards to 50% off the tre
 | 10  | Korean              |
 | 11  | Traditional Chinese |
 
+#### `never_undercut_local_market`
+
+If `true`, disables asking if the user wants to try to undercut local market when doing price updates.
+Default `false`.
+
+#### `sticky_price_char`
+
+The character in the card comment used to disable price updates for specific cards.
+Default `!`.
+
+#### `partial_update_filename`
+
+The name of the file storing partial updates.
+Default `partial_stock_update.txt`.
+
+#### `local_cache_filename`
+
+The name of the database file storing cached data.
+Default `local_pymkm_data.db`.
+
+#### `csv_import_filename`
+
+The name of the file which CSV importing is done from.
+Default `list.csv`.
+
+#### `csv_import_condition`
+
+The default condition for all CSV imports.
+Default `NM`.
+
+#### `show_num_best_worst_items`
+
+How many best and worst items to show after a price update.
+Default `20`.
+
+#### `show_top_x_expensive_items`
+
+How many items to show in the Top X expensive function.
+Default `20`.
+
+#### `log_level`
+
+Log level for the application and API.
+Default `WARNING`.
+
 ## 📄 CSV importing
 
 If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.
@@ -183,24 +229,3 @@ finespoo         FI         NM                 2     5.98
 ----------------------------------------------------------------------
 Total average price: 9.82, Total median price: 7.79, Total # of articles: 320
 ```
-
-## ✔️ Supported calls
-
-These calls are implemented so far. They are not fully tested with different edge cases etc. Please submit an issue or pull request if you find problems.
-
-- `get_games`
-- `get_expansions`
-- `get_cards_in_expansion`
-- `get_product`
-- `get_account`
-- `get_articles_in_shoppingcarts`
-- `set_vacation_status`
-- `set_display_language`
-- `get_stock`
-- `set_stock`
-- `add_stock`
-- `delete_stock`
-- `get_articles`
-- `find_product`
-- `find_stock_article`
-- `find_user_articles`

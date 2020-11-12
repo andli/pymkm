@@ -24,8 +24,8 @@ class TestPyMkmApp(TestCommon):
         self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_product",
-        return_value=TestCommon.fake_product_response,
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
+        return_value=TestCommon.fake_product_list_response,
     )
     @patch("pymkm.pymkmapi.PyMkmApi.set_stock", return_value=TestCommon.ok_response)
     @patch(
@@ -39,6 +39,7 @@ class TestPyMkmApp(TestCommon):
         "pymkm.pymkmapi.PyMkmApi.get_stock", return_value=TestCommon.get_stock_result,
     )
     @patch("builtins.input", side_effect=["1", "2", "y", "y", "0"])
+    @patch("builtins.open", new_callable=mock_open())
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     def test_menu_option_1(self, mock_open, mock_stdout, *args):
@@ -104,7 +105,7 @@ class TestPyMkmApp(TestCommon):
     )
     @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_of_3,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3["product"],
     )
     @patch("builtins.input", side_effect=["3", "words", "n", "1", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -118,8 +119,8 @@ class TestPyMkmApp(TestCommon):
             self.assertRegex(log_record.message, r"list_competition_for_product")
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_product",
-        return_value=TestCommon.fake_product_response,
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
+        return_value=TestCommon.fake_product_list_response,
     )
     @patch(
         "pymkm.pymkmapi.PyMkmApi.find_user_articles",
@@ -162,7 +163,11 @@ class TestPyMkmApp(TestCommon):
         )
 
     @patch(
-        "pymkm.pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_orders,
+        "pymkm.pymkmapi.PyMkmApi.get_items_async",
+        return_value=TestCommon.cardmarket_metaproduct_list_response,
+    )
+    @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_orders", return_value=TestCommon.get_order_items,
     )
     @patch(
         "pymkm.pymkmapi.PyMkmApi.get_wantslist_items",
@@ -216,8 +221,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_product_list_response,
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_of_3,
+        return_value=TestCommon.fake_find_product_result_one_match_of_3["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -240,8 +249,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_product_list_response,
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_no_match,
+        return_value=TestCommon.fake_find_product_result_no_match["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -263,8 +276,12 @@ class TestPyMkmApp(TestCommon):
     @patch("pymkm.pymkm_app.PyMkmApp.get_price_for_product", return_value=1)
     @patch("pymkm.pymkmapi.PyMkmApi.add_stock", return_value=TestCommon.ok_response)
     @patch(
+        "pymkm.pymkmapi.PyMkmApi.get_product",
+        return_value=TestCommon.fake_find_product_result_one_match_only["product"],
+    )
+    @patch(
         "pymkm.pymkmapi.PyMkmApi.find_product",
-        return_value=TestCommon.fake_find_product_result_one_match_only,
+        return_value=TestCommon.fake_find_product_result_one_match_only["product"],
     )
     @patch("builtins.input", side_effect=["9", "0"])
     @patch("sys.stdout", new_callable=io.StringIO)
@@ -309,7 +326,7 @@ class TestPyMkmApp(TestCommon):
 
         fake_product = app.get_stock_as_array(self.api)[0]
         price = app.get_price_for_product(
-            fake_product["idProduct"],
+            TestCommon.fake_product_response,
             fake_product["product"]["rarity"],
             fake_product["condition"],
             fake_product["isFoil"],
@@ -324,16 +341,16 @@ class TestPyMkmApp(TestCommon):
         app = PyMkmApp(self.config)
         self.assertIsNone(app.check_latest_version())
 
-    @patch("requests.post", side_effect=requests.exceptions.Timeout())
-    def test_report(self, mock_post, *args):
-        app = PyMkmApp(self.config)
-
-        with self.assertLogs(level="ERROR") as cm:
-            self.patcher.stop()
-            app.report("testcommand")
-            self.patcher.start()
-            log_record = cm.records[len(cm.records) - 1]
-            self.assertRegex(log_record.message, r"Connection error to stats server.")
+    # @patch("requests.post", side_effect=requests.exceptions.Timeout())
+    # def test_report(self, mock_post, *args):
+    #    app = PyMkmApp(self.config)
+    #
+    #    with self.assertLogs(level="ERROR") as cm:
+    #        self.patcher.stop()
+    #        app.report("testcommand")
+    #        self.patcher.start()
+    #        log_record = cm.records[len(cm.records) - 1]
+    #        self.assertRegex(log_record.message, r"Connection error to stats server.")
 
     @patch("builtins.input", side_effect=["1"])
     def test_select_from_list_of_wantslists(self, *args):

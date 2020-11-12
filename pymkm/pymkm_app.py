@@ -4,12 +4,13 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "1.8.2"
+__version__ = "2.0.0"
 __license__ = "MIT"
 
 import os
 import csv
 import json
+import shelve
 import logging
 import logging.handlers
 import pprint
@@ -31,23 +32,30 @@ class PyMkmApp:
 
     def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        # self.logger.setLevel(logging.INFO)
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        fh = logging.handlers.RotatingFileHandler(f"pymkm.log", maxBytes=2000000)
-        fh.setLevel(logging.DEBUG)
+        fh = logging.handlers.RotatingFileHandler(
+            f"log_pymkm.log", maxBytes=500000, backupCount=2
+        )
+        fh.setLevel(logging.WARNING)
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         sh = logging.StreamHandler()
-        sh.setLevel(logging.ERROR)
+        sh.setLevel(logging.ERROR)  # This gets outputted to stdout
         sh.setFormatter(formatter)
         self.logger.addHandler(sh)
 
         if config is None:
-            self.logger.debug(">> Loading config file")
+            self.logger.info(">> Loading config file")
             try:
                 self.config = json.load(open("config.json"))
+
+                # Sync missing attributes to active config
+                template_config = json.load(open("config_template.json"))
+                template_config.update(self.config)
+                self.config = template_config
             except FileNotFoundError:
                 self.logger.error(
                     "You must copy config_template.json to config.json and populate the fields."
@@ -57,8 +65,9 @@ class PyMkmApp:
             # if no UUID is present, generate one and add it to the file
             if "uuid" not in self.config:
                 self.config["uuid"] = str(uuid.uuid4())
-                with open("config.json", "w") as json_config_file:
-                    json.dump(self.config, json_config_file, indent=2)
+
+            with open("config.json", "w") as json_config_file:
+                json.dump(self.config, json_config_file, indent=2)
         else:
             self.config = config
 
@@ -68,21 +77,22 @@ class PyMkmApp:
         except Exception as err:
             pass
 
+        fh.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
-        self.account = self.api.get_account()["account"]
 
     def report(self, command):
         uuid = self.config["uuid"]
 
-        if self.config["reporting"] and not self.DEV_MODE:
-            try:
-                r = requests.post(
-                    "https://andli-stats-server.herokuapp.com/pymkm",
-                    json={"command": command, "uuid": uuid, "version": __version__},
-                )
-            except Exception as err:
-                self.logger.error("Connection error to stats server.")
-                pass
+        # if self.config["reporting"] and not self.DEV_MODE:
+        #    try:
+        #        r = requests.post(
+        #            "https://andli-stats-server.herokuapp.com/pymkm",
+        #            json={"command": command, "uuid": uuid, "version": __version__},
+        #        )
+        #    except Exception as err:
+        #        self.logger.error("Connection error to stats server.")
+        #        pass
+        pass
 
     def check_latest_version(self):
         latest_version = None
@@ -128,9 +138,12 @@ class PyMkmApp:
                 "Find deals from a user", self.find_deals_from_user, {"api": self.api}
             )
             menu.add_function_item(
-                "Show top 20 expensive items in stock",
+                f"Show top {self.config['show_top_x_expensive_items']} expensive items in stock",
                 self.show_top_expensive_articles_in_stock,
-                {"num_articles": 20, "api": self.api},
+                {
+                    "num_articles": self.config["show_top_x_expensive_items"],
+                    "api": self.api,
+                },
             )
             menu.add_function_item(
                 "Wantslists cleanup suggestions",
@@ -150,14 +163,65 @@ class PyMkmApp:
                 self.import_from_csv,
                 {"api": self.api},
             )
-
-            break_signal = menu.show()
+            if self.DEV_MODE:
+                menu.add_function_item(
+                    f"⚠ Check product id", self.check_product_id, {"api": self.api},
+                )
+                menu.add_function_item(
+                    f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
+                )
+            if self.api.requests_count < self.api.requests_max:
+                break_signal = menu.show()
+            else:
+                menu.print_menu()
+                sys.exit(0)
             if break_signal:
                 break
+
+    def check_product_id(self, api):
+        """ Dev function check on a product id. """
+        pid = int(PyMkmHelper.prompt_string("pid"))
+        product_json = api.get_product(pid)
+        del product_json["product"]["reprint"]
+        del product_json["product"]["links"]
+        pp = pprint.PrettyPrinter()
+        pp.pprint(product_json)
+
+    def add_fake_stock(self, api):
+        """ Dev function to add fake stock. """
+        range_start = int(PyMkmHelper.prompt_string("Range pid start"))
+        range_end = int(PyMkmHelper.prompt_string("Range pid end"))
+        if PyMkmHelper.prompt_bool("Sure?"):
+            print("Adding fake stock...")
+            product_list = []
+            for product_no in range(range_start, range_end):
+                product_list.append(
+                    {
+                        "idProduct": product_no,
+                        "idLanguage": 1,
+                        "count": 1,
+                        "price": 1,
+                        "comments": "TEST ARTICLE DO NOT BUY",
+                        "condition": "PO",
+                        "isFoil": "false",
+                    }
+                )
+
+            api.add_stock(product_list)
+
+    def clean_json_for_upload(self, not_uploadable_json):
+        for entry in not_uploadable_json:
+            del entry["price_diff"]
+            del entry["old_price"]
+            del entry["name"]
+        return not_uploadable_json
 
     def update_stock_prices_to_trend(self, api):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
+
+        stock_list = self.get_stock_as_array(api=self.api)
+
         partial_update_file = self.config["partial_update_filename"]
 
         already_checked_articles = []
@@ -166,21 +230,27 @@ class PyMkmApp:
             print(
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
-        partial_stock = PyMkmHelper.prompt_string(
+        partial_stock_update_size = PyMkmHelper.prompt_string(
             "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
         )
-        if partial_stock != "":
-            partial_stock = int(partial_stock)
+        if partial_stock_update_size != "":
+            partial_stock_update_size = int(partial_stock_update_size)
 
-        undercut_local_market = PyMkmHelper.prompt_bool(
-            "Try to undercut local market? (slower, more requests)"
-        )
-
+        if self.config["never_undercut_local_market"]:
+            undercut_local_market = False
+        else:
+            undercut_local_market = PyMkmHelper.prompt_bool(
+                "Try to undercut local market? (slower, more requests)"
+            )
         uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
-            undercut_local_market, partial_stock, already_checked_articles, api=self.api
+            stock_list,
+            undercut_local_market,
+            partial_stock_update_size,
+            already_checked_articles,
+            api=self.api,
         )
 
-        if partial_stock and len(checked_articles) > 0:
+        if partial_stock_update_size and len(checked_articles) > 0:
             PyMkmHelper.write_list(partial_update_file, checked_articles)
             print(
                 f"Partial stock update saved, next update will disregard articles in {partial_update_file}."
@@ -201,31 +271,32 @@ class PyMkmApp:
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
 
-    def clean_json_for_upload(self, not_uploadable_json):
-        for entry in not_uploadable_json:
-            del entry["price_diff"]
-            del entry["old_price"]
-            del entry["name"]
-        return not_uploadable_json
+    def __filter(self, article_list):
+        sticky_price_char = self.config["sticky_price_char"]
+        # if we find the sticky price marker, filter out articles
+        def filtered(stock_item):
+            if stock_item.get("comments"):
+                return stock_item.get("comments").startswith(sticky_price_char)
+            else:
+                return False
+
+        filtered_articles = [x for x in article_list if not filtered(x)]
+        return filtered_articles
 
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
         self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string("Search product name")
-        sticky_price_char = self.config["sticky_price_char"]
 
-        def filtered(stock_item):
-            return stock_item["comments"].startswith(sticky_price_char)
-
-        # if we find the sticky price marker, filter out articles
-
-        filtered_articles = []
         try:
             articles = api.find_stock_article(search_string, 1)
-            filtered_articles = [x for x in articles if not filtered(x)]
         except Exception as err:
             print(err)
+
+        filtered_articles = self.__filter(articles)
+
+        ### --- refactor?
 
         if not filtered_articles:
             print(f"{len(articles)} articles found, no editable prices.")
@@ -249,8 +320,9 @@ class PyMkmApp:
                 "Try to undercut local market? (slower, more requests)"
             )
 
-            r = self.get_article_with_updated_price(
-                article, undercut_local_market, api=self.api
+            product = self.api.get_product(article["idProduct"])
+            r = self.update_price_for_article(
+                article, product, undercut_local_market, api=self.api
             )
 
             if r:
@@ -293,16 +365,15 @@ class PyMkmApp:
                     # 'exact ': 'true',
                     "idGame": 1,
                     "idLanguage": 1,
-                    # TODO: Add Partial Content support
                     # TODO: Add language support
                 },
             )
         except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
-            self.logger.debug(err.mkm_msg())
         else:
             if result:
-                products = result["product"]
+                products = result
 
                 stock_list_products = [
                     x["idProduct"] for x in self.get_stock_as_array(api=self.api)
@@ -336,8 +407,8 @@ class PyMkmApp:
         try:
             result = api.find_user_articles(search_string)
         except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
-            self.logger.debug(err.mkm_msg())
         else:
             filtered_articles = [x for x in result if x.get("price") > 1]
             # language from configured filter
@@ -367,23 +438,33 @@ class PyMkmApp:
             if 1 <= num_searches <= len(sorted_articles):
                 table_data = []
 
+                products_to_get = []
                 index = 0
                 bar = progressbar.ProgressBar(max_value=num_searches)
-                for article in sorted_articles[:num_searches]:
-                    condition = article.get("condition")
-                    language = article.get("language").get("languageName")
-                    foil = article.get("isFoil")
-                    playset = article.get("isPlayset")
-                    price = float(article["price"])
+                bar.update(index)
+                products_to_get = [
+                    x["idProduct"] for x in sorted_articles[:num_searches]
+                ]
+                products = api.get_items_async("products", products_to_get)
 
-                    p = api.get_product(article["idProduct"])
+                for article in sorted_articles[:num_searches]:
+                    try:
+                        p = next(
+                            x
+                            for x in products
+                            if x["product"]["idProduct"] == article["idProduct"]
+                        )
+                    except StopIteration:
+                        # Stock item not found in update batch, continuing
+                        continue
                     name = p["product"]["enName"]
                     expansion = p["product"].get("expansion")
+                    price = float(article["price"])
                     if expansion:
                         expansion_name = expansion.get("enName")
                     else:
                         expansion_name = "N/A"
-                    if foil:
+                    if article.get("isFoil"):
                         market_price = p["product"]["priceGuide"]["TRENDFOIL"]
                     else:
                         market_price = p["product"]["priceGuide"]["TREND"]
@@ -395,10 +476,10 @@ class PyMkmApp:
                                 [
                                     name,
                                     expansion_name,
-                                    condition,
-                                    language,
-                                    "\u2713" if foil else "",
-                                    "\u2713" if playset else "",
+                                    article.get("condition"),
+                                    article.get("language").get("languageName"),
+                                    "\u2713" if article.get("isFoil") else "",
+                                    "\u2713" if article.get("isPlayset") else "",
                                     price,
                                     market_price,
                                     price_diff,
@@ -448,6 +529,7 @@ class PyMkmApp:
             expansion = article.get("product").get("expansion")
             foil = article.get("isFoil")
             playset = article.get("isPlayset")
+            condition = article.get("condition")
             language_code = article.get("language")
             language_name = language_code.get("languageName")
             price = article.get("price")
@@ -457,14 +539,15 @@ class PyMkmApp:
                     expansion,
                     "\u2713" if foil else "",
                     "\u2713" if playset else "",
-                    language_name if language_code != 1 else "",
+                    language_name,
+                    condition,
                     price,
                 ]
             )
             total_price += price
-        if len(stock_list) > 0:
+        if len(table_data) > 0:
             print(
-                "Top {} most expensive articles in stock:\n".format(str(num_articles))
+                f"Top {str(num_articles)} most expensive articles in stock (total {len(stock_list)} items):\n"
             )
             print(
                 tb.tabulate(
@@ -475,6 +558,7 @@ class PyMkmApp:
                         "Foil",
                         "Playset",
                         "Language",
+                        "Condition",
                         "Price",
                     ],
                     tablefmt="simple",
@@ -532,13 +616,33 @@ class PyMkmApp:
             matches = []
             for key, articles in wantslists_lists.items():
 
+                metaproducts_article_list = [
+                    x for x in articles if x.get("type") == "metaproduct"
+                ]
+                metaproducts_to_get = [
+                    x["idMetaproduct"] for x in metaproducts_article_list
+                ]
+                metaproduct_list = api.get_items_async(
+                    "metaproducts", metaproducts_to_get
+                )
+
                 for article in articles:
                     a_type = article.get("type")
                     a_foil = article.get("isFoil") == True
                     product_matches = []
 
                     if a_type == "metaproduct":
-                        metaproduct = api.get_metaproduct(article.get("idMetaproduct"))
+                        try:
+                            metaproduct = next(
+                                x
+                                for x in metaproduct_list
+                                if x["metaproduct"]["idMetaproduct"]
+                                == article["idMetaproduct"]
+                            )
+                        except StopIteration:
+                            # Stock item not found in update batch, continuing
+                            continue
+
                         metaproduct_product_ids = [
                             i["idProduct"] for i in metaproduct["product"]
                         ]
@@ -593,36 +697,41 @@ class PyMkmApp:
                     bar.update(index)
             bar.finish()
 
-            print(
-                tb.tabulate(
-                    [
+            if matches:
+                print(
+                    tb.tabulate(
                         [
-                            item["wantlist_name"],
-                            item["count"],
-                            "\u2713" if item["is_foil"] else "",
-                            item["product_name"],
-                            item["expansion_name"],
-                            item["date"],
-                        ]
-                        for item in matches
-                    ],
-                    headers=[
-                        "Wantlist",
-                        "# bought",
-                        "Foil",
-                        "Name",
-                        "Expansion",
-                        "Date (last) received",
-                    ],
-                    tablefmt="simple",
+                            [
+                                item["wantlist_name"],
+                                item["count"],
+                                "\u2713" if item["is_foil"] else "",
+                                item["product_name"],
+                                item["expansion_name"],
+                                item["date"],
+                            ]
+                            for item in matches
+                        ],
+                        headers=[
+                            "Wantlist",
+                            "# bought",
+                            "Foil",
+                            "Name",
+                            "Expansion",
+                            "Date (last) received",
+                        ],
+                        tablefmt="simple",
+                    )
                 )
-            )
+            else:
+                print("No cleanup needed.")
+        else:
+            print("No wantslists or received orders.")
 
     def show_account_info(self, api):
         self.report("show account info")
 
         pp = pprint.PrettyPrinter()
-        pp.pprint(self.account)
+        pp.pprint(api.get_account())
         self.logger.debug("-> show_account_info: Done")
 
     def clear_entire_stock(self, api):
@@ -641,6 +750,7 @@ class PyMkmApp:
                 {"count": x["count"], "idArticle": x["idArticle"]} for x in stock_list
             ]
 
+            print("Clearing stock...")
             api.delete_stock(delete_list)
             self.logger.debug("-> clear_entire_stock: done")
             print("Stock cleared.")
@@ -666,12 +776,16 @@ class PyMkmApp:
                 row_array = row.split(",")
                 if index > 0:
                     row_array = [x.strip('"') for x in row_array]
-                    (name, set_name, count, foil, language, *other) = row_array
-                    foil = True if foil.lower() == "foil" else False
-                    if not self.match_card_and_add_stock(
-                        api, name, set_name, count, foil, language, *other
-                    ):
+                    try:
+                        (name, set_name, count, foil, language, *other) = row_array
+                    except Exception as err:
                         problem_cards.append(row_array)
+                    else:
+                        foil = True if foil.lower() == "foil" else False
+                        if not self.match_card_and_add_stock(
+                            api, name, set_name, count, foil, language, *other
+                        ):
+                            problem_cards.append(row_array)
 
                 bar.update(index)
                 index += 1
@@ -702,50 +816,52 @@ class PyMkmApp:
     ):
         if all(v != "" for v in [name, set_name, count]):
             try:
-                possible_products = api.find_product(name, idGame="1")["product"]
+                possible_products = api.find_product(name, idGame="1")  # ["product"]
             except CardmarketError as err:
+                self.logger.error(err.mkm_msg())
                 print(err.mkm_msg())
-                self.logger.debug(err.mkm_msg())
             except Exception as err:
                 return False
             else:
-                product_match = [
-                    x
-                    for x in possible_products
-                    if x["categoryName"] == "Magic Single"
-                    and self.card_equals(
-                        x["enName"], x["expansionName"], name, set_name
-                    )
-                ]
-                if len(product_match) == 0:
+                if len(possible_products) == 0:
                     # no viable match
                     return False
-                elif len(product_match) == 1:
-                    language_id = (
-                        1 if language == "" else api.languages.index(language) + 1
-                    )
-                    price = self.get_price_for_product(
-                        product_match[0]["idProduct"],
-                        product_match[0]["rarity"],
-                        self.config["csv_import_condition"],
-                        foil,
-                        False,
-                        language_id=language_id,
-                        api=self.api,
-                    )
-                    card = {
-                        "idProduct": product_match[0]["idProduct"],
-                        "idLanguage": language_id,
-                        "count": count,
-                        "price": str(price),
-                        "condition": self.config["csv_import_condition"],
-                        "isFoil": ("true" if foil else "false"),
-                    }
-                    api.add_stock([card])
-                    return True
                 else:
-                    # no single matching card
-                    return False
+                    product_match = [
+                        x
+                        for x in possible_products
+                        if x["categoryName"] == "Magic Single"
+                        and self.card_equals(
+                            x["enName"], x["expansionName"], name, set_name
+                        )
+                    ]
+                    if len(product_match) == 1:
+                        language_id = (
+                            1 if language == "" else api.languages.index(language) + 1
+                        )
+                        product = api.get_product(product_match[0]["idProduct"])
+                        price = self.get_price_for_product(
+                            product,
+                            product_match[0]["rarity"],
+                            self.config["csv_import_condition"],
+                            foil,
+                            False,
+                            language_id=language_id,
+                            api=self.api,
+                        )
+                        card = {
+                            "idProduct": product_match[0]["idProduct"],
+                            "idLanguage": language_id,
+                            "count": count,
+                            "price": str(price),
+                            "condition": self.config["csv_import_condition"],
+                            "isFoil": ("true" if foil else "false"),
+                        }
+                        api.add_stock([card])
+                        return True
+                    else:
+                        # no single matching card
+                        return False
         else:
             # incomplete data from card scanner
             return False
@@ -790,7 +906,12 @@ class PyMkmApp:
                 )
             )
             index += 1
-        choice = int(input("Choose card: "))
+        choice = ""
+        while not isinstance(choice, int) or choice > len(products):
+            try:
+                choice = int(input("Choose card: "))
+            except ValueError as err:
+                print("Not a number.")
         return products[choice - 1]
 
     def select_from_list_of_articles(self, articles):
@@ -805,7 +926,7 @@ class PyMkmApp:
         return articles[choice - 1]
 
     def show_competition_for_product(self, product_id, product_name, is_foil, api):
-        print("Found product: {}".format(product_name))
+        print("Selected product: {}".format(product_name))
         table_data_local, table_data = self.get_competition(api, product_id, is_foil)
         if table_data_local:
             self.print_product_top_list("Local competition:", table_data_local, 4, 20)
@@ -816,8 +937,10 @@ class PyMkmApp:
 
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
-        account = self.account
-        country_code = account["country"]
+        # TODO: Add support for card condition
+        if self.account is None:
+            self.account = api.get_account()
+        country_code = self.account["country"]
 
         config = self.config
         is_altered = config["search_filters"]["isAltered"]
@@ -842,7 +965,7 @@ class PyMkmApp:
         table_data_local = []
         for article in articles:
             username = article["seller"]["username"]
-            if article["seller"]["username"] == account["username"]:
+            if article["seller"]["username"] == self.account["username"]:
                 username = "-> " + username
             item = [
                 username,
@@ -876,16 +999,15 @@ class PyMkmApp:
         )
 
     def calculate_new_prices_for_stock(
-        self, undercut_local_market, partial_stock, already_checked_articles, api
+        self,
+        stock_list,
+        undercut_local_market,
+        partial_stock_update_size,
+        already_checked_articles,
+        api,
     ):
-        stock_list = self.get_stock_as_array(api=self.api)
+        filtered_stock_list = self.__filter(stock_list)
 
-        sticky_price_char = self.config["sticky_price_char"]
-        # if we find the sticky price marker, filter out articles
-        def filtered(stock_item):
-            return stock_item["comments"].startswith(sticky_price_char)
-
-        filtered_stock_list = [x for x in stock_list if not filtered(x)]
         sticky_count = len(stock_list) - len(filtered_stock_list)
 
         if already_checked_articles:
@@ -899,19 +1021,39 @@ class PyMkmApp:
                     f"Entire stock updated in partial updates. Delete {self.config['partial_update_filename']} to reset."
                 )
                 return [], []
-        if partial_stock:
-            filtered_stock_list = filtered_stock_list[:partial_stock]
+        if partial_stock_update_size:
+            filtered_stock_list = filtered_stock_list[:partial_stock_update_size]
 
         result_json = []
         checked_articles = []
         total_price = 0
-        index = 0
 
+        index = 0
         bar = progressbar.ProgressBar(max_value=len(filtered_stock_list))
+        bar.update(index)
+
+        products_to_get = [x["idProduct"] for x in filtered_stock_list]
+        product_list = api.get_items_async("products", products_to_get)
+        product_list = [x for x in product_list if x]
+        # TODO: save articles that we know WERE updated to partial..txt
+
         for article in filtered_stock_list:
+            try:
+                product = next(
+                    x
+                    for x in product_list
+                    if x["product"]["idProduct"] == article["idProduct"]
+                )
+            except StopIteration:
+                # Stock item not found in update batch, continuing
+                self.logger.error(
+                    f"aid {article['idArticle']} pid {article['idProduct']} - {article['product']['enName']} {article['product']['expansion']} failed to find a product"
+                )
+                continue
+
             checked_articles.append(article.get("idArticle"))
-            updated_article = self.get_article_with_updated_price(
-                article, undercut_local_market, api=self.api
+            updated_article = self.update_price_for_article(
+                article, product, undercut_local_market, api=self.api
             )
             if updated_article:
                 result_json.append(updated_article)
@@ -927,11 +1069,11 @@ class PyMkmApp:
             print(f"Note: {sticky_count} items filtered out because of sticky prices.")
         return result_json, checked_articles
 
-    def get_article_with_updated_price(
-        self, article, undercut_local_market=False, api=None
+    def update_price_for_article(
+        self, article, product, undercut_local_market=False, api=None
     ):
         new_price = self.get_price_for_product(
-            article["idProduct"],
+            product,
             article["product"].get("rarity"),
             article.get("condition"),
             article.get("isFoil", False),
@@ -947,6 +1089,8 @@ class PyMkmApp:
                     "name": article["product"]["enName"],
                     "isFoil": article.get("isFoil", False),
                     "isPlayset": article.get("isPlayset", False),
+                    "language": article["language"]["languageName"],
+                    "condition": article["condition"],
                     "old_price": article["price"],
                     "price": new_price,
                     "price_diff": price_diff,
@@ -954,13 +1098,15 @@ class PyMkmApp:
                     "count": article["count"],
                 }
 
-    def get_rounding_limit_for_rarity(self, rarity):
+    def get_rounding_limit_for_rarity(self, rarity, product_id):
         rounding_limit = float(self.config["price_limit_by_rarity"]["default"])
 
         try:
             rounding_limit = float(self.config["price_limit_by_rarity"][rarity.lower()])
         except KeyError as err:
-            print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
+            print(
+                f"ERROR: Unknown rarity '{rarity}' (pid: {product_id}). Using default rounding."
+            )
         return rounding_limit
 
     def get_discount_for_condition(self, condition):
@@ -974,7 +1120,7 @@ class PyMkmApp:
 
     def get_price_for_product(
         self,
-        product_id,
+        product,
         rarity,
         condition,
         is_foil,
@@ -983,75 +1129,69 @@ class PyMkmApp:
         undercut_local_market=False,
         api=None,
     ):
-        rounding_limit = self.get_rounding_limit_for_rarity(rarity)
+        rounding_limit = self.get_rounding_limit_for_rarity(
+            rarity, product["product"]["idProduct"]
+        )
 
-        try:
-            response = api.get_product(product_id)
-        except Exception as err:
-            print("No response from API.")
-            sys.exit(0)
-
-        if response:
-            if not is_foil:
-                trend_price = response["product"]["priceGuide"]["TREND"]
-            else:
-                trend_price = response["product"]["priceGuide"]["TRENDFOIL"]
-
-            # Set competitive price for region
-            if undercut_local_market:
-                table_data_local, table_data = self.get_competition(
-                    api, product_id, is_foil
-                )
-
-                if len(table_data_local) > 0:
-                    # Undercut if there is local competition
-                    lowest_in_country = PyMkmHelper.get_lowest_price_from_table(
-                        table_data_local, 4
-                    )
-                    new_price = max(
-                        rounding_limit,
-                        min(trend_price, lowest_in_country - rounding_limit),
-                    )
-                else:
-                    # No competition in our country, set price a bit higher.
-                    new_price = trend_price * 1.2
-
-            else:  # don't try to undercut local market
-                new_price = trend_price
-
-            if new_price is None:
-                raise ValueError("No price found!")
-            else:
-                if is_playset:
-                    new_price = 4 * new_price
-
-                old_price = new_price
-                # Apply condition discount
-                if condition:
-                    new_price = new_price * self.get_discount_for_condition(condition)
-
-                # Round
-                new_price = PyMkmHelper.round_up_to_multiple_of_lower_limit(
-                    rounding_limit, new_price
-                )
-
-                return new_price
+        if not is_foil:
+            trend_price = product["product"]["priceGuide"]["TREND"]
         else:
-            print("No results.")
+            trend_price = product["product"]["priceGuide"]["TRENDFOIL"]
+
+        # Set competitive price for region
+        if undercut_local_market:
+            table_data_local, table_data = self.get_competition(
+                api, product["product"]["idProduct"], is_foil
+            )
+
+            if len(table_data_local) > 0:
+                # Undercut if there is local competition
+                lowest_in_country = PyMkmHelper.get_lowest_price_from_table(
+                    table_data_local, 4
+                )
+                new_price = max(
+                    rounding_limit,
+                    min(trend_price, lowest_in_country - rounding_limit),
+                )
+            else:
+                # No competition in our country, set price a bit higher.
+                new_price = trend_price * 1.2
+
+        else:  # don't try to undercut local market
+            new_price = trend_price
+
+        if new_price is None:
+            raise ValueError("No price found!")
+        else:
+            if is_playset:
+                new_price = 4 * new_price
+
+            old_price = new_price
+            # Apply condition discount
+            if condition:
+                new_price = new_price * self.get_discount_for_condition(condition)
+
+            # Round
+            new_price = PyMkmHelper.round_up_to_multiple_of_lower_limit(
+                rounding_limit, new_price
+            )
+
+            return new_price
 
     def display_price_changes_table(self, changes_json):
-        # table breaks because of progress bar rendering
+        num_items = self.config["show_num_best_worst_items"]
+
         print("\nBest diffs:\n")
         sorted_best = sorted(changes_json, key=lambda x: x["price_diff"], reverse=True)[
-            :10
+            :num_items
         ]
         self.draw_price_changes_table(i for i in sorted_best if i["price_diff"] > 0)
         print("\nWorst diffs:\n")
-        sorted_worst = sorted(changes_json, key=lambda x: x["price_diff"])[:10]
+        sorted_worst = sorted(changes_json, key=lambda x: x["price_diff"])[:num_items]
         self.draw_price_changes_table(i for i in sorted_worst if i["price_diff"] < 0)
 
         print(
-            "\nTotal price difference: {}.".format(
+            "\nTotal price difference: {}.".format(  # TODO: fix bug where summary is wrong
                 str(
                     round(
                         sum(item["price_diff"] * item["count"] for item in sorted_best),
@@ -1070,6 +1210,8 @@ class PyMkmApp:
                         item["name"],
                         "\u2713" if item["isFoil"] else "",
                         "\u2713" if item["isPlayset"] else "",
+                        item["condition"],
+                        item["language"],
                         item["old_price"],
                         item["price"],
                         item["price_diff"],
@@ -1081,6 +1223,8 @@ class PyMkmApp:
                     "Name",
                     "Foil",
                     "Playset",
+                    "Condition",
+                    "Language",
                     "Old price",
                     "New price",
                     "Diff",
@@ -1090,12 +1234,43 @@ class PyMkmApp:
         )
 
     def get_stock_as_array(self, api):
+        # Check for cached stock
+        local_stock_cache = None
+        s = shelve.open(self.config["local_cache_filename"])
+        try:
+            local_stock_cache = s["stock"]
+        except KeyError as ke:
+            pass
+        finally:
+            s.close()
+
+        if local_stock_cache:
+            if PyMkmHelper.prompt_bool(
+                f"Cached stock ({len(local_stock_cache)} items) found, use it? (if not, then it will be cleared)"
+            ):
+                return local_stock_cache
+            else:
+                s = shelve.open(self.config["local_cache_filename"])
+                try:
+                    del s["stock"]
+                finally:
+                    print("Stock cleared.")
+                    s.close()
+
+        print(
+            "Getting your stock from Cardmarket (the API can be slow for large stock)..."
+        )
         try:
             d = api.get_stock()
-        except Exception as err:
-            print("No response from API.")
-            self.logger.error("No response from API, exiting.")
+        except CardmarketError as err:
+            self.logger.error(err.mkm_msg())
+            print(err.mkm_msg())
             sys.exit(0)
+        # except Exception as err:
+        #    msg = f"No response from API. Error: {err}"
+        #    print(msg)
+        #    self.logger.error(msg)
+        #    sys.exit(0)
         else:
             keys = [
                 "idArticle",
@@ -1109,8 +1284,18 @@ class PyMkmApp:
                 "isPlayset",
                 "isSigned",
                 "language",
-            ]  # TODO: [language][languageId]
+            ]
             stock_list = [
                 {x: y for x, y in article.items() if x in keys} for article in d
             ]
+            print("Stock fetched.")
+
+            s = shelve.open(self.config["local_cache_filename"])
+            if len(stock_list) > 0:
+                try:
+                    s["stock"] = stock_list
+                finally:
+                    print("Stock cached.")
+                    s.close()
+
             return stock_list
