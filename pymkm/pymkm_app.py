@@ -32,18 +32,18 @@ class PyMkmApp:
 
     def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        # self.logger.setLevel(logging.INFO)
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         fh = logging.handlers.RotatingFileHandler(
             f"log_pymkm.log", maxBytes=500000, backupCount=2
         )
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(logging.WARNING)
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         sh = logging.StreamHandler()
-        sh.setLevel(logging.ERROR)
+        sh.setLevel(logging.ERROR)  # This gets outputted to stdout
         sh.setFormatter(formatter)
         self.logger.addHandler(sh)
 
@@ -77,6 +77,7 @@ class PyMkmApp:
         except Exception as err:
             pass
 
+        fh.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
         self.account = self.api.get_account()["account"]
 
@@ -138,9 +139,12 @@ class PyMkmApp:
                 "Find deals from a user", self.find_deals_from_user, {"api": self.api}
             )
             menu.add_function_item(
-                "Show top 20 expensive items in stock",
+                f"Show top {self.config['show_top_x_expensive_items']} expensive items in stock",
                 self.show_top_expensive_articles_in_stock,
-                {"num_articles": 20, "api": self.api},
+                {
+                    "num_articles": self.config["show_top_x_expensive_items"],
+                    "api": self.api,
+                },
             )
             menu.add_function_item(
                 "Wantslists cleanup suggestions",
@@ -540,7 +544,7 @@ class PyMkmApp:
             total_price += price
         if len(table_data) > 0:
             print(
-                "Top {} most expensive articles in stock:\n".format(str(num_articles))
+                f"Top {str(num_articles)} most expensive articles in stock (total {len(stock_list)} items):\n"
             )
             print(
                 tb.tabulate(
@@ -1090,13 +1094,15 @@ class PyMkmApp:
                     "count": article["count"],
                 }
 
-    def get_rounding_limit_for_rarity(self, rarity):
+    def get_rounding_limit_for_rarity(self, rarity, product_id):
         rounding_limit = float(self.config["price_limit_by_rarity"]["default"])
 
         try:
             rounding_limit = float(self.config["price_limit_by_rarity"][rarity.lower()])
         except KeyError as err:
-            print(f"ERROR: Unknown rarity '{rarity}'. Using default rounding.")
+            print(
+                f"ERROR: Unknown rarity '{rarity}' (pid: {product_id}). Using default rounding."
+            )
         return rounding_limit
 
     def get_discount_for_condition(self, condition):
@@ -1119,7 +1125,9 @@ class PyMkmApp:
         undercut_local_market=False,
         api=None,
     ):
-        rounding_limit = self.get_rounding_limit_for_rarity(rarity)
+        rounding_limit = self.get_rounding_limit_for_rarity(
+            rarity, product["product"]["idProduct"]
+        )
 
         if not is_foil:
             trend_price = product["product"]["priceGuide"]["TREND"]

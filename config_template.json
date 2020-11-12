@@ -39,5 +39,7 @@
   "local_cache_filename": "local_pymkm_data.db",
   "csv_import_filename": "list.csv",
   "csv_import_condition": "NM",
-  "show_num_best_worst_items": 20
+  "show_num_best_worst_items": 20,
+  "show_top_x_expensive_items": 20,
+  "log_level": "WARNING"
 }
