@@ -108,9 +108,6 @@ class PyMkmApi:
             requests.codes.partial_content,
         )
         if response.status_code in handled_codes:
-            self.__read_request_limits_from_header(response)
-
-            # TODO: use requests count to handle code 429, Too Many Requests
             return True
         elif response.status_code == requests.codes.temporary_redirect:
             pass
@@ -122,7 +119,8 @@ class PyMkmApi:
         elif response.status_code == requests.codes.not_found:
             raise CardmarketError(response.json())
         elif response.status_code == requests.codes.too_many_requests:
-            raise CardmarketError(response.json())
+            raise CardmarketError("Request quota depleted. :(")
+            sys.exit(0)
         else:
             raise requests.exceptions.ConnectionError(response)
 
@@ -180,8 +178,10 @@ class PyMkmApi:
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
         self.logger.info(">> Getting request quotas")
-        r = self.mkm_request(mkm_oauth, url)
-        self.__handle_response(r)
+        try:
+            r = self.mkm_request(mkm_oauth, url)
+        except CardmarketError as err:
+            print("hej")
 
     def get_language_code_from_string(self, language_string):
         if language_string in self.languages:
@@ -210,6 +210,7 @@ class PyMkmApi:
     def mkm_request(self, mkm_oauth, url, params=None):
         try:
             r = mkm_oauth.get(url, params=params, allow_redirects=False)
+            self.__read_request_limits_from_header(r)
             # However, you should switch off the behaviour to automatically
             # redirect to the given request URI, because a new Authorization
             # header needs to be compiled for the redirected resource. (MKM API docs)

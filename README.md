@@ -5,16 +5,16 @@ See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
 
 # 📙 PyMKM
 
+> _NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT._
+
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
-The included sample app can update your stock prices to trend for non-foils, and to a competitive prices for foils, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
+The included sample app can update your stock prices to trend, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
 The app also keeps track of how many API requests your have left each day, and can do partial updates if you have more than 5000 articles to update.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
-
-**NOTE 2:** This app collects a tiny amount of usage data. The purpose is to allow me to see what people use the most and to focus on improving that. If you want to opt out from this, please change `"reporting": true` to `false` in `config.json`.
 
 ```
 ╭─── PyMKM 2.0.0 ────────────────────────────────────────╮

@@ -79,7 +79,6 @@ class PyMkmApp:
 
         fh.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
-        self.account = self.api.get_account()["account"]
 
     def report(self, command):
         uuid = self.config["uuid"]
@@ -171,7 +170,11 @@ class PyMkmApp:
                 menu.add_function_item(
                     f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
                 )
-            break_signal = menu.show()
+            if self.api.requests_count < self.api.requests_max:
+                break_signal = menu.show()
+            else:
+                menu.print_menu()
+                sys.exit(0)
             if break_signal:
                 break
 
@@ -728,7 +731,7 @@ class PyMkmApp:
         self.report("show account info")
 
         pp = pprint.PrettyPrinter()
-        pp.pprint(self.account)
+        pp.pprint(api.get_account())
         self.logger.debug("-> show_account_info: Done")
 
     def clear_entire_stock(self, api):
@@ -935,8 +938,9 @@ class PyMkmApp:
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
         # TODO: Add support for card condition
-        account = self.account
-        country_code = account["country"]
+        if self.account is None:
+            self.account = api.get_account()
+        country_code = self.account["country"]
 
         config = self.config
         is_altered = config["search_filters"]["isAltered"]
@@ -961,7 +965,7 @@ class PyMkmApp:
         table_data_local = []
         for article in articles:
             username = article["seller"]["username"]
-            if article["seller"]["username"] == account["username"]:
+            if article["seller"]["username"] == self.account["username"]:
                 username = "-> " + username
             item = [
                 username,
@@ -1262,11 +1266,11 @@ class PyMkmApp:
             self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
             sys.exit(0)
-        except Exception as err:
-            msg = f"No response from API. Error: {err}"
-            print(msg)
-            self.logger.error(msg)
-            sys.exit(0)
+        # except Exception as err:
+        #    msg = f"No response from API. Error: {err}"
+        #    print(msg)
+        #    self.logger.error(msg)
+        #    sys.exit(0)
         else:
             keys = [
                 "idArticle",
