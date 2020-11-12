@@ -134,6 +134,51 @@ _Example_: `"PL": "0.5"` would set the price for Played cards to 50% off the tre
 | 10  | Korean              |
 | 11  | Traditional Chinese |
 
+#### `never_undercut_local_market`
+
+If `true`, disables asking if the user wants to try to undercut local market when doing price updates.
+Default `false`.
+
+#### `sticky_price_char`
+
+The character in the card comment used to disable price updates for specific cards.
+Default `!`.
+
+#### `partial_update_filename`
+
+The name of the file storing partial updates.
+Default `partial_stock_update.txt`.
+
+#### `local_cache_filename`
+
+The name of the database file storing cached data.
+Default `local_pymkm_data.db`.
+
+#### `csv_import_filename`
+
+The name of the file which CSV importing is done from.
+Default `list.csv`.
+
+#### `csv_import_condition`
+
+The default condition for all CSV imports.
+Default `NM`.
+
+#### `show_num_best_worst_items`
+
+How many best and worst items to show after a price update.
+Default `20`.
+
+#### `show_top_x_expensive_items`
+
+How many items to show in the Top X expensive function.
+Default `20`.
+
+#### `log_level`
+
+Log level for the application and API.
+Default `WARNING`.
+
 ## 📄 CSV importing
 
 If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.

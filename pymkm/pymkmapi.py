@@ -216,7 +216,8 @@ class PyMkmApi:
             self.__handle_response(r)
             return r
         except CardmarketError as err:
-            print(err.mkm_msg())
+            self.logger.error(f"{err.mkm_msg()} {err.url}")
+            # print(err.mkm_msg())
             # sys.exit(0)
         except Exception as err:
             print(f"\n>> Cardmarket connection error: {err} for {url}")
@@ -272,6 +273,7 @@ class PyMkmApi:
             client_secret=self.config["app_secret"],
             token=self.config["access_token"],
             token_secret=self.config["access_token_secret"],
+            timeout=10.0,
         ) as client:
             tasks = []
             sem = asyncio.Semaphore(100)
@@ -382,7 +384,7 @@ class PyMkmApi:
                 #'{"inserted":[{"success":false,"tried":{"idProduct":"12636","idLanguage":"1","count":"1","price":"0.75","condition":"nm","isFoil":"false","amount":"1"},"error":"An error has ocurred, the card has NOT been listed."}]}'
             except CardmarketError as err:
                 self.logger.error(f"{err.mkm_msg()} {err.url}")
-                print(err.mkm_msg())
+                # print(err.mkm_msg())
         # TODO: Only considers the last response.
         if self.__handle_response(r):
             return r.json()
