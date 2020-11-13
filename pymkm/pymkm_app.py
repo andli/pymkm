@@ -174,6 +174,7 @@ class PyMkmApp:
                 break_signal = menu.show()
             else:
                 menu.print_menu()
+                self.logger.error("Out of quota, exiting app.")
                 sys.exit(0)
             if break_signal:
                 break

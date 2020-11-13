@@ -126,8 +126,8 @@ class PyMkmApi:
 
     def __read_request_limits_from_header(self, response):
         try:
-            self.requests_count = response.headers["X-Request-Limit-Count"]
-            self.requests_max = response.headers["X-Request-Limit-Max"]
+            self.requests_count = int(response.headers["X-Request-Limit-Count"])
+            self.requests_max = int(response.headers["X-Request-Limit-Max"])
             self.logger.info(f">> Quota: {self.requests_count}/{self.requests_max}")
         except (AttributeError, KeyError) as err:
             self.logger.debug(f">> Attribute not found in header: {err}")
