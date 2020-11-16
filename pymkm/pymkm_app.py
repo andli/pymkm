@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __license__ = "MIT"
 
 import os
@@ -48,7 +48,7 @@ class PyMkmApp:
         self.logger.addHandler(sh)
 
         if config is None:
-            self.logger.info(">> Loading config file")
+            self.logger.debug(">> Loading config file")
             try:
                 self.config = json.load(open("config.json"))
 
@@ -78,6 +78,7 @@ class PyMkmApp:
             pass
 
         fh.setLevel(self.config["log_level"])
+        self.logger.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
 
     def report(self, command):
@@ -308,11 +309,11 @@ class PyMkmApp:
                 article = filtered_articles[0]
                 found_string = f"Found: {article['product']['enName']}"
                 if article["product"].get("expansion"):
-                    found_string += f"[{article['product'].get('expansion')}]."
+                    found_string += f"[{article['product'].get('expansion')}] "
                 if article["isFoil"]:
-                    found_string += f"[foil: {article['isFoil']}]."
+                    found_string += f"[foil: {article['isFoil']}] "
                 if article["comments"]:
-                    found_string += f"[comment: {article['comments']}]."
+                    found_string += f"[comment: {article['comments']}] "
                 else:
                     found_string += "."
                 print(found_string)
@@ -770,7 +771,7 @@ class PyMkmApp:
             index = 0
             card_rows = (sum(1 for row in csv_reader)) - 1
             bar = progressbar.ProgressBar(max_value=card_rows)
-            self.logger.info(f"-> import_from_csv: {card_rows} cards in csv file.")
+            self.logger.debug(f"-> import_from_csv: {card_rows} cards in csv file.")
             csvfile.seek(0)
             for row in csv_reader:
                 row = row.rstrip()
@@ -798,7 +799,7 @@ class PyMkmApp:
                 ) as csvfile:
                     csv_writer = csv.writer(csvfile)
                     csv_writer.writerows(problem_cards)
-                self.logger.info(
+                self.logger.debug(
                     f"import_from_csv:: {len(problem_cards)} failed imports."
                 )
                 print(
