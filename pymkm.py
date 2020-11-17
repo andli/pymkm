@@ -22,12 +22,14 @@ def main():
     )
     parser.add_argument(
         "--partial",
+        metavar="<number>",
         type=int,
         default=0,
         help="Used for partial updates of for example stock.",
     )
     parser.add_argument(
         "--price_check_wantslist",
+        metavar="<wantslist name>",
         type=str,
         help="Run the Track price data to csv option.",
     )
