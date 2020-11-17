@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __license__ = "MIT"
 
 import os
@@ -16,6 +16,7 @@ import logging.handlers
 import pprint
 import uuid
 import sys
+from datetime import datetime
 
 import micromenu
 import progressbar
@@ -162,6 +163,11 @@ class PyMkmApp:
             menu.add_function_item(
                 f"Import stock from {self.config['csv_import_filename']}",
                 self.import_from_csv,
+                {"api": self.api},
+            )
+            menu.add_function_item(
+                f"Track price data to {self.config['csv_prices_filename']}",
+                self.track_prices_to_csv,
                 {"api": self.api},
             )
             if self.DEV_MODE:
@@ -569,21 +575,72 @@ class PyMkmApp:
             print("\nTotal stock value: {}".format(str(total_price)))
         return None
 
+    def track_prices_to_csv(self, api):
+        self.report("track prices")
+
+        wantslists, wantslists_lists = self.get_wantslists_data(api)
+        selected_list = self.select_from_list_of_wantslists(wantslists)
+        selected_list_id = selected_list["idWantslist"]
+        products_to_get = [x["idProduct"] for x in wantslists_lists[selected_list_id]]
+        updated_products = []
+        try:
+            updated_products = api.get_items_async("products", products_to_get)
+        except Exception as err:
+            pass
+
+        # Write to CSV:
+        if len(updated_products) > 0:
+            # if blank, then header: datetime, productid, priceguide labels
+            example_priceguide = updated_products[0]["product"]["priceGuide"]
+            priceguide_header_items = [k for k in example_priceguide.keys()]
+            header_list = ["datetime", "product id", "name", "expansion"]
+            header_list.extend(priceguide_header_items)
+            data_array = []
+            for product in updated_products:
+                price_data_exploded = [
+                    k for k in product["product"]["priceGuide"].values()
+                ]
+                data_row = [
+                    datetime.now().isoformat(" "),
+                    product["product"]["idProduct"],
+                    product["product"]["enName"],
+                    product["product"]["expansion"]["enName"],
+                ]
+                data_row.extend(price_data_exploded)
+                data_array.append(data_row)
+            self.write_to_csv(header_list, data_array)
+
+    def write_to_csv(self, header_list, data_array):
+        if len(data_array) > 0:
+            try:
+                with open(
+                    self.config["csv_prices_filename"],
+                    "a",
+                    newline="",
+                    encoding="utf-8",
+                ) as csv_a, open(self.config["csv_prices_filename"], "r",) as csv_r:
+                    csv_reader = csv.reader(csv_r)
+                    row_count = sum(1 for row in csv_reader)
+                    csv_writer = csv.writer(csv_a, delimiter=";")
+                    if row_count == 0:
+                        csv_writer.writerow(header_list)
+                    csv_writer.writerows(data_array)
+                self.logger.debug(
+                    f"write_to_csv:: {len(data_array)} lines written to {self.config['csv_prices_filename']}."
+                )
+                print(
+                    f"Wrote {len(data_array)} price updates to {self.config['csv_prices_filename']}."
+                )
+            except Exception as err:
+                print(err.value)
+
     def clean_purchased_from_wantslists(self, api):
         self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
 
-        wantslists_lists = []
-        try:
-            print("Gettings wantslists from Cardmarket...")
-            result = api.get_wantslists()
-            wantslists = {
-                i["idWantslist"]: i["name"] for i in result if i["game"]["idGame"] == 1
-            }
-            wantslists_lists = {
-                k: api.get_wantslist_items(k)["item"] for k, v in wantslists.items()
-            }
+        wantslists, wantslists_lists = self.get_wantslists_data(api)
 
+        try:
             print("Gettings received orders from Cardmarket...")
             received_orders = api.get_orders("buyer", "received", start=1)
         except Exception as err:
@@ -813,6 +870,59 @@ class PyMkmApp:
 
     # End of menu item functions ============================================
 
+    def get_wantslists_data(self, api):
+        # Check for cached wantslists
+        local_wantslists_cache = None
+        local_wantslists_lists_cache = None
+        s = shelve.open(self.config["local_cache_filename"])
+        try:
+            local_wantslists_cache = s["wantslists"]
+            local_wantslists_lists_cache = s["wantslists_lists"]
+        except KeyError as ke:
+            pass
+        finally:
+            s.close()
+
+        if local_wantslists_cache:
+            if PyMkmHelper.prompt_bool(
+                f"Cached wantslists ({len(local_wantslists_cache)} items) found, use it? (if not, then it will be cleared)"
+            ):
+                return local_wantslists_cache, local_wantslists_lists_cache
+            else:
+                s = shelve.open(self.config["local_cache_filename"])
+                try:
+                    del s["wantslists"]
+                    del s["wantslists_lists"]
+                finally:
+                    print("Local Wantslists cleared.")
+                    s.close()
+                    self.get_wantslists_data(api)
+        else:  # no local cache
+            wantslists = []
+            wantslists_lists = {}
+            try:
+                print("Gettings wantslists from Cardmarket...")
+                wantslists = api.get_wantslists()
+                wantslists_lists = {
+                    item["idWantslist"]: api.get_wantslist_items(item["idWantslist"])[
+                        "item"
+                    ]
+                    for item in wantslists
+                }
+            except Exception as err:
+                print(err)
+
+            s = shelve.open(self.config["local_cache_filename"])
+            if len(wantslists_lists) > 0:
+                try:
+                    s["wantslists"] = wantslists
+                    s["wantslists_lists"] = wantslists_lists
+                finally:
+                    print("Wantslists cached.")
+                    s.close()
+
+            return wantslists, wantslists_lists
+
     def match_card_and_add_stock(
         self, api, name, set_name, count, foil, language, *other
     ):
@@ -887,14 +997,11 @@ class PyMkmApp:
 
     def select_from_list_of_wantslists(self, wantslists):
         index = 1
-        filtered_wantslists = [
-            i for i in wantslists["wantslist"] if i["game"]["idGame"] == 1
-        ]
-        for wl in filtered_wantslists:
-            print(f"{index}: {wl['name']} [{wl['itemCount']}]")
+        for wantlist in wantslists:
+            print(f"{index}: {wantlist['name']} ({wantlist['game']['abbreviation']})")
             index += 1
         choice = int(input("Choose wantslist: "))
-        return wantslists["wantslist"][choice - 1]
+        return wantslists[choice - 1]
 
     def select_from_list_of_products(self, products):
         index = 1

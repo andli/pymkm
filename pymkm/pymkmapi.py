@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __license__ = "MIT"
 
 import asyncio
@@ -70,7 +70,9 @@ class PyMkmApi:
             self.logger = logger
         else:
             self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(config["log_level"]) # HACK: config may not be available
+            self.logger.setLevel(
+                config["log_level"]
+            )  # HACK: config may not be available
             formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
@@ -427,10 +429,14 @@ class PyMkmApi:
             r = mkm_oauth.put(url, data=xml_payload)
             try:
                 json_response = r.json()
-                for success in json_response['updatedArticles']:
-                    self.logger.debug(f"Updated price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']}).")
-                for failure in json_response['notUpdatedArticles']:
-                    self.logger.warning(f"Failed update price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']}).")
+                for success in json_response["updatedArticles"]:
+                    self.logger.debug(
+                        f"Updated price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']})."
+                    )
+                for failure in json_response["notUpdatedArticles"]:
+                    self.logger.warning(
+                        f"Failed update price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']})."
+                    )
                     print(failure)
             except Exception as err:
                 print(err)
@@ -554,7 +560,7 @@ class PyMkmApi:
         if len(search) < 4:
             kwargs["exact"] = "true"
 
-        #TODO: Handle no response etc first
+        # TODO: Handle no response etc first
 
         return self.handle_partial_content(
             "product", url, provided_oauth=provided_oauth, **kwargs

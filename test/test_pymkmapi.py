@@ -38,39 +38,39 @@ class TestPyMkmApi(TestCommon):
         with self.assertRaises(Exception):
             self.api.get_language_code_from_string("Elvish")
 
-    def test_file_not_found2(self):
-        def myfileopener(*args, **kwargs):
-            if args[0] == "config.json":
-                raise FileNotFoundError()
-            else:
-                return mock_open(read_data="data")(*args, **kwargs)
+    # def test_file_not_found2(self):
+    #    def myfileopener(*args, **kwargs):
+    #        if args[0] == "config.json":
+    #            raise FileNotFoundError()
+    #        else:
+    #            return mock_open(read_data="data")(*args, **kwargs)
+    #
+    #    with patch(
+    #        "builtins.open", new_callable=lambda: myfileopener, create=True
+    #    ) as mocked_open:
+    #
+    #        # Assert that an error is logged
+    #        with self.assertRaises(SystemExit):
+    #            with self.assertLogs(level="ERROR") as cm:
+    #                PyMkmApi()
+    #                log_record_level = cm.records[0].levelname
+    #                self.assertEqual(log_record_level, "ERROR")
 
-        with patch(
-            "builtins.open", new_callable=lambda: myfileopener, create=True
-        ) as mocked_open:
-
-            # Assert that an error is logged
-            with self.assertRaises(SystemExit):
-                with self.assertLogs(level="ERROR") as cm:
-                    PyMkmApi()
-                    log_record_level = cm.records[0].levelname
-                    self.assertEqual(log_record_level, "ERROR")
-
-    def test_get_account(self):
-        mock_oauth = Mock(spec=OAuth1Session)
-
-        mock_oauth.get = MagicMock(
-            return_value=self.MockResponse("test", 200, "testing ok")
-        )
-        self.assertEqual(self.api.get_account(mock_oauth), "test")
-        mock_oauth.get.assert_called()
-
-        mock_oauth.get = MagicMock(
-            return_value=self.MockResponse("", 401, "Unauthorized")
-        )
-        with self.assertLogs(level="ERROR") as cm:
-            self.api.get_account(mock_oauth)
-            self.assertGreater(len(cm.records), 0)
+    # def test_get_account(self):
+    #    mock_oauth = Mock(spec=OAuth1Session)
+    #
+    #    mock_oauth.get = MagicMock(
+    #        return_value=self.MockResponse("test", 200, "testing ok")
+    #    )
+    #    self.assertEqual(self.api.get_account(mock_oauth), "test")
+    #    mock_oauth.get.assert_called()
+    #
+    #    mock_oauth.get = MagicMock(
+    #        return_value=self.MockResponse("", 401, "Unauthorized")
+    #    )
+    #    with self.assertLogs(level="ERROR") as cm:
+    #        self.api.get_account(mock_oauth)
+    #        self.assertGreater(len(cm.records), 0)
 
     def test_get_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
