@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 __license__ = "MIT"
 
 import os
@@ -109,7 +109,7 @@ class PyMkmApp:
             return None
 
     def start(self, args=None):
-        if args is None:
+        if not len(sys.argv) > 1:  # if args have been passed
             while True:
                 top_message = self.check_latest_version()
 
@@ -125,7 +125,7 @@ class PyMkmApp:
                 menu.add_function_item(
                     "Update stock prices",
                     self.update_stock_prices_to_trend,
-                    {"api": self.api},
+                    {"api": self.api, "cli_called": False},
                 )
                 menu.add_function_item(
                     "Update price for a product",
@@ -194,6 +194,10 @@ class PyMkmApp:
                 self.track_prices_to_csv(
                     self.api, args.price_check_wantslist, args.cached
                 )
+            if args.update_stock:
+                self.update_stock_prices_to_trend(
+                    self.api, args.update_stock, args.cached, args.partial
+                )
 
     def check_product_id(self, api):
         """ Dev function check on a product id. """
@@ -233,11 +237,11 @@ class PyMkmApp:
             del entry["name"]
         return not_uploadable_json
 
-    def update_stock_prices_to_trend(self, api):
+    def update_stock_prices_to_trend(self, api, cli_called, cached=None, partial=0):
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
 
-        stock_list = self.get_stock_as_array(api=self.api)
+        stock_list = self.get_stock_as_array(self.api, cli_called, cached)
 
         partial_update_file = self.config["partial_update_filename"]
 
@@ -247,18 +251,25 @@ class PyMkmApp:
             print(
                 f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
             )
-        partial_stock_update_size = PyMkmHelper.prompt_string(
-            "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
-        )
-        if partial_stock_update_size != "":
-            partial_stock_update_size = int(partial_stock_update_size)
 
-        if self.config["never_undercut_local_market"]:
+        partial_stock_update_size = 0
+        if partial > 0:
+            partial_stock_update_size = partial
+        elif not cli_called:
+            partial_stock_update_size = PyMkmHelper.prompt_string(
+                "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
+            )
+
+            if partial_stock_update_size != "":
+                partial_stock_update_size = int(partial_stock_update_size)
+
+        if cli_called or self.config["never_undercut_local_market"]:
             undercut_local_market = False
         else:
             undercut_local_market = PyMkmHelper.prompt_bool(
                 "Try to undercut local market? (slower, more requests)"
             )
+
         uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
             stock_list,
             undercut_local_market,
@@ -277,7 +288,9 @@ class PyMkmApp:
 
             self.display_price_changes_table(uploadable_json)
 
-            if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
+            if cli_called or PyMkmHelper.prompt_bool(
+                "Do you want to update these prices?"
+            ):
                 print("Updating prices...")
                 api.set_stock(uploadable_json)
                 print("Prices updated.")
@@ -1205,7 +1218,7 @@ class PyMkmApp:
             bar.update(index)
         bar.finish()
 
-        print("Total stock value: {}".format(str(round(total_price, 2))))
+        print("Value in this update: {}".format(str(round(total_price, 2))))
         if len(stock_list) != len(filtered_stock_list):
             print(f"Note: {sticky_count} items filtered out because of sticky prices.")
         return result_json, checked_articles
@@ -1374,7 +1387,7 @@ class PyMkmApp:
             )
         )
 
-    def get_stock_as_array(self, api):
+    def get_stock_as_array(self, api, cli_called, cached):
         # Check for cached stock
         local_stock_cache = None
         s = shelve.open(self.config["local_cache_filename"])
@@ -1386,17 +1399,21 @@ class PyMkmApp:
             s.close()
 
         if local_stock_cache:
-            if PyMkmHelper.prompt_bool(
-                f"Cached stock ({len(local_stock_cache)} items) found, use it? (if not, then it will be cleared)"
-            ):
-                return local_stock_cache
+            if not cli_called:
+                if PyMkmHelper.prompt_bool(
+                    f"Cached stock ({len(local_stock_cache)} items) found, use it? (if not, then it will be cleared)"
+                ):
+                    return local_stock_cache
             else:
-                s = shelve.open(self.config["local_cache_filename"])
-                try:
-                    del s["stock"]
-                finally:
-                    print("Stock cleared.")
-                    s.close()
+                if cached:
+                    return local_stock_cache
+
+            s = shelve.open(self.config["local_cache_filename"])
+            try:
+                del s["stock"]
+            finally:
+                print("Stock cleared.")
+                s.close()
 
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added command line support for wantslist price tracking.
+- Added command line support for updating stock price.
 
 ## [2.0.2]
 
