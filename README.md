@@ -83,6 +83,14 @@ Base prices (€) and discounts for lower grading (decimal %) can be set in `con
 
 Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
 
+## Price checking wantslist to .csv
+
+This function selects a wantslist and dumps price data for all products in that list to a .csv file.
+
+This function has command line support, see `python pymkm.py --help` for more info.
+
+_NOTE: This does not work for metaproducts, only for products._
+
 ## ⚙️ Config parameters
 
 ### `price_limit_by_rarity`

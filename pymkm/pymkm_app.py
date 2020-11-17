@@ -108,83 +108,92 @@ class PyMkmApp:
         else:
             return None
 
-    def start(self):
-        while True:
-            top_message = self.check_latest_version()
+    def start(self, args=None):
+        if args is None:
+            while True:
+                top_message = self.check_latest_version()
 
-            if hasattr(self, "DEV_MODE") and self.DEV_MODE:
-                top_message = "dev mode"
-            menu = micromenu.Menu(
-                f"PyMKM {__version__}",
-                top_message,
-                f"API calls used today: {self.api.requests_count}/{self.api.requests_max}",
-                cycle=False,
-            )
+                if hasattr(self, "DEV_MODE") and self.DEV_MODE:
+                    top_message = "dev mode"
+                menu = micromenu.Menu(
+                    f"PyMKM {__version__}",
+                    top_message,
+                    f"API calls used today: {self.api.requests_count}/{self.api.requests_max}",
+                    cycle=False,
+                )
 
-            menu.add_function_item(
-                "Update stock prices",
-                self.update_stock_prices_to_trend,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                "Update price for a product",
-                self.update_product_to_trend,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                "List competition for a product",
-                self.list_competition_for_product,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                "Find deals from a user", self.find_deals_from_user, {"api": self.api}
-            )
-            menu.add_function_item(
-                f"Show top {self.config['show_top_x_expensive_items']} expensive items in stock",
-                self.show_top_expensive_articles_in_stock,
-                {
-                    "num_articles": self.config["show_top_x_expensive_items"],
-                    "api": self.api,
-                },
-            )
-            menu.add_function_item(
-                "Wantslists cleanup suggestions",
-                self.clean_purchased_from_wantslists,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                "Show account info", self.show_account_info, {"api": self.api}
-            )
-            menu.add_function_item(
-                "Clear entire stock (WARNING)",
-                self.clear_entire_stock,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                f"Import stock from {self.config['csv_import_filename']}",
-                self.import_from_csv,
-                {"api": self.api},
-            )
-            menu.add_function_item(
-                f"Track price data to {self.config['csv_prices_filename']}",
-                self.track_prices_to_csv,
-                {"api": self.api},
-            )
-            if self.DEV_MODE:
                 menu.add_function_item(
-                    f"⚠ Check product id", self.check_product_id, {"api": self.api},
+                    "Update stock prices",
+                    self.update_stock_prices_to_trend,
+                    {"api": self.api},
                 )
                 menu.add_function_item(
-                    f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
+                    "Update price for a product",
+                    self.update_product_to_trend,
+                    {"api": self.api},
                 )
-            if self.api.requests_count < self.api.requests_max:
-                break_signal = menu.show()
-            else:
-                menu.print_menu()
-                self.logger.error("Out of quota, exiting app.")
-                sys.exit(0)
-            if break_signal:
-                break
+                menu.add_function_item(
+                    "List competition for a product",
+                    self.list_competition_for_product,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
+                    "Find deals from a user",
+                    self.find_deals_from_user,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
+                    f"Show top {self.config['show_top_x_expensive_items']} expensive items in stock",
+                    self.show_top_expensive_articles_in_stock,
+                    {
+                        "num_articles": self.config["show_top_x_expensive_items"],
+                        "api": self.api,
+                    },
+                )
+                menu.add_function_item(
+                    "Wantslists cleanup suggestions",
+                    self.clean_purchased_from_wantslists,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
+                    "Show account info", self.show_account_info, {"api": self.api}
+                )
+                menu.add_function_item(
+                    "Clear entire stock (WARNING)",
+                    self.clear_entire_stock,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
+                    f"Import stock from {self.config['csv_import_filename']}",
+                    self.import_from_csv,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
+                    f"Track price data to {self.config['csv_prices_filename']}",
+                    self.track_prices_to_csv,
+                    {"api": self.api},
+                )
+                if self.DEV_MODE:
+                    menu.add_function_item(
+                        f"⚠ Check product id", self.check_product_id, {"api": self.api},
+                    )
+                    menu.add_function_item(
+                        f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
+                    )
+                if self.api.requests_count < self.api.requests_max:
+                    break_signal = menu.show()
+                else:
+                    menu.print_menu()
+                    self.logger.error("Out of quota, exiting app.")
+                    sys.exit(0)
+                if break_signal:
+                    break
+        else:
+            # command line interface
+            if args.price_check_wantslist:
+                self.track_prices_to_csv(
+                    self.api, args.price_check_wantslist, args.cached
+                )
 
     def check_product_id(self, api):
         """ Dev function check on a product id. """
@@ -575,13 +584,30 @@ class PyMkmApp:
             print("\nTotal stock value: {}".format(str(total_price)))
         return None
 
-    def track_prices_to_csv(self, api):
+    def track_prices_to_csv(self, api, wantslist_name=None, cached=False):
         self.report("track prices")
 
-        wantslists, wantslists_lists = self.get_wantslists_data(api)
-        selected_list = self.select_from_list_of_wantslists(wantslists)
-        selected_list_id = selected_list["idWantslist"]
-        products_to_get = [x["idProduct"] for x in wantslists_lists[selected_list_id]]
+        wantslists, wantslists_lists = self.get_wantslists_data(api, cached)
+        if wantslist_name is None:
+            selected_list = self.select_from_list_of_wantslists(wantslists)
+            selected_list_id = selected_list["idWantslist"]
+        else:
+            selected_list_id = next(
+                x["idWantslist"] for x in wantslists if x["name"] == wantslist_name
+            )
+
+        # TODO: fails for metaproduct
+        products_to_get = [
+            x["idProduct"]
+            for x in wantslists_lists[selected_list_id]
+            if x["type"] == "product"
+        ]
+        for x in wantslists_lists[selected_list_id]:
+            if x["type"] == "metaproduct":
+                self.logger.warning(
+                    f"Wantslist contains metaproduct ({x['metaproduct']['enName']}) which cannot be used to get prices."
+                )
+
         updated_products = []
         try:
             updated_products = api.get_items_async("products", products_to_get)
@@ -593,7 +619,12 @@ class PyMkmApp:
             # if blank, then header: datetime, productid, priceguide labels
             example_priceguide = updated_products[0]["product"]["priceGuide"]
             priceguide_header_items = [k for k in example_priceguide.keys()]
-            header_list = ["datetime", "product id", "name", "expansion"]
+            header_list = [
+                "datetime",
+                "product id",
+                "name",
+                "expansion",
+            ]
             header_list.extend(priceguide_header_items)
             data_array = []
             for product in updated_products:
@@ -608,6 +639,7 @@ class PyMkmApp:
                 ]
                 data_row.extend(price_data_exploded)
                 data_array.append(data_row)
+
             self.write_to_csv(header_list, data_array)
 
     def write_to_csv(self, header_list, data_array):
@@ -870,7 +902,7 @@ class PyMkmApp:
 
     # End of menu item functions ============================================
 
-    def get_wantslists_data(self, api):
+    def get_wantslists_data(self, api, cached=False):
         # Check for cached wantslists
         local_wantslists_cache = None
         local_wantslists_lists_cache = None
@@ -884,7 +916,7 @@ class PyMkmApp:
             s.close()
 
         if local_wantslists_cache:
-            if PyMkmHelper.prompt_bool(
+            if cached or PyMkmHelper.prompt_bool(
                 f"Cached wantslists ({len(local_wantslists_cache)} items) found, use it? (if not, then it will be cleared)"
             ):
                 return local_wantslists_cache, local_wantslists_lists_cache
