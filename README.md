@@ -5,8 +5,8 @@ See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
 
 # 📙 PyMKM
 
-> \_NEW in 2.0.3: Command line support, see `python pymkm.py --help` for more info.
-> \_NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT.
+> _NEW in 2.0.3: Command line support, see `python pymkm.py --help` for more info._  
+> _NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT._
 
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
