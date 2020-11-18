@@ -4,11 +4,12 @@ Helper functions for the PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 __license__ = "MIT"
 
 import math
 import statistics
+import shelve
 from distutils.util import strtobool
 
 
@@ -75,3 +76,48 @@ class PyMkmHelper:
         with open(file_name, "r") as f:
             for line in f:
                 list_data.append(int(line.strip()))
+
+    @staticmethod
+    def store_to_cache(filename, label, data):
+        s = shelve.open(filename)
+        if len(data) > 0:
+            try:
+                s[label] = data
+                print(f"{label.title()} cached ({len(data)} items).")
+                return len(s[label])
+            finally:
+                s.close()
+
+    @staticmethod
+    def append_to_cache(filename, label, data):
+        s = shelve.open(filename)
+        if len(data) > 0:
+            try:
+                appended_data = s[label]
+                appended_data.extend(data)
+                s[label] = appended_data
+                print(f"{label.title()} cached ({len(data)} new items).")
+                return len(s[label])
+            except KeyError:
+                return PyMkmHelper.store_to_cache(filename, label, data)
+            finally:
+                s.close()
+
+    @staticmethod
+    def clear_cache(filename, label):
+        s = shelve.open(filename)
+        try:
+            del s[label]
+            print(f"{label.title()} cleared.")
+        finally:
+            s.close()
+
+    @staticmethod
+    def read_from_cache(filename, label):
+        s = shelve.open(filename)
+        try:
+            return s[label]
+        except KeyError as ke:
+            return None
+        finally:
+            s.close()

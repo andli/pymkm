@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 __license__ = "MIT"
 
 import os
@@ -243,25 +243,33 @@ class PyMkmApp:
 
         stock_list = self.get_stock_as_array(self.api, cli_called, cached)
 
-        partial_update_file = self.config["partial_update_filename"]
+        already_checked_articles = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "partial_updated"
+        )
 
-        already_checked_articles = []
-        if os.path.exists(partial_update_file):
-            PyMkmHelper.read_list(partial_update_file, already_checked_articles)
+        if already_checked_articles:
             print(
-                f"{len(already_checked_articles)} articles found in previous updates, ignoring those. Remove {partial_update_file} if you want to clear the list."
+                f"{len(already_checked_articles)} articles found in previous updates, ignoring those."
             )
 
         partial_stock_update_size = 0
         if partial > 0:
             partial_stock_update_size = partial
         elif not cli_called:
+            partial_status_string = ""
+            if already_checked_articles:
+                partial_status_string = (
+                    f"({len(already_checked_articles)}/{len(stock_list)} done)"
+                )
             partial_stock_update_size = PyMkmHelper.prompt_string(
-                "Partial update? If so, enter number of cards (or press Enter to update all remaining stock)"
+                f"Partial update? {partial_status_string} \n"
+                + "If so, enter number of cards (or press Enter to update all remaining stock)"
             )
 
             if partial_stock_update_size != "":
                 partial_stock_update_size = int(partial_stock_update_size)
+            else:
+                partial_stock_update_size = 0
 
         if cli_called or self.config["never_undercut_local_market"]:
             undercut_local_market = False
@@ -278,11 +286,20 @@ class PyMkmApp:
             api=self.api,
         )
 
-        if partial_stock_update_size and len(checked_articles) > 0:
-            PyMkmHelper.write_list(partial_update_file, checked_articles)
-            print(
-                f"Partial stock update saved, next update will disregard articles in {partial_update_file}."
+        cache_size = 0
+        if checked_articles:
+            cache_size = PyMkmHelper.append_to_cache(
+                self.config["local_cache_filename"],
+                "partial_updated",
+                checked_articles,
             )
+            if cache_size == len(stock_list):
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "partial_updated"
+                )
+                print(
+                    f"Entire stock updated in partial updates. Partial update data cleared."
+                )
 
         if len(uploadable_json) > 0:
 
@@ -858,6 +875,7 @@ class PyMkmApp:
             api.delete_stock(delete_list)
             self.logger.debug("-> clear_entire_stock: done")
             print("Stock cleared.")
+            PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
         else:
             print("Aborted.")
 
@@ -918,15 +936,11 @@ class PyMkmApp:
     def get_wantslists_data(self, api, cached=False):
         # Check for cached wantslists
         local_wantslists_cache = None
+        PyMkmHelper.read_from_cache(self.config["local_cache_filename"], "wantslists")
         local_wantslists_lists_cache = None
-        s = shelve.open(self.config["local_cache_filename"])
-        try:
-            local_wantslists_cache = s["wantslists"]
-            local_wantslists_lists_cache = s["wantslists_lists"]
-        except KeyError as ke:
-            pass
-        finally:
-            s.close()
+        PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "wantslists_lists"
+        )
 
         if local_wantslists_cache:
             if cached or PyMkmHelper.prompt_bool(
@@ -934,14 +948,13 @@ class PyMkmApp:
             ):
                 return local_wantslists_cache, local_wantslists_lists_cache
             else:
-                s = shelve.open(self.config["local_cache_filename"])
-                try:
-                    del s["wantslists"]
-                    del s["wantslists_lists"]
-                finally:
-                    print("Local Wantslists cleared.")
-                    s.close()
-                    self.get_wantslists_data(api)
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "wantslists"
+                )
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "wantslists_lists"
+                )
+                self.get_wantslists_data(api)
         else:  # no local cache
             wantslists = []
             wantslists_lists = {}
@@ -957,14 +970,14 @@ class PyMkmApp:
             except Exception as err:
                 print(err)
 
-            s = shelve.open(self.config["local_cache_filename"])
-            if len(wantslists_lists) > 0:
-                try:
-                    s["wantslists"] = wantslists
-                    s["wantslists_lists"] = wantslists_lists
-                finally:
-                    print("Wantslists cached.")
-                    s.close()
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"], "wantslists", wantslists
+            )
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"],
+                "wantslists_lists",
+                wantslists_lists,
+            )
 
             return wantslists, wantslists_lists
 
@@ -1171,8 +1184,11 @@ class PyMkmApp:
                 if x["idArticle"] not in already_checked_articles
             ]
             if len(filtered_stock_list) == 0:
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "partial_updated"
+                )
                 print(
-                    f"Entire stock updated in partial updates. Delete {self.config['partial_update_filename']} to reset."
+                    f"Entire stock updated in partial updates. Partial update data cleared."
                 )
                 return [], []
         if partial_stock_update_size:
@@ -1189,7 +1205,6 @@ class PyMkmApp:
         products_to_get = [x["idProduct"] for x in filtered_stock_list]
         product_list = api.get_items_async("products", products_to_get)
         product_list = [x for x in product_list if x]
-        # TODO: save articles that we know WERE updated to partial..txt
 
         for article in filtered_stock_list:
             try:
@@ -1387,16 +1402,12 @@ class PyMkmApp:
             )
         )
 
-    def get_stock_as_array(self, api, cli_called, cached):
+    def get_stock_as_array(self, api, cli_called=False, cached=None):
         # Check for cached stock
         local_stock_cache = None
-        s = shelve.open(self.config["local_cache_filename"])
-        try:
-            local_stock_cache = s["stock"]
-        except KeyError as ke:
-            pass
-        finally:
-            s.close()
+        local_stock_cache = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "stock"
+        )
 
         if local_stock_cache:
             if not cli_called:
@@ -1408,12 +1419,7 @@ class PyMkmApp:
                 if cached:
                     return local_stock_cache
 
-            s = shelve.open(self.config["local_cache_filename"])
-            try:
-                del s["stock"]
-            finally:
-                print("Stock cleared.")
-                s.close()
+            PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
 
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
@@ -1448,12 +1454,8 @@ class PyMkmApp:
             ]
             print("Stock fetched.")
 
-            s = shelve.open(self.config["local_cache_filename"])
-            if len(stock_list) > 0:
-                try:
-                    s["stock"] = stock_list
-                finally:
-                    print("Stock cached.")
-                    s.close()
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"], "stock", stock_list
+            )
 
             return stock_list
