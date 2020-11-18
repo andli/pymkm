@@ -1105,8 +1105,7 @@ class PyMkmApp:
     def get_competition(self, api, product_id, is_foil):
         # TODO: Add support for playsets
         # TODO: Add support for card condition
-        if self.account is None:
-            self.account = api.get_account()
+        self.account = api.get_account()["account"]
         country_code = self.account["country"]
 
         config = self.config
@@ -1138,6 +1137,7 @@ class PyMkmApp:
                 username,
                 article["seller"]["address"]["country"],
                 article["condition"],
+                article["language"]["languageName"],
                 article["count"],
                 article["price"],
             ]
@@ -1152,15 +1152,22 @@ class PyMkmApp:
         print(
             tb.tabulate(
                 sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
-                headers=["Username", "Country", "Condition", "Count", "Price"],
+                headers=[
+                    "Username",
+                    "Country",
+                    "Condition",
+                    "Language",
+                    "Count",
+                    "Price",
+                ],
                 tablefmt="simple",
             )
         )
         print(70 * "-")
         print(
             "Total average price: {}, Total median price: {}, Total # of articles: {}\n".format(
-                str(PyMkmHelper.calculate_average(table_data, 3, 4)),
-                str(PyMkmHelper.calculate_median(table_data, 3, 4)),
+                str(PyMkmHelper.calculate_average(table_data, 4, 5)),
+                str(PyMkmHelper.calculate_median(table_data, 4, 5)),
                 str(len(table_data)),
             )
         )
@@ -1176,6 +1183,8 @@ class PyMkmApp:
         filtered_stock_list = self.__filter(stock_list)
 
         sticky_count = len(stock_list) - len(filtered_stock_list)
+
+        # articles_in_shoppingcarts = api.get_articles_in_shoppingcarts()
 
         if already_checked_articles:
             filtered_stock_list = [
