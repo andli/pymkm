@@ -276,7 +276,7 @@ class PyMkmApi:
             client_secret=self.config["app_secret"],
             token=self.config["access_token"],
             token_secret=self.config["access_token_secret"],
-            timeout=10.0,
+            timeout=20.0,
         ) as client:
             tasks = []
             sem = asyncio.Semaphore(100)
