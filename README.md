@@ -68,12 +68,11 @@ Do you want to update these prices? [y/N]:
 
 ## 📈 Price calculation
 
-The prices for non-foils are the "trend" prices supplied by Cardmarket. I only look at English cards for now.
-Cardmarket does not however supply trend prices for foils, so my algorithm is this:
+The price data is supplied by the Cardmarket API.
 
 _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
 
-1. Filter out foils, English, not altered, not signed, minimum Good condition.
+1. Filter out English, not altered, not signed, minimum Good condition.
 1. Set price to lowest + (median - lowest / 4), rounded to closest rouding limit.
 1. Undercut price in seller's own country by the rounding limit if not contradicting 2)
 1. Never go below the rounding limit for foils
@@ -88,9 +87,23 @@ Should you want to avoid updating certain articles in your stock, set the starti
 
 This function selects a wantslist and dumps price data for all products in that list to a .csv file.
 
-This function has command line support, see `python pymkm.py --help` for more info.
-
 _NOTE: This does not work for metaproducts, only for products._
+
+## CLI
+
+Some functions have command line support, see `python pymkm.py --help` for more info.
+
+#### Example 1
+
+`python pymkm.py --update_stock --partial 500 --cache True`
+
+_This updates the stock, 500 articles each time, using the local cache of the stock if available._
+
+#### Example 2
+
+`python pymkm.py --price_check_wantslist fancycards --cache True`
+
+_This dumps price data for all the cards in the wantslist "fancycards" to a .csv file, using the local cache of the wantslists if available._
 
 ## ⚙️ Config parameters
 
