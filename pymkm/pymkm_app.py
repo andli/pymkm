@@ -598,7 +598,7 @@ class PyMkmApp:
             )
             print(
                 tb.tabulate(
-                    sorted(table_data, key=lambda x: x[5], reverse=True)[:num_articles],
+                    sorted(table_data, key=lambda x: x[6], reverse=True)[:num_articles],
                     headers=[
                         "Name",
                         "Expansion",
