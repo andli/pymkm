@@ -99,6 +99,7 @@ class PyMkmHelper:
                 print(f"{label.title()} cached ({len(data)} new items).")
                 return len(s[label])
             except KeyError:
+                s.close()
                 return PyMkmHelper.store_to_cache(filename, label, data)
             finally:
                 s.close()
