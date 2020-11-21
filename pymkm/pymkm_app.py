@@ -1421,7 +1421,7 @@ class PyMkmApp:
         if local_stock_cache:
             if not cli_called:
                 if PyMkmHelper.prompt_bool(
-                    f"Cached stock ({len(local_stock_cache)} items) found, use it? (if not, then it will be cleared)"
+                    f"Cached stock ({len(local_stock_cache)} items) found, use it? Note that prices may be outdated."
                 ):
                     return local_stock_cache
             else:
