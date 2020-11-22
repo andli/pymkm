@@ -1296,7 +1296,7 @@ class PyMkmApp:
         try:
             discount = float(self.config["discount_by_condition"][condition])
         except KeyError as err:
-            self.logger.error(f"Unknown rarity '{rarity}' (pid: {product_id}).")
+            self.logger.error(f"Unknown condition '{condition}'.")
             raise err
         else:
             return discount
