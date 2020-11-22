@@ -645,7 +645,7 @@ class PyMkmApp:
         try:
             updated_products = api.get_items_async("products", products_to_get)
         except Exception as err:
-            pass
+            self.logger.error(err)
 
         # Write to CSV:
         if len(updated_products) > 0:
@@ -734,7 +734,6 @@ class PyMkmApp:
             )
 
             total_number_of_items = sum([len(x) for x in wantslists_lists.values()])
-            index = 0
             print("Matching received purchases with wantslists...")
             bar = progressbar.ProgressBar(max_value=total_number_of_items)
             matches = []
@@ -747,7 +746,7 @@ class PyMkmApp:
                     x["idMetaproduct"] for x in metaproducts_article_list
                 ]
                 metaproduct_list = api.get_items_async(
-                    "metaproducts", metaproducts_to_get
+                    "metaproducts", metaproducts_to_get, bar
                 )
 
                 for article in articles:
@@ -817,8 +816,6 @@ class PyMkmApp:
                                 }
                             )
                         matches.append(match)
-                    index += 1
-                    bar.update(index)
             bar.finish()
 
             if matches:
@@ -939,9 +936,11 @@ class PyMkmApp:
     def get_wantslists_data(self, api, cached=False):
         # Check for cached wantslists
         local_wantslists_cache = None
-        PyMkmHelper.read_from_cache(self.config["local_cache_filename"], "wantslists")
+        local_wantslists_cache = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "wantslists"
+        )
         local_wantslists_lists_cache = None
-        PyMkmHelper.read_from_cache(
+        local_wantslists_lists_cache = PyMkmHelper.read_from_cache(
             self.config["local_cache_filename"], "wantslists_lists"
         )
 

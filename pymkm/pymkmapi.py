@@ -219,8 +219,7 @@ class PyMkmApi:
             self.__handle_response(r)
             return r
         except CardmarketError as err:
-            self.logger.error(f"{err.mkm_msg()} {err.url}")
-            # print(err.mkm_msg())
+            self.logger.error(f"{err.mkm_msg()} {url}")
             # sys.exit(0)
         except Exception as err:
             print(f"\n>> Cardmarket connection error: {err} for {url}")
@@ -270,7 +269,8 @@ class PyMkmApi:
             else:
                 return resp.json()
             finally:
-                progressbar.update()
+                if progressbar:
+                    progressbar.update()
 
     async def get_items(self, item_type, item_id_list, progressbar=None):
         async with AsyncOAuth1Client(
