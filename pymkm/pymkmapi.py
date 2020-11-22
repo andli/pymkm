@@ -258,7 +258,7 @@ class PyMkmApi:
         if r:
             return r.json()
 
-    async def fetch(self, sem, client, url, uri, item_type, item_id):
+    async def fetch(self, sem, client, url, uri, item_type, item_id, progressbar=None):
         async with sem:
             client_auth = copy.copy(client.auth)
             client_auth.realm = url
@@ -269,8 +269,10 @@ class PyMkmApi:
                 self.logger.debug(f"Timeout on {item_type} {item_id}")
             else:
                 return resp.json()
+            finally:
+                progressbar.update()
 
-    async def get_items(self, item_type, item_id_list):
+    async def get_items(self, item_type, item_id_list, progressbar=None):
         async with AsyncOAuth1Client(
             client_id=self.config["app_token"],
             client_secret=self.config["app_secret"],
@@ -290,15 +292,18 @@ class PyMkmApi:
                             f"{self.base_url}/{item_type}/",
                             item_type,
                             item_id,
+                            progressbar,
                         )
                     )
                 )
             responses = await asyncio.gather(*tasks, return_exceptions=False)
             return responses
 
-    def get_items_async(self, item_type, item_id_list):
+    def get_items_async(self, item_type, item_id_list, progressbar=None):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.get_items(item_type, item_id_list))
+        return loop.run_until_complete(
+            self.get_items(item_type, item_id_list, progressbar)
+        )
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
         # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct

@@ -1210,13 +1210,13 @@ class PyMkmApp:
         checked_articles = []
         total_price = 0
 
-        index = 0
+        # index = 0
         bar = progressbar.ProgressBar(max_value=len(filtered_stock_list))
-        bar.update(index)
+        # bar.update(index)
 
         products_to_get = [x["idProduct"] for x in filtered_stock_list]
         product_list = api.get_items_async(
-            "products", products_to_get
+            "products", products_to_get, bar
         )  # TODO: pass bar in here?
         product_list = [x for x in product_list if x]
 
@@ -1243,8 +1243,8 @@ class PyMkmApp:
                 total_price += updated_article.get("price")
             else:
                 total_price += article.get("price")
-            index += 1
-            bar.update(index)
+            # index += 1
+            bar.update()
         bar.finish()
 
         print("Value in this update: {}".format(str(round(total_price, 2))))
