@@ -10,6 +10,7 @@ __license__ = "MIT"
 import math
 import statistics
 import shelve
+import collections.abc
 from distutils.util import strtobool
 
 
@@ -122,3 +123,12 @@ class PyMkmHelper:
             return None
         finally:
             s.close()
+
+    @staticmethod
+    def update_recursive(d, u):
+        for k, v in u.items():
+            if isinstance(v, collections.abc.Mapping):
+                d[k] = PyMkmHelper.update_recursive(d.get(k, {}), v)
+            elif k not in d:
+                d[k] = v
+        return d

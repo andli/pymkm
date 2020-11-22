@@ -55,8 +55,9 @@ class PyMkmApp:
 
                 # Sync missing attributes to active config
                 template_config = json.load(open("config_template.json"))
-                template_config.update(self.config)
-                self.config = template_config
+                # template_config.update(self.config)
+                PyMkmHelper.update_recursive(self.config, template_config)
+                # self.config = template_config
             except FileNotFoundError:
                 self.logger.error(
                     "You must copy config_template.json to config.json and populate the fields."
