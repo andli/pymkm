@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 __license__ = "MIT"
 
 import os
@@ -271,7 +271,7 @@ class PyMkmApp:
             else:
                 partial_stock_update_size = 0
 
-        if cli_called or self.config["never_undercut_local_market"]:
+        if cli_called or not self.config["enable_undercut_local_market"]:
             undercut_local_market = False
         else:
             undercut_local_market = PyMkmHelper.prompt_bool(
@@ -363,9 +363,11 @@ class PyMkmApp:
                     found_string += "."
                 print(found_string)
 
-            undercut_local_market = PyMkmHelper.prompt_bool(
-                "Try to undercut local market? (slower, more requests)"
-            )
+            undercut_local_market = False
+            if self.config["enable_undercut_local_market"]:
+                undercut_local_market = PyMkmHelper.prompt_bool(
+                    "Try to undercut local market? (slower, more requests)"
+                )
 
             product = self.api.get_product(article["idProduct"])
             r = self.update_price_for_article(

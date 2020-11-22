@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm) 
+[![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm)
 [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm)
 
 See the [Changelog](CHANGELOG.md) for what's new.
@@ -119,6 +119,10 @@ _Example_: `"mythic": "1.0"` would set the lowest price Mythic rarity cards to â
 
 Set a decimal multiplier on each card condition level.
 _Example_: `"PL": "0.5"` would set the price for Played cards to 50% off the trend price.
+
+### `enable_undercut_local_market`
+
+This enables an extra confirmation step for updating prices which tries to undercut your local (same country) competition. Use this when you really want to sell your stock.
 
 ### `search_filters`
 

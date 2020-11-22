@@ -33,7 +33,7 @@
     "idLanguage": 1
   },
   "reporting": true,
-  "never_undercut_local_market": false,
+  "enable_undercut_local_market": false,
   "sticky_price_char": "!",
   "local_cache_filename": "local_pymkm_data.db",
   "csv_prices_filename": "prices.csv",
