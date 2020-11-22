@@ -1214,7 +1214,9 @@ class PyMkmApp:
         bar.update(index)
 
         products_to_get = [x["idProduct"] for x in filtered_stock_list]
-        product_list = api.get_items_async("products", products_to_get)
+        product_list = api.get_items_async(
+            "products", products_to_get
+        )  # TODO: pass bar in here?
         product_list = [x for x in product_list if x]
 
         for article in filtered_stock_list:
@@ -1265,8 +1267,10 @@ class PyMkmApp:
         if new_price:
             price_diff = new_price - article["price"]
             if price_diff != 0:
+                # table data created here
                 return {
                     "name": article["product"]["enName"],
+                    "expansion": article["product"]["expansion"],
                     "isFoil": article.get("isFoil", False),
                     "isPlayset": article.get("isPlayset", False),
                     "language": article["language"]["languageName"],
@@ -1284,16 +1288,14 @@ class PyMkmApp:
         try:
             rounding_limit = float(self.config["price_limit_by_rarity"][rarity.lower()])
         except KeyError as err:
-            print(
-                f"ERROR: Unknown rarity '{rarity}' (pid: {product_id}). Using default rounding."
-            )
+            self.logger.error(f"Unknown rarity '{rarity}' (pid: {product_id}).")
         return rounding_limit
 
     def get_discount_for_condition(self, condition):
         try:
             discount = float(self.config["discount_by_condition"][condition])
         except KeyError as err:
-            print(f"ERROR: Unknown condition '{condition}'.")
+            self.logger.error(f"Unknown rarity '{rarity}' (pid: {product_id}).")
             raise err
         else:
             return discount
@@ -1371,7 +1373,7 @@ class PyMkmApp:
         self.draw_price_changes_table(i for i in sorted_worst if i["price_diff"] < 0)
 
         print(
-            "\nTotal price difference: {}.".format(  # TODO: fix bug where summary is wrong
+            "\nTotal price difference: {}.".format(
                 str(
                     round(
                         sum(item["price_diff"] * item["count"] for item in sorted_best),
@@ -1388,6 +1390,7 @@ class PyMkmApp:
                     [
                         item["count"],
                         item["name"],
+                        item["expansion"],
                         "\u2713" if item["isFoil"] else "",
                         "\u2713" if item["isPlayset"] else "",
                         item["condition"],
@@ -1401,6 +1404,7 @@ class PyMkmApp:
                 headers=[
                     "Count",
                     "Name",
+                    "Expansion",
                     "Foil",
                     "Playset",
                     "Condition",

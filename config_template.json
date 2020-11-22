@@ -13,7 +13,8 @@
     "special": "0.25",
     "ultra rare": "0.25",
     "ghost rare": "0.25",
-    "token": "0.25"
+    "token": "0.25",
+    "land": "0.25"
   },
   "discount_by_condition": {
     "MT": "1",
