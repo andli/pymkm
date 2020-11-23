@@ -121,6 +121,8 @@ class PyMkmHelper:
         try:
             del s[label]
             print(f"{label.title()} cleared.")
+        except KeyError:
+            pass
         finally:
             s.close()
 

@@ -456,7 +456,7 @@ class PyMkmApi:
             index += 1
             self.logger.debug(f"chunk {index}/{len(chunked_list)}")
             xml_payload = self.__json_to_xml(chunk)
-            r = mkm_oauth.put(url, data=xml_payload)
+            r = mkm_oauth.put(url, data=xml_payload, timeout=30)
             try:
                 json_response = r.json()
                 if len(json_response["updatedArticles"]) > 0:
@@ -469,9 +469,8 @@ class PyMkmApi:
                         self.logger.warning(
                             f"Failed update price for aid: {failure['tried']['idArticle']})."
                         )
-                        print(
-                            failure
-                        )  # TODO: remove this when stable. update config to log level WARNING as default
+                        print(failure)
+                        # TODO: remove this when stable. update config to log level WARNING as default
             except Exception as err:
                 self.logger.error(err)
 

@@ -350,7 +350,11 @@ class PyMkmApp:
                 "Try to undercut local market? (slower, more requests)"
             )
 
-        uploadable_json, checked_articles = self.calculate_new_prices_for_stock(
+        (
+            uploadable_json,
+            checked_articles,
+            num_filtered_articles,
+        ) = self.calculate_new_prices_for_stock(
             stock_list,
             undercut_local_market,
             partial_stock_update_size,
@@ -359,13 +363,13 @@ class PyMkmApp:
         )
 
         cache_size = 0
-        if checked_articles:
+        if checked_articles:  # TODO: subtract the sticky prices
             cache_size = PyMkmHelper.append_to_cache(
                 self.config["local_cache_filename"],
                 "partial_updated",
                 checked_articles,
             )
-            if cache_size == len(stock_list):
+            if cache_size + num_filtered_articles == len(stock_list):
                 print(f"Entire stock updated in partial updates.")
                 PyMkmHelper.clear_cache(
                     self.config["local_cache_filename"], "partial_updated"
@@ -388,7 +392,7 @@ class PyMkmApp:
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
 
-    def __filter(self, article_list):
+    def __filter_sticky(self, article_list):
         sticky_price_char = self.config["sticky_price_char"]
         # if we find the sticky price marker, filter out articles
         def filtered(stock_item):
@@ -411,7 +415,7 @@ class PyMkmApp:
         except Exception as err:
             print(err)
 
-        filtered_articles = self.__filter(articles)
+        filtered_articles = self.__filter_sticky(articles)
 
         ### --- refactor?
 
@@ -1254,7 +1258,7 @@ class PyMkmApp:
         already_checked_articles,
         api,
     ):
-        filtered_stock_list = self.__filter(stock_list)
+        filtered_stock_list = self.__filter_sticky(stock_list)
 
         sticky_count = len(stock_list) - len(filtered_stock_list)
 
@@ -1321,7 +1325,7 @@ class PyMkmApp:
         print("Value in this update: {}".format(str(round(total_price, 2))))
         if len(stock_list) != len(filtered_stock_list):
             print(f"Note: {sticky_count} items filtered out because of sticky prices.")
-        return result_json, checked_articles
+        return result_json, checked_articles, sticky_count
 
     def update_price_for_article(
         self, article, product, undercut_local_market=False, api=None
