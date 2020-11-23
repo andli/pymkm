@@ -16,6 +16,7 @@ partial_stock_update.txt
 failed_imports.csv
 list.csv
 prices.csv
+stock.csv
 *.log
 *.log.*
 *.db.dir

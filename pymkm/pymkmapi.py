@@ -15,6 +15,9 @@ import logging.handlers
 import re
 import sys
 import urllib.parse
+import base64, zlib
+import csv
+import codecs
 
 import requests
 from authlib.integrations.httpx_client import AsyncOAuth1Client, OAuth1Auth
@@ -482,9 +485,58 @@ class PyMkmApi:
         self.logger.debug(f"-> get_stock_file")
         url = f"{self.base_url}/stock/file"
 
-        return self.handle_partial_content(
-            "article", url, start, provided_oauth=provided_oauth, **kwargs
-        )
+        mkm_oauth = self.__setup_auth_session(url, provided_oauth)
+
+        self.logger.debug(">> Getting stock as gzip")
+        r = self.mkm_request(mkm_oauth, url).json()
+
+        encoded_data = r["stock"]
+        if encoded_data:
+            decompressed_data = zlib.decompress(
+                base64.b64decode(encoded_data), 16 + zlib.MAX_WBITS
+            )
+            decoded_data = codecs.decode(decompressed_data, "unicode_escape")
+
+            ## print(repr(decoded_data))
+
+            has_header = csv.Sniffer().has_header(decoded_data)
+            dialect = csv.Sniffer().sniff(decoded_data)
+
+            fieldnames = [
+                "idArticle",
+                "idProduct",
+                "English Name",
+                "Local Name",
+                "Exp.",
+                "Exp. Name",
+                "Price",
+                "Language",
+                "Condition",
+                "Foil?",
+                "Signed?",
+                "Playset?",
+                "Altered?",
+                "Comments",
+                "Amount",
+                "onSale",
+                "idCurrency",
+                "Currency Code",
+            ]
+
+            with open("stock.csv", "w", newline="") as f:
+                f.write(decoded_data)
+
+            reader = None
+            return_dict = []
+            with open("stock.csv", "r") as f:
+                reader = csv.DictReader(f, dialect=dialect)
+                for row in reader:
+                    return_dict.append(row)
+
+            if reader is None:
+                self.logger.error("Error getting stock as CSV.")
+
+            return return_dict
 
     def get_stock(self, start=1, provided_oauth=None, **kwargs):
         # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management

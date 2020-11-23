@@ -181,6 +181,9 @@ class PyMkmApp:
                     menu.add_function_item(
                         f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
                     )
+                    menu.add_function_item(
+                        f"⚠ Get stock file", self.get_stock_as_file, {"api": self.api},
+                    )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
                 else:
@@ -230,6 +233,32 @@ class PyMkmApp:
                 )
 
             api.add_stock(product_list)
+
+    def get_stock_as_file(self, api):
+        stock = api.get_stock_file()
+
+        keys = [
+            "idArticle",
+            "idProduct",
+            "product",
+            "count",
+            "comments",
+            "price",
+            "condition",
+            "isFoil",
+            "isPlayset",
+            "isSigned",
+            "language",
+        ]
+        stock_list = [
+            {x: y for x, y in article.items() if x in keys} for article in stock
+        ]
+        # TODO: translate retarded col names from csv to the regular stock columns
+        print("Stock fetched.")
+
+        PyMkmHelper.store_to_cache(
+            self.config["local_cache_filename"], "stock", stock_list
+        )
 
     def clean_json_for_upload(self, not_uploadable_json):
         for entry in not_uploadable_json:
