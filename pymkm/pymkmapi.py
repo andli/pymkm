@@ -303,7 +303,7 @@ class PyMkmApi:
             client_secret=self.config["app_secret"],
             token=self.config["access_token"],
             token_secret=self.config["access_token_secret"],
-            timeout=20.0,
+            timeout=30.0,
         ) as client:
             tasks = []
             sem = asyncio.Semaphore(100)
@@ -459,17 +459,21 @@ class PyMkmApi:
             r = mkm_oauth.put(url, data=xml_payload)
             try:
                 json_response = r.json()
-                for success in json_response["updatedArticles"]:
-                    self.logger.debug(
-                        f"Updated price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']})."
-                    )
-                for failure in json_response["notUpdatedArticles"]:
-                    self.logger.warning(
-                        f"Failed update price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']})."
-                    )
-                    print(failure)
+                if len(json_response["updatedArticles"]) > 0:
+                    for success in json_response["updatedArticles"]:
+                        self.logger.debug(
+                            f"Updated price for aid: {success['idArticle']}, pid: {success['idProduct']}, {success['product']['enName']})."
+                        )
+                if len(json_response["notUpdatedArticles"]) > 0:
+                    for failure in json_response["notUpdatedArticles"]:
+                        self.logger.warning(
+                            f"Failed update price for aid: {failure['tried']['idArticle']})."
+                        )
+                        print(
+                            failure
+                        )  # TODO: remove this when stable. update config to log level WARNING as default
             except Exception as err:
-                print(err)
+                self.logger.error(err)
 
         # TODO: Only considers the last response.
         if self.__handle_response(r):

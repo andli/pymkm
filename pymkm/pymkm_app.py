@@ -297,6 +297,7 @@ class PyMkmApp:
         # TODO: translate retarded col names from csv to the regular stock columns
         print("Stock fetched (using gzipped data).")
 
+        PyMkmHelper.clear_cache(self.config["local_cache_filename"], "partial_updated")
         PyMkmHelper.store_to_cache(
             self.config["local_cache_filename"], "stock", stock_list
         )
@@ -365,11 +366,9 @@ class PyMkmApp:
                 checked_articles,
             )
             if cache_size == len(stock_list):
+                print(f"Entire stock updated in partial updates.")
                 PyMkmHelper.clear_cache(
                     self.config["local_cache_filename"], "partial_updated"
-                )
-                print(
-                    f"Entire stock updated in partial updates. Partial update data cleared."
                 )
 
         if len(uploadable_json) > 0:
@@ -947,7 +946,7 @@ class PyMkmApp:
             print("Clearing stock...")
             api.delete_stock(delete_list)
             self.logger.debug("-> clear_entire_stock: done")
-            print("Stock cleared.")
+
             PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
         else:
             print("Aborted.")
@@ -1519,6 +1518,9 @@ class PyMkmApp:
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
         )
+        PyMkmHelper.clear_cache(
+            self.config["local_cache_filename"], "partial_updated"
+        )  # clear this because a new stock invalidates it
         try:
             d = api.get_stock()
         except CardmarketError as err:
