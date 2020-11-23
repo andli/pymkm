@@ -50,6 +50,7 @@ class PyMkmApi:
     base_url = "https://api.cardmarket.com/ws/v2.0/output.json"
     conditions = ["MT", "NM", "EX", "GD", "LP", "PL", "PO"]
     languages = [
+        "N/A",
         "English",
         "French",
         "German",
@@ -65,6 +66,27 @@ class PyMkmApi:
         "Polish",
         "Czech",
         "Hungarian",
+    ]
+    # These are from 2020-11-22, not the same as in the API specs:
+    stock_csv_fieldnames = [
+        "idArticle",
+        "idProduct",
+        "English Name",
+        "Local Name",
+        "Exp.",
+        "Exp. Name",
+        "Price",
+        "Language",
+        "Condition",
+        "Foil?",
+        "Signed?",
+        "Playset?",
+        "Altered?",
+        "Comments",
+        "Amount",
+        "onSale",
+        "idCurrency",
+        "Currency Code",
     ]
 
     def __init__(self, config=None, logger=None):
@@ -497,31 +519,8 @@ class PyMkmApi:
             )
             decoded_data = codecs.decode(decompressed_data, "unicode_escape")
 
-            ## print(repr(decoded_data))
-
             has_header = csv.Sniffer().has_header(decoded_data)
             dialect = csv.Sniffer().sniff(decoded_data)
-
-            fieldnames = [
-                "idArticle",
-                "idProduct",
-                "English Name",
-                "Local Name",
-                "Exp.",
-                "Exp. Name",
-                "Price",
-                "Language",
-                "Condition",
-                "Foil?",
-                "Signed?",
-                "Playset?",
-                "Altered?",
-                "Comments",
-                "Amount",
-                "onSale",
-                "idCurrency",
-                "Currency Code",
-            ]
 
             with open("stock.csv", "w", newline="") as f:
                 f.write(decoded_data)

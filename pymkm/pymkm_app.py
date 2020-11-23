@@ -170,6 +170,11 @@ class PyMkmApp:
                     {"api": self.api},
                 )
                 menu.add_function_item(
+                    f"Get stock as gzip file",
+                    self.get_stock_as_file,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
                     f"Track price data to {self.config['csv_prices_filename']}",
                     self.track_prices_to_csv,
                     {"api": self.api},
@@ -180,9 +185,6 @@ class PyMkmApp:
                     )
                     menu.add_function_item(
                         f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
-                    )
-                    menu.add_function_item(
-                        f"⚠ Get stock file", self.get_stock_as_file, {"api": self.api},
                     )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
@@ -236,25 +238,61 @@ class PyMkmApp:
 
     def get_stock_as_file(self, api):
         stock = api.get_stock_file()
+        unused_attributes = [
+            "Exp.",
+            "Exp. Name",
+            "Altered?",
+            "onSale",
+            "idCurrency",
+            "Currency Code",
+        ]
 
-        keys = [
-            "idArticle",
-            "idProduct",
-            "product",
-            "count",
-            "comments",
-            "price",
-            "condition",
-            "isFoil",
-            "isPlayset",
-            "isSigned",
-            "language",
-        ]
+        regular_stock_keys_mapping = {
+            "idArticle": "idArticle",
+            "idProduct": "idProduct",
+            "Amount": "count",
+            "Comments": "comments",
+            "Price": "price",
+            "Condition": "condition",
+            "Foil?": "isFoil",
+            "Playset?": "isPlayset",
+            "Signed?": "isSigned",
+            "Language": "language",
+        }
         stock_list = [
-            {x: y for x, y in article.items() if x in keys} for article in stock
+            {
+                regular_stock_keys_mapping[x]: y
+                for x, y in article.items()
+                if x in regular_stock_keys_mapping
+            }
+            for article in stock
         ]
+        # TODO: construct the 'product' entity for each article
+        for article in stock_list:
+            try:
+                product_item = {
+                    "enName": next(
+                        x["English Name"]
+                        for x in stock
+                        if x["idArticle"] == article["idArticle"]
+                    ),
+                    "locName": next(
+                        x["Local Name"]
+                        for x in stock
+                        if x["idArticle"] == article["idArticle"]
+                    ),
+                    "expansion": next(
+                        x["Exp. Name"]
+                        for x in stock
+                        if x["idArticle"] == article["idArticle"]
+                    ),
+                }
+                article["product"] = product_item
+            except StopIteration:
+                # Stock item not found, continuing
+                continue
         # TODO: translate retarded col names from csv to the regular stock columns
-        print("Stock fetched.")
+        print("Stock fetched (using gzipped data).")
 
         PyMkmHelper.store_to_cache(
             self.config["local_cache_filename"], "stock", stock_list
@@ -610,8 +648,11 @@ class PyMkmApp:
             playset = article.get("isPlayset")
             condition = article.get("condition")
             language_code = article.get("language")
-            language_name = language_code.get("languageName")
-            price = article.get("price")
+            if isinstance(language_code, str):
+                language_name = PyMkmApi.languages[int(language_code)]
+            else:
+                language_name = language_code.get("languageName")
+            price = float(article.get("price"))
             table_data.append(
                 [
                     name,

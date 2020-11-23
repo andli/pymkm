@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added expansion to price update tables.
 - Added "Land" rarity.
+- Added the api call to fetch stock as gzip.
 
 ### Changed
 
