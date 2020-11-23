@@ -16,6 +16,16 @@ from distutils.util import strtobool
 
 class PyMkmHelper:
     @staticmethod
+    def string_to_float_or_int(input_string):
+        try:
+            if float(input_string).is_integer():
+                return int(float(input_string))
+            else:
+                return float(input_string)
+        except ValueError:
+            pass
+
+    @staticmethod
     def calculate_average(table, col_no_count, col_no_price):
         flat_array = []
         for row in table:

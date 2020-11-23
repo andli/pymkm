@@ -269,28 +269,31 @@ class PyMkmApp:
         ]
         # TODO: construct the 'product' entity for each article
         for article in stock_list:
-            try:
-                product_item = {
-                    "enName": next(
-                        x["English Name"]
-                        for x in stock
-                        if x["idArticle"] == article["idArticle"]
-                    ),
-                    "locName": next(
-                        x["Local Name"]
-                        for x in stock
-                        if x["idArticle"] == article["idArticle"]
-                    ),
-                    "expansion": next(
-                        x["Exp. Name"]
-                        for x in stock
-                        if x["idArticle"] == article["idArticle"]
-                    ),
-                }
-                article["product"] = product_item
-            except StopIteration:
-                # Stock item not found, continuing
-                continue
+            for k, v in article.items():
+                try:
+                    article[k] = PyMkmHelper.string_to_float_or_int(v)
+                except ValueError as err:
+                    continue
+
+            def map_stock_item(to_string, from_string):
+                try:
+                    return {
+                        to_string: next(
+                            x[from_string]
+                            for x in stock
+                            if int(x["idArticle"]) == article["idArticle"]
+                        )
+                    }
+                except StopIteration:
+                    return {to_string: ""}
+
+            product_item = {}
+            product_item.update(map_stock_item("enName", "English Name"))
+            product_item.update(map_stock_item("locName", "Local Name"))
+            product_item.update(map_stock_item("expansion", "Exp. Name"))
+
+            article["product"] = product_item
+
         # TODO: translate retarded col names from csv to the regular stock columns
         print("Stock fetched (using gzipped data).")
 
@@ -1324,13 +1327,20 @@ class PyMkmApp:
     def update_price_for_article(
         self, article, product, undercut_local_market=False, api=None
     ):
+        if isinstance(article["language"], int):
+            language_id = PyMkmHelper.string_to_float_or_int(article["language"])
+            language_name = PyMkmApi.languages[language_id]
+        else:
+            language_id = article["language"]["idLanguage"]
+            language_name = article["language"]["languageName"]
+
         new_price = self.get_price_for_product(
             product,
-            article["product"].get("rarity"),
+            product["product"].get("rarity"),
             article.get("condition"),
             article.get("isFoil", False),
             article.get("isPlayset", False),
-            language_id=article["language"]["idLanguage"],
+            language_id=language_id,
             undercut_local_market=undercut_local_market,
             api=self.api,
         )
@@ -1343,7 +1353,7 @@ class PyMkmApp:
                     "expansion": article["product"]["expansion"],
                     "isFoil": article.get("isFoil", False),
                     "isPlayset": article.get("isPlayset", False),
-                    "language": article["language"]["languageName"],
+                    "language": language_name,
                     "condition": article["condition"],
                     "old_price": article["price"],
                     "price": new_price,
@@ -1358,7 +1368,7 @@ class PyMkmApp:
         try:
             rounding_limit = float(self.config["price_limit_by_rarity"][rarity.lower()])
         except KeyError as err:
-            self.logger.error(f"Unknown rarity '{rarity}' (pid: {product_id}).")
+            self.logger.warning(f"Unknown rarity '{rarity}' (pid: {product_id}).")
         return rounding_limit
 
     def get_discount_for_condition(self, condition):
