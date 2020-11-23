@@ -212,7 +212,7 @@ class PyMkmApi:
 
     def get_language_code_from_string(self, language_string):
         if language_string in self.languages:
-            return self.languages.index(language_string) + 1
+            return self.languages.index(language_string)
         else:
             self.logger.error(">>> Configuration error, review config file.")
             raise Exception("Configuration error (search_filters, language).")
