@@ -303,7 +303,7 @@ class PyMkmApi:
             client_secret=self.config["app_secret"],
             token=self.config["access_token"],
             token_secret=self.config["access_token_secret"],
-            timeout=30.0,
+            timeout=self.config["cardmarket_request_timeout"],
         ) as client:
             tasks = []
             sem = asyncio.Semaphore(100)
@@ -403,7 +403,11 @@ class PyMkmApi:
             # chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
             try:
                 xml_payload = self.__json_to_xml(chunk)
-                r = mkm_oauth.post(url, data=xml_payload)
+                r = mkm_oauth.post(
+                    url,
+                    data=xml_payload,
+                    timeout=self.config["cardmarket_request_timeout"],
+                )
                 inserted = r.json()
                 for item in inserted["inserted"]:
                     if not item["success"]:
@@ -456,7 +460,9 @@ class PyMkmApi:
             index += 1
             self.logger.debug(f"chunk {index}/{len(chunked_list)}")
             xml_payload = self.__json_to_xml(chunk)
-            r = mkm_oauth.put(url, data=xml_payload, timeout=30)
+            r = mkm_oauth.put(
+                url, data=xml_payload, timeout=self.config["cardmarket_request_timeout"]
+            )
             try:
                 json_response = r.json()
                 if len(json_response["updatedArticles"]) > 0:

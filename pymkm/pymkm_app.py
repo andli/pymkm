@@ -16,6 +16,7 @@ import logging.handlers
 import pprint
 import uuid
 import sys
+import time
 from datetime import datetime
 
 import micromenu
@@ -26,6 +27,21 @@ from pkg_resources import parse_version
 
 from .pymkm_helper import PyMkmHelper
 from .pymkmapi import PyMkmApi, CardmarketError
+
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if "log_time" in kw:
+            name = kw.get("log_name", method.__name__)
+            kw["log_time"][name] = round(te - ts, 2)
+        else:
+            print(f"{method.__name__} {round(te - ts)}s")
+        return result
+
+    return timed
 
 
 class PyMkmApp:
@@ -236,7 +252,11 @@ class PyMkmApp:
             api.add_stock(product_list)
 
     def get_stock_as_file(self, api):
+        start = time.time()
+        print("Fetching stock gzip file...")
         stock = api.get_stock_file()
+        end = time.time()
+        print(f"Fetching done, took {end-start} seconds")
         unused_attributes = [
             "Exp.",
             "Exp. Name",
@@ -642,7 +662,9 @@ class PyMkmApp:
     def show_top_expensive_articles_in_stock(self, num_articles, api):
         self.report("show top expensive in stock")
 
-        stock_list = self.get_stock_as_array(api=self.api)
+        logtime_data = {}
+        stock_list = self.get_stock_as_array(api=self.api, log_time=logtime_data)
+        print(f"Fetching stock took {logtime_data['get_stock_as_array']} s.")
         table_data = []
         total_price = 0
 
@@ -653,7 +675,7 @@ class PyMkmApp:
             playset = article.get("isPlayset")
             condition = article.get("condition")
             language_code = article.get("language")
-            if isinstance(language_code, str):
+            if isinstance(language_code, int):
                 language_name = PyMkmApi.languages[int(language_code)]
             else:
                 language_name = language_code.get("languageName")
@@ -1502,7 +1524,8 @@ class PyMkmApp:
             )
         )
 
-    def get_stock_as_array(self, api, cli_called=False, cached=None):
+    @timeit
+    def get_stock_as_array(self, api, cli_called=False, cached=None, **kwargs):
         # Check for cached stock
         local_stock_cache = None
         local_stock_cache = PyMkmHelper.read_from_cache(
