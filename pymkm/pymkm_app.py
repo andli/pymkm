@@ -814,6 +814,9 @@ class PyMkmApp:
             bar = progressbar.ProgressBar(max_value=total_number_of_items)
             matches = []
             for key, articles in wantslists_lists.items():
+                current_wantslist = next(
+                    (x for x in wantslists if x["idWantslist"] == key), None
+                )
 
                 metaproducts_article_list = [
                     x for x in articles if x.get("type") == "metaproduct"
@@ -862,7 +865,7 @@ class PyMkmApp:
                     if product_matches:
                         match = {
                             "wantlist_id": key,
-                            "wantlist_name": wantslists[key],
+                            "wantlist_name": current_wantslist["name"],
                             "date": product_matches[0]["date"],
                             "is_foil": a_foil,
                             "count": sum([x.get("count") for x in product_matches]),
@@ -1032,7 +1035,7 @@ class PyMkmApp:
                 PyMkmHelper.clear_cache(
                     self.config["local_cache_filename"], "wantslists_lists"
                 )
-                self.get_wantslists_data(api)
+                return self.get_wantslists_data(api)
         else:  # no local cache
             wantslists = []
             wantslists_lists = {}
