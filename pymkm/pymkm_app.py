@@ -160,9 +160,7 @@ class PyMkmApp:
                     "Show account info", self.show_account_info, {"api": self.api}
                 )
                 menu.add_function_item(
-                    "Clear entire stock (WARNING)",
-                    self.clear_entire_stock,
-                    {"api": self.api},
+                    "Clear entire stock", self.clear_entire_stock, {"api": self.api},
                 )
                 menu.add_function_item(
                     f"Import stock from {self.config['csv_import_filename']}",
@@ -170,7 +168,7 @@ class PyMkmApp:
                     {"api": self.api},
                 )
                 menu.add_function_item(
-                    f"Get stock as gzip file",
+                    f"Get cached stock as gzip file (very fast)",
                     self.get_stock_as_file,
                     {"api": self.api},
                 )

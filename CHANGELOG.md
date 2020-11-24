@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Recursive config sync (i.e. to add new rarities etc)
 
+### Fixed
+
+- Fixed #28 - issue with wantslist cleanup
+
 ## [2.0.4]
 
 ### Changed
