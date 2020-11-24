@@ -11,7 +11,20 @@ import math
 import statistics
 import shelve
 import collections.abc
+import time
 from distutils.util import strtobool
+
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if "log_time_label" in kw:
+            print(f"{kw['log_time_label']} took {round(te - ts)}s")
+        return result
+
+    return timed
 
 
 class PyMkmHelper:

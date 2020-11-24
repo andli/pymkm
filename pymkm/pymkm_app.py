@@ -25,23 +25,8 @@ import requests
 import tabulate as tb
 from pkg_resources import parse_version
 
-from .pymkm_helper import PyMkmHelper
+from .pymkm_helper import PyMkmHelper, timeit
 from .pymkmapi import PyMkmApi, CardmarketError
-
-
-def timeit(method):
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        if "log_time" in kw:
-            name = kw.get("log_name", method.__name__)
-            kw["log_time"][name] = round(te - ts, 2)
-        else:
-            print(f"{method.__name__} {round(te - ts)}s")
-        return result
-
-    return timed
 
 
 class PyMkmApp:
@@ -187,7 +172,7 @@ class PyMkmApp:
                 menu.add_function_item(
                     f"Get cached stock as gzip file (fast!)",
                     self.get_stock_as_file,
-                    {"api": self.api},
+                    {"api": self.api, "log_time_label": "Fetching stock as gzip file"},
                 )
                 menu.add_function_item(
                     f"Track price data to {self.config['csv_prices_filename']}",
@@ -251,6 +236,7 @@ class PyMkmApp:
 
             api.add_stock(product_list)
 
+    @timeit
     def get_stock_as_file(self, api):
         start = time.time()
         print("Fetching stock gzip file...")
@@ -332,7 +318,9 @@ class PyMkmApp:
         """ This function updates all prices in the user's stock to TREND. """
         self.report("update stock price to trend")
 
-        stock_list = self.get_stock_as_array(self.api, cli_called, cached)
+        stock_list = self.get_stock_as_array(
+            self.api, cli_called, cached, log_time_label="Fetching stock"
+        )
 
         already_checked_articles = PyMkmHelper.read_from_cache(
             self.config["local_cache_filename"], "partial_updated"
@@ -518,7 +506,10 @@ class PyMkmApp:
                 products = result
 
                 stock_list_products = [
-                    x["idProduct"] for x in self.get_stock_as_array(api=self.api)
+                    x["idProduct"]
+                    for x in self.get_stock_as_array(
+                        api=self.api, log_time_label="Fetching stock"
+                    )
                 ]
                 products = [
                     x for x in products if x["idProduct"] in stock_list_products
@@ -662,9 +653,10 @@ class PyMkmApp:
     def show_top_expensive_articles_in_stock(self, num_articles, api):
         self.report("show top expensive in stock")
 
-        logtime_data = {}
-        stock_list = self.get_stock_as_array(api=self.api, log_time=logtime_data)
-        print(f"Fetching stock took {logtime_data['get_stock_as_array']} s.")
+        stock_list = self.get_stock_as_array(
+            api=self.api, log_time_label="Fetching stock"
+        )
+
         table_data = []
         total_price = 0
 
@@ -800,10 +792,12 @@ class PyMkmApp:
         self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
 
-        wantslists, wantslists_lists = self.get_wantslists_data(api)
+        wantslists, wantslists_lists = self.get_wantslists_data(
+            api, log_time_label="Fetching wantslists"
+        )
 
         try:
-            print("Gettings received orders from Cardmarket...")
+            print("Getting received orders from Cardmarket...")
             received_orders = api.get_orders("buyer", "received", start=1)
         except Exception as err:
             print(err)
@@ -958,7 +952,9 @@ class PyMkmApp:
     def clear_entire_stock(self, api):
         self.report("clear entire stock")
 
-        stock_list = self.get_stock_as_array(api=self.api)
+        stock_list = self.get_stock_as_array(
+            api=self.api, log_time_label="Fetching stock"
+        )
         if PyMkmHelper.prompt_bool(
             "Do you REALLY want to clear your entire stock ({} items)?".format(
                 len(stock_list)
@@ -1033,7 +1029,8 @@ class PyMkmApp:
 
     # End of menu item functions ============================================
 
-    def get_wantslists_data(self, api, cached=False):
+    @timeit
+    def get_wantslists_data(self, api, cached=False, **kwargs):
         # Check for cached wantslists
         local_wantslists_cache = None
         local_wantslists_cache = PyMkmHelper.read_from_cache(

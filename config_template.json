@@ -42,6 +42,6 @@
   "csv_import_condition": "NM",
   "show_num_best_worst_items": 20,
   "show_top_x_expensive_items": 20,
-  "cardmarket_request_timeout": 30,
+  "cardmarket_request_timeout": 40,
   "log_level": "WARNING"
 }
