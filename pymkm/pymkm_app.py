@@ -782,9 +782,10 @@ class PyMkmApp:
                         ]
 
                     if product_matches:
+                        list = [w for w in wantslists if w['idWantslist'] == key][0]
                         match = {
                             "wantlist_id": key,
-                            "wantlist_name": wantslists[key],
+                            "wantlist_name": list['name'],
                             "date": product_matches[0]["date"],
                             "is_foil": a_foil,
                             "count": sum([x.get("count") for x in product_matches]),
