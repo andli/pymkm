@@ -33,7 +33,8 @@ jobs:
       - name: Test with pytest
         run: | #pytest --cov=micromenu --cov-report xml:coverage.xml tests/
           pytest
-          coverage run -m --source=./pymkm/ -o coverage.xml unittest discover
+          coverage run -m --source=./pymkm/ unittest discover
+          coverage xml
       - name: Coverage
         uses: codecov/codecov-action@v1
         with:
