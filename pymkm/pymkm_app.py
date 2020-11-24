@@ -121,6 +121,7 @@ class PyMkmApp:
                     top_message,
                     f"API calls used today: {self.api.requests_count}/{self.api.requests_max}",
                     cycle=False,
+                    min_width=50,
                 )
 
                 menu.add_function_item(
@@ -168,7 +169,7 @@ class PyMkmApp:
                     {"api": self.api},
                 )
                 menu.add_function_item(
-                    f"Get cached stock as gzip file (very fast)",
+                    f"Get cached stock as gzip file (fast!)",
                     self.get_stock_as_file,
                     {"api": self.api},
                 )
