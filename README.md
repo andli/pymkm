@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/andli/pymkm.svg?branch=master)](https://travis-ci.org/andli/pymkm)
+![Python application](https://github.com/andli/pymkm/workflows/Python%20application/badge.svg)
 [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm)
 
 See the [Changelog](CHANGELOG.md) for what's new.
