@@ -3,6 +3,7 @@ __pycache__/
 .vscode/
 .idea
 .coverage
+coverage.xml
 /htmlcov
 *.pyc
 /dist/
@@ -10,9 +11,6 @@ __pycache__/
 /.pytest_cache/
 
 config.json
-data.json
-partial_stock_update.txt
-
 failed_imports.csv
 list.csv
 prices.csv
