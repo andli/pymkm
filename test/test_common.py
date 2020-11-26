@@ -13,21 +13,32 @@ from pymkm.pymkmapi import PyMkmApi
 
 
 @patch("pymkm.pymkmapi.PyMkmApi.set_api_quota_attributes", new_callable=MagicMock())
-class TestCommon(unittest.TestCase):
-    class MockResponse:
-        def __init__(self, json_data, status_code, content):
-            self.json_data = json_data
-            self.status_code = status_code
-            self.content = content
-            # TODO: write a test for these
-            self.headers = {
-                "X-Request-Limit-Count": 1234,
-                "X-Request-Limit-Max": 5000,
-                "Content-Range": "/100",
-            }
+class MockRequest:
+    def __init__(self, url):
+        self.url = url
 
-        def json(self):
-            return self.json_data
+
+class MockResponse:
+
+    request = None
+
+    def __init__(self, json_data, status_code, content):
+        self.json_data = json_data
+        self.status_code = status_code
+        self.content = content
+        self.request = MockRequest("test url")
+        # TODO: write a test for these
+        self.headers = {
+            "X-Request-Limit-Count": 1234,
+            "X-Request-Limit-Max": 5000,
+            "Content-Range": "/100",
+        }
+
+    def json(self):
+        return self.json_data
+
+
+class TestCommon(unittest.TestCase):
 
     cardmarket_get_stock_result = {
         "article": [
@@ -529,54 +540,9 @@ Dragon Breath,Scourge,1,Foil,French"""
     fake_github_releases = MockResponse({"tag_name": "1.0.0"}, 200, "ok")
 
     def setUp(self):
-        self.config = json.loads(
-            """
-            {
-                "app_token": "aaaaa",
-                "app_secret": "bbbbb",
-                "access_token": "ccccccccccc",
-                "access_token_secret": "dddddddddd",
-                "price_limit_by_rarity": {
-                    "default": "0.25",
-                    "common": "0.25",
-                    "uncommon": "0.25",
-                    "rare": "1.0",
-                    "mythic": "0.25",
-                    "time shifted": "0.25"
-                },
-                "discount_by_condition": {
-                    "MT": "1.5",
-                    "NM": "1",
-                    "EX": "0.9",
-                    "GD": "0.7",
-                    "LP": "0.6",
-                    "PL": "0.5",
-                    "PO": "0.4"
-                },
-                "search_filters": {
-                    "language": "",
-                    "isAltered": false,
-                    "isSigned": false,
-                    "minCondition": "EX",
-                    "userType": "",
-                    "idLanguage": 1
-                },
-                "sticky_price_char": "!",
-                "uuid": "xxx",
-                "reporting": true,
-                "never_undercut_local_market": false,
-                "local_cache_filename": "local_pymkm_data.db",
-                "show_num_best_worst_items": 20,
-                "show_top_x_expensive_items": 20,
-                "log_level": "WARNING",
-                "partial_update_filename": "partial_stock_update.txt",
-                "csv_import_filename": "list.csv",
-                "csv_import_condition": "NM",
-                "cardmarket_request_timeout": 40,
-                "dev_mode": false
-            }
-            """
-        )
+        # CONFIG
+        with open("test/test_config.json", "r") as f:
+            self.config = json.load(f)
 
         self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
         self.mock_report = self.patcher.start()

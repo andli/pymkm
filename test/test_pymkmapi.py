@@ -10,7 +10,7 @@ from requests_oauthlib import OAuth1Session
 
 from pymkm.pymkmapi import PyMkmApi, CardmarketError
 from pymkm.pymkm_app import PyMkmApp
-from test.test_common import TestCommon
+from test.test_common import TestCommon, MockResponse, MockRequest
 
 
 class TestPyMkmApi(TestCommon):
@@ -22,15 +22,17 @@ class TestPyMkmApi(TestCommon):
 
         self.api = PyMkmApi(self.config)
 
-    # def test_no_results(self):
-    #    mock_oauth = Mock(spec=OAuth1Session)
-    #    mock_oauth.get = MagicMock(
-    #        return_value=self.MockResponse(None, 204, "testing ok")
-    #    )
-    #    with self.assertLogs(level="ERROR") as cm:
-    #        empty_response = self.api.get_expansions(1, mock_oauth)
-    #        log_record_message = cm.records[len(cm.records) - 1].message
-    #        self.assertRegex(log_record_message, r"^No results found.")
+    @patch("logging.Logger.error")
+    def test_no_results(self, mock):
+        mock_oauth = Mock(spec=OAuth1Session)
+        mock_oauth.get = MagicMock(
+            return_value=MockResponse(None, 204, "testing No Result 204")
+        )
+
+        empty_response = self.api.get_expansions(1, mock_oauth)
+        mock.assert_called_with(
+            "[Cardmarket API] No results found. https://api.cardmarket.com/ws/v2.0/output.json/games/1/expansions"
+        )
 
     def test_get_language_code_from_string(self):
         language_code = self.api.get_language_code_from_string("English")
@@ -60,13 +62,13 @@ class TestPyMkmApi(TestCommon):
     #    mock_oauth = Mock(spec=OAuth1Session)
     #
     #    mock_oauth.get = MagicMock(
-    #        return_value=self.MockResponse("test", 200, "testing ok")
+    #        return_value=MockResponse("test", 200, "testing ok")
     #    )
     #    self.assertEqual(self.api.get_account(mock_oauth), "test")
     #    mock_oauth.get.assert_called()
     #
     #    mock_oauth.get = MagicMock(
-    #        return_value=self.MockResponse("", 401, "Unauthorized")
+    #        return_value=MockResponse("", 401, "Unauthorized")
     #    )
     #    with self.assertLogs(level="ERROR") as cm:
     #        self.api.get_account(mock_oauth)
@@ -75,7 +77,7 @@ class TestPyMkmApi(TestCommon):
     def test_get_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_get_stock_result, 200, "testing ok"
             )
         )
@@ -85,7 +87,7 @@ class TestPyMkmApi(TestCommon):
     def test_get_orders(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_get_order_items, 200, "testing ok"
             )
         )
@@ -96,7 +98,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
         self.assertEqual(self.api.get_games(mock_oauth), test_json)
 
@@ -104,7 +106,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
         game_id = 1
         self.assertEqual(self.api.get_expansions(game_id, mock_oauth), test_json)
@@ -113,7 +115,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
         expansion_id = 1
         self.assertEqual(
@@ -124,7 +126,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
         product_id = 1
         self.assertEqual(self.api.get_product(product_id, mock_oauth), test_json)
@@ -133,7 +135,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
         metaproduct_id = 1
         self.assertEqual(
@@ -143,7 +145,7 @@ class TestPyMkmApi(TestCommon):
     def test_find_product(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.fake_product_response, 200, "testing ok"
             )
         )
@@ -157,7 +159,7 @@ class TestPyMkmApi(TestCommon):
     def test_find_stock_article(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
             )
         )
@@ -170,7 +172,7 @@ class TestPyMkmApi(TestCommon):
         test_json = json.loads('{"test": "test"}')
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(test_json, 200, "testing ok")
+            return_value=MockResponse(test_json, 200, "testing ok")
         )
 
         self.assertEqual(self.api.get_articles_in_shoppingcarts(mock_oauth), test_json)
@@ -178,7 +180,7 @@ class TestPyMkmApi(TestCommon):
     def test_get_articles(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
             )
         )
@@ -188,7 +190,7 @@ class TestPyMkmApi(TestCommon):
         self.assertEqual(result[0]["comments"], "x")
 
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_find_user_articles_result, 206, "partial content"
             )
         )
@@ -201,7 +203,7 @@ class TestPyMkmApi(TestCommon):
 
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_find_user_articles_result, 200, "testing ok"
             )
         )
@@ -212,7 +214,7 @@ class TestPyMkmApi(TestCommon):
         self.assertEqual(result[0]["comments"], "x")
 
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_find_user_articles_result, 206, "partial content"
             )
         )
@@ -223,9 +225,7 @@ class TestPyMkmApi(TestCommon):
     def test_set_vacation_status(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.put = MagicMock(
-            return_value=self.MockResponse(
-                TestCommon.fake_account_data, 200, "testing ok"
-            )
+            return_value=MockResponse(TestCommon.fake_account_data, 200, "testing ok")
         )
         vacation_status = True
 
@@ -236,9 +236,7 @@ class TestPyMkmApi(TestCommon):
     def test_set_display_language(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.put = MagicMock(
-            return_value=self.MockResponse(
-                TestCommon.fake_account_data, 200, "testing ok"
-            )
+            return_value=MockResponse(TestCommon.fake_account_data, 200, "testing ok")
         )
         display_language = 1
 
@@ -250,7 +248,7 @@ class TestPyMkmApi(TestCommon):
     def test_add_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.post = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 {
                     "inserted": [
                         {
@@ -270,9 +268,7 @@ class TestPyMkmApi(TestCommon):
     def test_set_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.put = MagicMock(
-            return_value=self.MockResponse(
-                TestCommon.get_stock_result, 200, "testing ok"
-            )
+            return_value=MockResponse(TestCommon.get_stock_result, 200, "testing ok")
         )
 
         result = self.api.set_stock(TestCommon.get_stock_result, mock_oauth)
@@ -281,9 +277,7 @@ class TestPyMkmApi(TestCommon):
     def test_delete_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.delete = MagicMock(
-            return_value=self.MockResponse(
-                TestCommon.get_stock_result, 200, "testing ok"
-            )
+            return_value=MockResponse(TestCommon.get_stock_result, 200, "testing ok")
         )
 
         result = self.api.delete_stock(TestCommon.get_stock_result, mock_oauth)
@@ -292,7 +286,7 @@ class TestPyMkmApi(TestCommon):
     def test_get_wantslists(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_get_wantslists, 200, "testing ok"
             )
         )
@@ -302,7 +296,7 @@ class TestPyMkmApi(TestCommon):
     def test_get_wantslist_items(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.get = MagicMock(
-            return_value=self.MockResponse(
+            return_value=MockResponse(
                 TestCommon.cardmarket_get_wantslist_items, 200, "testing ok"
             )
         )
@@ -313,7 +307,7 @@ class TestPyMkmApi(TestCommon):
     # def test_mkm_error_message(self):
     #    mock_oauth = Mock(spec=OAuth1Session)
     #    mock_oauth.get = MagicMock(
-    #        return_value=self.MockResponse(
+    #        return_value=MockResponse(
     #            TestCommon.cardmarket_example_error_message, 400, "testing error"
     #        )
     #    )
