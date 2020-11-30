@@ -107,7 +107,7 @@ class PyMkmHelper:
         if len(data) > 0:
             try:
                 s[label] = data
-                print(f"{label.title()} cached ({len(data)} items).")
+                print(f"[Cache] {label.title()} cached ({len(data)} items).")
                 return len(s[label])
             finally:
                 s.close()
@@ -120,7 +120,7 @@ class PyMkmHelper:
                 appended_data = s[label]
                 appended_data.extend(data)
                 s[label] = appended_data
-                print(f"{label.title()} cached ({len(data)} new items).")
+                print(f"[Cache] {label.title()} cached ({len(data)} new items).")
                 return len(s[label])
             except KeyError:
                 s.close()
@@ -133,7 +133,7 @@ class PyMkmHelper:
         s = shelve.open(filename)
         try:
             del s[label]
-            print(f"{label.title()} cleared.")
+            print(f"[Cache] {label.title()} cleared.")
         except KeyError:
             pass
         finally:

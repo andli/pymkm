@@ -15,7 +15,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
     def test_string_to_float_or_int(self):
         self.assertEqual(self.helper.string_to_float_or_int("1.0"), 1)
         self.assertEqual(self.helper.string_to_float_or_int("1"), 1)
-        self.assertEqual(self.helper.string_to_float_or_int("AAAAA"), None)
+        self.assertEqual(self.helper.string_to_float_or_int("AAAAA"), "AAAAA")
         self.assertEqual(self.helper.string_to_float_or_int("11.3"), 11.3)
         self.assertEqual(self.helper.string_to_float_or_int(str(4 / 3)), 4 / 3)
 
