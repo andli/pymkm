@@ -531,7 +531,7 @@ class PyMkmApi:
             has_header = csv.Sniffer().has_header(decoded_data)
             dialect = csv.Sniffer().sniff(decoded_data)
 
-            with open("stock.csv", "w", newline="") as f:
+            with open("stock.csv", "w", newline="", encoding="utf-8") as f:
                 f.write(decoded_data)
 
             reader = None
