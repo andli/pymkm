@@ -4,7 +4,7 @@ Helper functions for the PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 __license__ = "MIT"
 
 import math
@@ -36,7 +36,7 @@ class PyMkmHelper:
             else:
                 return float(input_string)
         except ValueError:
-            pass
+            return input_string
 
     @staticmethod
     def calculate_average(table, col_no_count, col_no_price):

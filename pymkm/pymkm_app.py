@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 __license__ = "MIT"
 
 import os
@@ -237,12 +237,9 @@ class PyMkmApp:
             api.add_stock(product_list)
 
     @timeit
-    def get_stock_as_file(self, api):
-        start = time.time()
+    def get_stock_as_file(self, api, log_time_label="Fetching stock as file"):
         print("Fetching stock gzip file...")
         stock = api.get_stock_file()
-        end = time.time()
-        print(f"Fetching done, took {end-start} seconds")
         unused_attributes = [
             "Exp.",
             "Exp. Name",
@@ -272,12 +269,13 @@ class PyMkmApp:
             }
             for article in stock
         ]
-        # TODO: construct the 'product' entity for each article
+        # construct the 'product' entity for each article
         for article in stock_list:
             for k, v in article.items():
                 try:
                     article[k] = PyMkmHelper.string_to_float_or_int(v)
                 except ValueError as err:
+                    article[k] = v
                     continue
 
             def map_stock_item(to_string, from_string):
@@ -299,10 +297,8 @@ class PyMkmApp:
 
             article["product"] = product_item
 
-        # TODO: translate retarded col names from csv to the regular stock columns
         print("Stock fetched (using gzipped data).")
 
-        PyMkmHelper.clear_cache(self.config["local_cache_filename"], "partial_updated")
         PyMkmHelper.store_to_cache(
             self.config["local_cache_filename"], "stock", stock_list
         )

@@ -3,7 +3,7 @@ progressbar2
 requests_oauthlib
 tabulate
 dicttoxml
-micromenu~=1.0.3
+micromenu~=1.1.1
 httpx
 authlib
 asyncio
