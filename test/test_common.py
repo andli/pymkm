@@ -3,7 +3,7 @@ Python unittest
 """
 import io
 import json
-
+import logging
 import unittest
 
 from unittest.mock import MagicMock, Mock, mock_open, patch
@@ -540,6 +540,7 @@ Dragon Breath,Scourge,1,Foil,French"""
     fake_github_releases = MockResponse({"tag_name": "1.0.0"}, 200, "ok")
 
     def setUp(self):
+        logging.disable(logging.CRITICAL)
         # CONFIG
         with open("test/test_config.json", "r") as f:
             self.config = json.load(f)

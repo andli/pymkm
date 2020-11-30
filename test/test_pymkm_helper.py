@@ -3,6 +3,7 @@ Python unittest
 """
 import io
 import unittest
+import logging
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
 from pymkm.pymkm_helper import PyMkmHelper
@@ -11,6 +12,7 @@ from pymkm.pymkm_helper import PyMkmHelper
 class TestPyMkmHelperFunctions(unittest.TestCase):
     def setUp(self):
         self.helper = PyMkmHelper()
+        logging.disable(logging.CRITICAL)
 
     def test_string_to_float_or_int(self):
         self.assertEqual(self.helper.string_to_float_or_int("1.0"), 1)
