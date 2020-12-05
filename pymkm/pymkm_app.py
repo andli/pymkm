@@ -576,6 +576,9 @@ class PyMkmApp:
                 ]
                 products = api.get_items_async("products", products_to_get)
 
+                # remove any None results (probably caused by being booster boxes etc)
+                products = [x for x in products if x != None]
+
                 for article in sorted_articles[:num_searches]:
                     try:
                         p = next(
