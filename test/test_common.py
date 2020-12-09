@@ -39,6 +39,14 @@ class MockResponse:
 
 
 class TestCommon(unittest.TestCase):
+    class ArgsObject(object):
+        pass
+
+    parsed_args = ArgsObject()
+    parsed_args.cached = False
+    parsed_args.partial = 0
+    parsed_args.price_check_wantslist = None
+    parsed_args.update_stock = None
 
     cardmarket_get_stock_result = {
         "article": [
@@ -544,10 +552,8 @@ Dragon Breath,Scourge,1,Foil,French"""
         # CONFIG
         with open("test/test_config.json", "r") as f:
             self.config = json.load(f)
-
         self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
         self.mock_report = self.patcher.start()
-
         self.patcher2 = patch("pymkm.pymkmapi.PyMkmApi.set_api_quota_attributes")
         self.patcher2.start()
 

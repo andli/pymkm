@@ -2,7 +2,7 @@ __pycache__/
 .venv/
 .vscode/
 .idea
-.coverage
+.coverage*
 coverage.xml
 /htmlcov
 *.pyc

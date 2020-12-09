@@ -15,6 +15,34 @@ from test.test_common import TestCommon
 
 @patch("pymkm.pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
 class TestPyMkmApp(TestCommon):
+
+    @patch("requests.get", return_value=TestCommon.fake_github_releases)
+    def test_check_latest_version(self, *args):
+        app = PyMkmApp(self.config)
+        self.assertIsNone(app.check_latest_version())
+
+
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("builtins.input", side_effect=["0"])
+    def test_stock_update(self, mock_input, mock_stdout, *args):
+        app = PyMkmApp()
+        app.start(self.parsed_args)
+        self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
+
+    
+    def test_get_rounding_limit_for_rarity(self, mock_account):
+        app = PyMkmApp(self.config)
+        self.assertEqual(app.get_rounding_limit_for_rarity("rare", "1"), 1.0)
+        self.assertEqual(app.get_rounding_limit_for_rarity("time shifted", "1"), 0.25)
+        self.assertEqual(app.get_rounding_limit_for_rarity("XX", "1"), 0.25)
+
+    def test_get_discount_for_condition(self, mock_account):
+        app = PyMkmApp(self.config)
+        self.assertEqual(app.get_discount_for_condition("MT"), 1.5)
+        self.assertEqual(app.get_discount_for_condition("LP"), 0.6)
+        with self.assertRaises(KeyError):
+            app.get_discount_for_condition("XX")
+
     # @patch("pymkm.pymkm_app.PyMkmApp.check_latest_version", return_value=None)
     # @patch("sys.stdout", new_callable=io.StringIO)
     # @patch("builtins.input", side_effect=["0"])
@@ -300,18 +328,6 @@ class TestPyMkmApp(TestCommon):
     #        log_record = cm.records[len(cm.records) - 1]
     #        self.assertRegex(log_record.message, r"import_from_csv:")
 
-    def test_get_rounding_limit_for_rarity(self, mock_account):
-        app = PyMkmApp(self.config)
-        self.assertEqual(app.get_rounding_limit_for_rarity("rare", "1"), 1.0)
-        self.assertEqual(app.get_rounding_limit_for_rarity("time shifted", "1"), 0.25)
-        self.assertEqual(app.get_rounding_limit_for_rarity("XX", "1"), 0.25)
-
-    def test_get_discount_for_condition(self, mock_account):
-        app = PyMkmApp(self.config)
-        self.assertEqual(app.get_discount_for_condition("MT"), 1.5)
-        self.assertEqual(app.get_discount_for_condition("LP"), 0.6)
-        with self.assertRaises(KeyError):
-            app.get_discount_for_condition("XX")
 
     # @patch(
     #    "pymkm.pymkm_app.PyMkmApi.get_product",
@@ -336,10 +352,7 @@ class TestPyMkmApp(TestCommon):
     #
     #    self.assertEqual(price, 3.0)
 
-    @patch("requests.get", return_value=TestCommon.fake_github_releases)
-    def test_check_latest_version(self, *args):
-        app = PyMkmApp(self.config)
-        self.assertIsNone(app.check_latest_version())
+
 
     # @patch("requests.post", side_effect=requests.exceptions.Timeout())
     # def test_report(self, mock_post, *args):

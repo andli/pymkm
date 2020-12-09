@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.7"
+__version__ = "2.0.6"
 __license__ = "MIT"
 
 import os
@@ -111,7 +111,8 @@ class PyMkmApp:
             return None
 
     def start(self, args=None):
-        if not len(sys.argv) > 1:  # if args have been passed
+
+        if "--cached" not in sys.argv:  # if command line args have not been passed
             while True:
                 stock_status = ""
                 num_stock = PyMkmHelper.read_from_cache(

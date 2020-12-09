@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.7"
+__version__ = "2.0.6"
 __license__ = "MIT"
 
 import asyncio
@@ -20,6 +20,7 @@ import csv
 import codecs
 
 import requests
+from json import JSONDecodeError
 from authlib.integrations.httpx_client import AsyncOAuth1Client, OAuth1Auth
 from requests import ConnectionError
 from requests_oauthlib import OAuth1Session
@@ -293,7 +294,8 @@ class PyMkmApi:
                 self.logger.debug(f"Timeout on {item_type} {item_id}")
             else:
                 try:
-                    return resp.json()
+                    json = resp.json()
+                    return json
                 except JSONDecodeError as err:
                     self.logger.error(f"Error in async fetch: {err.msg}")
             finally:
