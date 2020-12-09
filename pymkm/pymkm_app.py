@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 __license__ = "MIT"
 
 import os
@@ -113,20 +113,35 @@ class PyMkmApp:
     def start(self, args=None):
         if not len(sys.argv) > 1:  # if args have been passed
             while True:
+                stock_status = ""
+                num_stock = PyMkmHelper.read_from_cache(
+                    self.config["local_cache_filename"], "stock"
+                )
+
+                num_already_checked = PyMkmHelper.read_from_cache(
+                    self.config["local_cache_filename"], "partial_updated"
+                )
+
+                if num_stock and not num_already_checked:
+                    stock_status = f"({len(num_stock)} items)"
+                if num_stock and num_already_checked:
+                    stock_status = f"({len(num_already_checked)}/{len(num_stock)} done)"
+
                 top_message = self.check_latest_version()
+                bottom_message = f"API calls used today: {self.api.requests_count}/{self.api.requests_max}"
 
                 if hasattr(self, "DEV_MODE") and self.DEV_MODE:
                     top_message = "dev mode"
                 menu = micromenu.Menu(
                     f"PyMKM {__version__}",
                     top_message,
-                    f"API calls used today: {self.api.requests_count}/{self.api.requests_max}",
+                    bottom_message,
                     cycle=False,
                     min_width=50,
                 )
 
                 menu.add_function_item(
-                    "Update stock prices",
+                    f"Update stock prices {stock_status}",
                     self.update_stock_prices_to_trend,
                     {"api": self.api, "cli_called": False},
                 )
@@ -1543,9 +1558,7 @@ class PyMkmApp:
         print(
             "Getting your stock from Cardmarket (the API can be slow for large stock)..."
         )
-        PyMkmHelper.clear_cache(
-            self.config["local_cache_filename"], "partial_updated"
-        )  # clear this because a new stock invalidates it
+
         try:
             d = api.get_stock()
         except CardmarketError as err:

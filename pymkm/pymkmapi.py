@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 __license__ = "MIT"
 
 import asyncio
@@ -292,7 +292,10 @@ class PyMkmApi:
             except Exception as err:
                 self.logger.debug(f"Timeout on {item_type} {item_id}")
             else:
-                return resp.json()
+                try:
+                    return resp.json()
+                except JSONDecodeError as err:
+                    self.logger.error(f"Error in async fetch: {err.msg}")
             finally:
                 if progressbar:
                     progressbar.update()
