@@ -15,21 +15,18 @@ from test.test_common import TestCommon
 
 @patch("pymkm.pymkmapi.PyMkmApi.get_account", return_value=TestCommon.fake_account_data)
 class TestPyMkmApp(TestCommon):
-
     @patch("requests.get", return_value=TestCommon.fake_github_releases)
     def test_check_latest_version(self, *args):
         app = PyMkmApp(self.config)
         self.assertIsNone(app.check_latest_version())
 
+    # @patch("sys.stdout", new_callable=io.StringIO)
+    # @patch("builtins.input", side_effect=["0"])
+    # def test_stock_update(self, mock_input, mock_stdout, *args):
+    #    app = PyMkmApp()
+    #    app.start(self.parsed_args)
+    #    self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
 
-    @patch("sys.stdout", new_callable=io.StringIO)
-    @patch("builtins.input", side_effect=["0"])
-    def test_stock_update(self, mock_input, mock_stdout, *args):
-        app = PyMkmApp()
-        app.start(self.parsed_args)
-        self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
-
-    
     def test_get_rounding_limit_for_rarity(self, mock_account):
         app = PyMkmApp(self.config)
         self.assertEqual(app.get_rounding_limit_for_rarity("rare", "1"), 1.0)
@@ -328,7 +325,6 @@ class TestPyMkmApp(TestCommon):
     #        log_record = cm.records[len(cm.records) - 1]
     #        self.assertRegex(log_record.message, r"import_from_csv:")
 
-
     # @patch(
     #    "pymkm.pymkm_app.PyMkmApi.get_product",
     #    return_value=TestCommon.fake_product_response,
@@ -351,8 +347,6 @@ class TestPyMkmApp(TestCommon):
     #    )
     #
     #    self.assertEqual(price, 3.0)
-
-
 
     # @patch("requests.post", side_effect=requests.exceptions.Timeout())
     # def test_report(self, mock_post, *args):
