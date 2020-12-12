@@ -10,7 +10,7 @@ from requests_oauthlib import OAuth1Session
 
 from pymkm.pymkmapi import PyMkmApi
 from pymkm.pymkm_app import PyMkmApp
-from test.test_common import LocalTestCommon
+from test.local_test_common import LocalTestCommon
 
 
 class TestPyMkmApp(LocalTestCommon):
