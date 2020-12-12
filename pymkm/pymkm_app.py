@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 __license__ = "MIT"
 
 import os
@@ -178,6 +178,11 @@ class PyMkmApp:
                     "Show account info", self.show_account_info, {"api": self.api}
                 )
                 menu.add_function_item(
+                    "Clear partial updates",
+                    self.clear_partial_updates,
+                    {"api": self.api},
+                )
+                menu.add_function_item(
                     "Clear entire stock", self.clear_entire_stock, {"api": self.api},
                 )
                 menu.add_function_item(
@@ -256,68 +261,72 @@ class PyMkmApp:
     def get_stock_as_file(self, api, log_time_label="Fetching stock as file"):
         print("Fetching stock gzip file...")
         stock = api.get_stock_file()
-        unused_attributes = [
-            "Exp.",
-            "Exp. Name",
-            "Altered?",
-            "onSale",
-            "idCurrency",
-            "Currency Code",
-        ]
 
-        regular_stock_keys_mapping = {
-            "idArticle": "idArticle",
-            "idProduct": "idProduct",
-            "Amount": "count",
-            "Comments": "comments",
-            "Price": "price",
-            "Condition": "condition",
-            "Foil?": "isFoil",
-            "Playset?": "isPlayset",
-            "Signed?": "isSigned",
-            "Language": "language",
-        }
-        stock_list = [
-            {
-                regular_stock_keys_mapping[x]: y
-                for x, y in article.items()
-                if x in regular_stock_keys_mapping
+        if stock:
+            unused_attributes = [
+                "Exp.",
+                "Exp. Name",
+                "Altered?",
+                "onSale",
+                "idCurrency",
+                "Currency Code",
+            ]
+
+            regular_stock_keys_mapping = {
+                "idArticle": "idArticle",
+                "idProduct": "idProduct",
+                "Amount": "count",
+                "Comments": "comments",
+                "Price": "price",
+                "Condition": "condition",
+                "Foil?": "isFoil",
+                "Playset?": "isPlayset",
+                "Signed?": "isSigned",
+                "Language": "language",
             }
-            for article in stock
-        ]
-        # construct the 'product' entity for each article
-        for article in stock_list:
-            for k, v in article.items():
-                try:
-                    article[k] = PyMkmHelper.string_to_float_or_int(v)
-                except ValueError as err:
-                    article[k] = v
-                    continue
+            stock_list = [
+                {
+                    regular_stock_keys_mapping[x]: y
+                    for x, y in article.items()
+                    if x in regular_stock_keys_mapping
+                }
+                for article in stock
+            ]
+            # construct the 'product' entity for each article
+            for article in stock_list:
+                for k, v in article.items():
+                    try:
+                        article[k] = PyMkmHelper.string_to_float_or_int(v)
+                    except ValueError as err:
+                        article[k] = v
+                        continue
 
-            def map_stock_item(to_string, from_string):
-                try:
-                    return {
-                        to_string: next(
-                            x[from_string]
-                            for x in stock
-                            if int(x["idArticle"]) == article["idArticle"]
-                        )
-                    }
-                except StopIteration:
-                    return {to_string: ""}
+                def map_stock_item(to_string, from_string):
+                    try:
+                        return {
+                            to_string: next(
+                                x[from_string]
+                                for x in stock
+                                if int(x["idArticle"]) == article["idArticle"]
+                            )
+                        }
+                    except StopIteration:
+                        return {to_string: ""}
 
-            product_item = {}
-            product_item.update(map_stock_item("enName", "English Name"))
-            product_item.update(map_stock_item("locName", "Local Name"))
-            product_item.update(map_stock_item("expansion", "Exp. Name"))
+                product_item = {}
+                product_item.update(map_stock_item("enName", "English Name"))
+                product_item.update(map_stock_item("locName", "Local Name"))
+                product_item.update(map_stock_item("expansion", "Exp. Name"))
 
-            article["product"] = product_item
+                article["product"] = product_item
 
-        print("Stock fetched (using gzipped data).")
+            print("Stock fetched (using gzipped data).")
 
-        PyMkmHelper.store_to_cache(
-            self.config["local_cache_filename"], "stock", stock_list
-        )
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"], "stock", stock_list
+            )
+        else:
+            print("Stock empty.")
 
     def clean_json_for_upload(self, not_uploadable_json):
         for entry in not_uploadable_json:
@@ -818,26 +827,42 @@ class PyMkmApp:
             print(err)
 
         if wantslists_lists and received_orders:
-            purchased_product_ids = []
             purchased_products = []
-            for (
-                order
-            ) in received_orders:  # TODO: foil in purchase removes non-foil in wants
-                purchased_product_ids.extend(
-                    [i["idProduct"] for i in order.get("article")]
-                )
-                purchased_products.extend(
-                    {
-                        "id": i["idProduct"],
-                        "foil": i.get("isFoil"),
-                        "count": i["count"],
-                        "date": order["state"]["dateReceived"],
-                    }
-                    for i in order.get("article")
-                )
-            purchased_products = sorted(
-                purchased_products, key=lambda t: t["date"], reverse=True
-            )
+            for order in received_orders:
+                # TODO: foil in purchase removes non-foil in wants
+                def article_equals(a, b):
+                    if a["idProduct"] == b["idProduct"] and a.get("isFoil") == b.get(
+                        "isFoil"
+                    ):
+                        return True
+                    else:
+                        return False
+
+                for article in order.get("article"):
+                    if not any(article_equals(article, x) for x in purchased_products):
+                        purchased_products.append(
+                            {
+                                "idProduct": article["idProduct"],
+                                "foil": article.get("isFoil"),
+                                "count": article["count"],
+                                "date": order["state"]["dateReceived"],
+                            }
+                        )
+                    else:
+                        try:
+                            hit = next(
+                                x
+                                for x in purchased_products
+                                if article_equals(article, x)
+                            )
+                            hit["count"] += article["count"]
+                        except StopIteration:
+                            # Should not happen
+                            continue
+
+            # purchased_products = sorted(
+            #     purchased_products, key=lambda t: t["date"], reverse=True
+            # )
 
             total_number_of_items = sum([len(x) for x in wantslists_lists.values()])
             print("Matching received purchases with wantslists...")
@@ -881,7 +906,7 @@ class PyMkmApp:
                         product_matches = [
                             i
                             for i in purchased_products
-                            if i["id"] in metaproduct_product_ids
+                            if i["idProduct"] in metaproduct_product_ids
                             and i["foil"] == a_foil
                         ]
                     else:
@@ -889,7 +914,7 @@ class PyMkmApp:
                         product_matches = [
                             i
                             for i in purchased_products
-                            if i["id"] == a_product_id and i["foil"] == a_foil
+                            if i["idProduct"] == a_product_id and i["foil"] == a_foil
                         ]
 
                     if product_matches:
@@ -963,6 +988,12 @@ class PyMkmApp:
         pp = pprint.PrettyPrinter()
         pp.pprint(api.get_account())
         self.logger.debug("-> show_account_info: Done")
+
+    def clear_partial_updates(self, api):
+        print("Clearing partial update data...")
+        PyMkmHelper.clear_cache(self.config["local_cache_filename"], "partial_updated")
+        self.logger.debug("-> clear_partial_updates: done")
+        print("Done.")
 
     def clear_entire_stock(self, api):
         self.report("clear entire stock")

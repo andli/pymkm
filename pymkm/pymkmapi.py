@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 __license__ = "MIT"
 
 import asyncio
@@ -533,21 +533,22 @@ class PyMkmApi:
             )
             decoded_data = codecs.decode(decompressed_data, "unicode_escape")
 
-            has_header = csv.Sniffer().has_header(decoded_data)
-            dialect = csv.Sniffer().sniff(decoded_data)
-
-            with open("stock.csv", "w", newline="", encoding="utf-8") as f:
-                f.write(decoded_data)
-
-            reader = None
             return_dict = []
-            with open("stock.csv", "r") as f:
-                reader = csv.DictReader(f, dialect=dialect)
-                for row in reader:
-                    return_dict.append(row)
+            if decoded_data:
+                has_header = csv.Sniffer().has_header(decoded_data)
+                dialect = csv.Sniffer().sniff(decoded_data)
 
-            if reader is None:
-                self.logger.error("Error getting stock as CSV.")
+                with open("stock.csv", "w", newline="", encoding="utf-8") as f:
+                    f.write(decoded_data)
+
+                reader = None
+                with open("stock.csv", "r") as f:
+                    reader = csv.DictReader(f, dialect=dialect)
+                    for row in reader:
+                        return_dict.append(row)
+
+                if reader is None:
+                    self.logger.error("Error getting stock as CSV.")
 
             return return_dict
 
