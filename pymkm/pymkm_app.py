@@ -1508,7 +1508,7 @@ class PyMkmApp:
                 rounding_limit, new_price
             )
 
-            return new_price
+            return round(new_price, 2)
 
     def display_price_changes_table(self, changes_json):
         num_items = self.config["show_num_best_worst_items"]
