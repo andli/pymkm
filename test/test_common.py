@@ -552,11 +552,12 @@ Dragon Breath,Scourge,1,Foil,French"""
         # CONFIG
         with open("test/test_config.json", "r") as f:
             self.config = json.load(f)
-        self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
-        self.mock_report = self.patcher.start()
+        # self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
+        # self.mock_report = self.patcher.start()
 
     def tearDown(self):
-        self.patcher.stop()
+        # self.patcher.stop()
+        pass
 
 
 if __name__ == "__main__":
