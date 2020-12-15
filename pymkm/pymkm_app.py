@@ -53,7 +53,7 @@ class PyMkmApp:
 
         # Check that dependencies are ok
         micromenu_version = pkg_resources.get_distribution("micromenu").version
-        if parse_version(micromenu_version) < parse_version("1.2.0"):
+        if parse_version(micromenu_version) < parse_version("1.3.0"):
             print("Dependencies for PyMkm need updating, run:")
             print("pip install --upgrade -r requirements.txt")
             sys.exit(0)
@@ -198,6 +198,7 @@ class PyMkmApp:
                     {"api": self.api},
                 )
                 if self.DEV_MODE:
+                    menu.add_divider()
                     menu.add_function_item(
                         f"⚠ Check product id", self.check_product_id, {"api": self.api},
                     )
@@ -473,6 +474,12 @@ class PyMkmApp:
         filtered_articles = [x for x in article_list if not filtered(x)]
         return filtered_articles
 
+    def __filter_language_data(self, article_list):
+        for article in article_list:
+            article["idLanguage"] = article["language"]["idLanguage"]
+            del article["language"]
+        return article_list
+
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
 
@@ -484,6 +491,7 @@ class PyMkmApp:
             print(err)
 
         filtered_articles = self.__filter_sticky(articles)
+        filtered_articles = self.__filter_language_data(articles)
 
         ### --- refactor?
 
@@ -911,6 +919,7 @@ class PyMkmApp:
                 metaproduct_list = api.get_items_async(
                     "metaproducts", metaproducts_to_get, bar
                 )
+                metaproduct_list = [x for x in metaproduct_list if x]
 
                 for article in articles:
                     a_type = article.get("type")
@@ -1411,12 +1420,7 @@ class PyMkmApp:
     def update_price_for_article(
         self, article, product, undercut_local_market=False, api=None
     ):
-        if isinstance(article["idLanguage"], int):
-            language_id = PyMkmHelper.string_to_float_or_int(article["idLanguage"])
-            # language_name = PyMkmApi.languages[language_id]
-        else:
-            language_id = article["language"]["idLanguage"]
-            # language_name = article["language"]["languageName"]
+        language_id = PyMkmHelper.string_to_float_or_int(article["idLanguage"])
 
         new_price = self.get_price_for_product(
             product,
