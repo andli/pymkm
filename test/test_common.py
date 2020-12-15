@@ -554,12 +554,9 @@ Dragon Breath,Scourge,1,Foil,French"""
             self.config = json.load(f)
         self.patcher = patch("pymkm.pymkm_app.PyMkmApp.report")
         self.mock_report = self.patcher.start()
-        self.patcher2 = patch("pymkm.pymkmapi.PyMkmApi.set_api_quota_attributes")
-        self.patcher2.start()
 
     def tearDown(self):
         self.patcher.stop()
-        self.patcher2.stop()
 
 
 if __name__ == "__main__":

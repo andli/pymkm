@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.7"
+__version__ = "2.1.0"
 __license__ = "MIT"
 
 import asyncio
@@ -68,7 +68,7 @@ class PyMkmApi:
         "Czech",
         "Hungarian",
     ]
-    # These are from 2020-11-22, not the same as in the API specs:
+    ## These are from 2020-11-22, not the same as in the API specs:
     stock_csv_fieldnames = [
         "idArticle",
         "idProduct",
@@ -127,8 +127,6 @@ class PyMkmApi:
                 sys.exit(0)
         else:
             self.config = config
-
-        self.set_api_quota_attributes()
 
     def __handle_response(self, response):
         handled_codes = (
@@ -199,17 +197,6 @@ class PyMkmApi:
             except KeyError as err:
                 self.logger.error(">>> Header error finding content-range")
             return max_items
-
-    def set_api_quota_attributes(self, provided_oauth=None):
-        # Use a 400 to get the response headers
-        url = f"{self.base_url}/games"
-        mkm_oauth = self.__setup_auth_session(url, provided_oauth)
-
-        self.logger.debug(">> Getting request quotas")
-        try:
-            r = self.mkm_request(mkm_oauth, url)
-        except CardmarketError as err:
-            print("hej")
 
     def get_language_code_from_string(self, language_string):
         if language_string in self.languages:
@@ -336,7 +323,7 @@ class PyMkmApi:
         )
 
     def get_metaproduct(self, metaproduct_id, provided_oauth=None):
-        # https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
+        ## https://api.cardmarket.com/ws/v2.0/metaproducts/:idMetaproduct
         url = f"{self.base_url}/metaproducts/{str(metaproduct_id)}"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
@@ -367,7 +354,7 @@ class PyMkmApi:
             return r.json()
 
     def set_vacation_status(self, vacation_status=False, provided_oauth=None):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Account_Vacation
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Account_Vacation
         url = f"{self.base_url}/account/vacation"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
@@ -391,7 +378,7 @@ class PyMkmApi:
             return r.json()
 
     def add_stock(self, payload=None, provided_oauth=None):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = f"{self.base_url}/stock"
 
         # clean data because the API treats "False" as true, must be "false".
@@ -423,7 +410,7 @@ class PyMkmApi:
                         self.logger.debug(
                             f">> Added {item['idArticle']['product']['enName']}."
                         )
-                #'{"inserted":[{"success":false,"tried":{"idProduct":"12636","idLanguage":"1","count":"1","price":"0.75","condition":"nm","isFoil":"false","amount":"1"},"error":"An error has ocurred, the card has NOT been listed."}]}'
+
             except CardmarketError as err:
                 self.logger.error(f"{err.mkm_msg()} {err.url}")
                 # print(err.mkm_msg())
@@ -432,7 +419,7 @@ class PyMkmApi:
             return r.json()
 
     def set_stock(self, payload=None, provided_oauth=None):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = f"{self.base_url}/stock"
 
         allowed_items = [
@@ -490,7 +477,7 @@ class PyMkmApi:
             return r.json()
 
     def delete_stock(self, payload=None, provided_oauth=None):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = f"{self.base_url}/stock"
 
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
@@ -506,7 +493,7 @@ class PyMkmApi:
             return r.json()
 
     def get_articles(self, product_id, start=0, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Articles
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Articles
         url = f"{self.base_url}/articles/{product_id}"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
@@ -517,7 +504,7 @@ class PyMkmApi:
         )
 
     def get_stock_file(self, start=0, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock_file")
         url = f"{self.base_url}/stock/file"
 
@@ -553,7 +540,7 @@ class PyMkmApi:
             return return_dict
 
     def get_stock(self, start=1, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock start={start}")
         url = f"{self.base_url}/stock"
 
@@ -620,7 +607,7 @@ class PyMkmApi:
             raise ConnectionError(r)
 
     def find_product(self, search, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Products
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Find_Products
 
         url = f"{self.base_url}/products/find"
 
@@ -638,7 +625,7 @@ class PyMkmApi:
         )
 
     def find_stock_article(self, name, game_id, provided_oauth=None):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Find_Articles
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Find_Articles
 
         url = (
             f"{self.base_url}/stock/articles/{urllib.parse.quote(name)}/{str(game_id)}"
@@ -659,7 +646,7 @@ class PyMkmApi:
     def find_user_articles(
         self, user_id, game_id=1, start=0, provided_oauth=None, **kwargs
     ):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:User_Articles
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:User_Articles
         INCREMENT = 1000
         url = f"{self.base_url}/users/{user_id}/articles"
 
@@ -669,7 +656,7 @@ class PyMkmApi:
         )
 
     def get_wantslists(self, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist
 
         url = f"{self.base_url}/wantslist"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
@@ -680,7 +667,7 @@ class PyMkmApi:
         return r.json()["wantslist"]
 
     def get_wantslist_items(self, idWantsList, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist_Item
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Wantslist_Item
 
         url = f"{self.base_url}/wantslist/{idWantsList}"
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
@@ -691,7 +678,7 @@ class PyMkmApi:
         return r.json()["wantslist"]
 
     def get_orders(self, actor, state, start=0, provided_oauth=None, **kwargs):
-        # https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
+        ## https://api.cardmarket.com/ws/documentation/API_2.0:Filter_Orders
         url = f"{self.base_url}/orders/{actor}/{state}"
         if start:
             url += f"/{start}"

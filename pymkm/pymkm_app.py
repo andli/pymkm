@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.0.7"
+__version__ = "2.1.0"
 __license__ = "MIT"
 
 import os
@@ -17,12 +17,14 @@ import pprint
 import uuid
 import sys
 import time
-from datetime import datetime
+import pkg_resources
 
 import micromenu
 import progressbar
 import requests
 import tabulate as tb
+
+from datetime import datetime
 from pkg_resources import parse_version
 
 from .pymkm_helper import PyMkmHelper, timeit
@@ -48,6 +50,13 @@ class PyMkmApp:
         sh.setLevel(logging.ERROR)  # This gets outputted to stdout
         sh.setFormatter(formatter)
         self.logger.addHandler(sh)
+
+        # Check that dependencies are ok
+        micromenu_version = pkg_resources.get_distribution("micromenu").version
+        if parse_version(micromenu_version) < parse_version("1.2.0"):
+            print("Dependencies for PyMkm need updating, run:")
+            print("pip install --upgrade -r requirements.txt")
+            sys.exit(0)
 
         if config is None:
             self.logger.debug(">> Loading config file")
@@ -83,20 +92,7 @@ class PyMkmApp:
         fh.setLevel(self.config["log_level"])
         self.logger.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
-
-    def report(self, command):
-        uuid = self.config["uuid"]
-
-        # if self.config["reporting"] and not self.DEV_MODE:
-        #    try:
-        #        r = requests.post(
-        #            "https://andli-stats-server.herokuapp.com/pymkm",
-        #            json={"command": command, "uuid": uuid, "version": __version__},
-        #        )
-        #    except Exception as err:
-        #        self.logger.error("Connection error to stats server.")
-        #        pass
-        pass
+        self.account = self.api.get_account()["account"]
 
     def check_latest_version(self):
         latest_version = None
@@ -129,16 +125,18 @@ class PyMkmApp:
                     stock_status = f"({len(num_already_checked)}/{len(num_stock)} done)"
 
                 top_message = self.check_latest_version()
-                bottom_message = f"API calls used today: {self.api.requests_count}/{self.api.requests_max}"
 
                 if hasattr(self, "DEV_MODE") and self.DEV_MODE:
                     top_message = "dev mode"
                 menu = micromenu.Menu(
-                    f"PyMKM {__version__}",
-                    top_message,
-                    bottom_message,
-                    cycle=False,
-                    min_width=50,
+                    f"PyMKM {__version__}", top_message, cycle=False, min_width=50,
+                )
+
+                menu.add_message_bottom_row(
+                    f"{self.account['name']['firstName']} {self.account['name']['lastName']} ({self.account['username']})"
+                )
+                menu.add_message_bottom_row(
+                    f"API calls used today: {self.api.requests_count}/{self.api.requests_max}"
                 )
 
                 menu.add_function_item(
@@ -175,9 +173,6 @@ class PyMkmApp:
                     {"api": self.api},
                 )
                 menu.add_function_item(
-                    "Show account info", self.show_account_info, {"api": self.api}
-                )
-                menu.add_function_item(
                     "Clear partial updates",
                     self.clear_partial_updates,
                     {"api": self.api},
@@ -189,11 +184,6 @@ class PyMkmApp:
                     f"Import stock from {self.config['csv_import_filename']}",
                     self.import_from_csv,
                     {"api": self.api},
-                )
-                menu.add_function_item(
-                    f"Get cached stock as gzip file (fast!)",
-                    self.get_stock_as_file,
-                    {"api": self.api, "log_time_label": "Fetching stock as gzip file"},
                 )
                 menu.add_function_item(
                     f"Track price data to {self.config['csv_prices_filename']}",
@@ -257,76 +247,73 @@ class PyMkmApp:
 
             api.add_stock(product_list)
 
-    @timeit
-    def get_stock_as_file(self, api, log_time_label="Fetching stock as file"):
-        print("Fetching stock gzip file...")
+    def get_stock_as_file_to_cache(self, api, log_time_label="Fetching stock as file"):
+        # print("Fetching stock gzip file...")
         stock = api.get_stock_file()
 
-        if stock:
-            unused_attributes = [
-                "Exp.",
-                "Exp. Name",
-                "Altered?",
-                "onSale",
-                "idCurrency",
-                "Currency Code",
-            ]
+        unused_attributes = [
+            "Exp.",
+            "Exp. Name",
+            "Altered?",
+            "onSale",
+            "idCurrency",
+            "Currency Code",
+        ]
 
-            regular_stock_keys_mapping = {
-                "idArticle": "idArticle",
-                "idProduct": "idProduct",
-                "Amount": "count",
-                "Comments": "comments",
-                "Price": "price",
-                "Condition": "condition",
-                "Foil?": "isFoil",
-                "Playset?": "isPlayset",
-                "Signed?": "isSigned",
-                "Language": "language",
+        regular_stock_keys_mapping = {
+            "idArticle": "idArticle",
+            "idProduct": "idProduct",
+            "Amount": "count",
+            "Comments": "comments",
+            "Price": "price",
+            "Condition": "condition",
+            "Foil?": "isFoil",
+            "Playset?": "isPlayset",
+            "Signed?": "isSigned",
+            "Language": "language",
+        }
+        stock_list = [
+            {
+                regular_stock_keys_mapping[x]: y
+                for x, y in article.items()
+                if x in regular_stock_keys_mapping
             }
-            stock_list = [
-                {
-                    regular_stock_keys_mapping[x]: y
-                    for x, y in article.items()
-                    if x in regular_stock_keys_mapping
-                }
-                for article in stock
-            ]
-            # construct the 'product' entity for each article
-            for article in stock_list:
-                for k, v in article.items():
-                    try:
-                        article[k] = PyMkmHelper.string_to_float_or_int(v)
-                    except ValueError as err:
-                        article[k] = v
-                        continue
+            for article in stock
+        ]
+        # construct the 'product' entity for each article
+        for article in stock_list:
+            for k, v in article.items():
+                try:
+                    article[k] = PyMkmHelper.string_to_float_or_int(v)
+                except ValueError as err:
+                    article[k] = v
+                    continue
 
-                def map_stock_item(to_string, from_string):
-                    try:
-                        return {
-                            to_string: next(
-                                x[from_string]
-                                for x in stock
-                                if int(x["idArticle"]) == article["idArticle"]
-                            )
-                        }
-                    except StopIteration:
-                        return {to_string: ""}
+            def map_stock_item(to_string, from_string):
+                try:
+                    return {
+                        to_string: next(
+                            x[from_string]
+                            for x in stock
+                            if int(x["idArticle"]) == article["idArticle"]
+                        )
+                    }
+                except StopIteration:
+                    return {to_string: ""}
 
-                product_item = {}
-                product_item.update(map_stock_item("enName", "English Name"))
-                product_item.update(map_stock_item("locName", "Local Name"))
-                product_item.update(map_stock_item("expansion", "Exp. Name"))
+            product_item = {}
+            product_item.update(map_stock_item("enName", "English Name"))
+            product_item.update(map_stock_item("locName", "Local Name"))
+            product_item.update(map_stock_item("expansion", "Exp. Name"))
 
-                article["product"] = product_item
+            article["product"] = product_item
 
-            print("Stock fetched (using gzipped data).")
+        print("Stock fetched (using gzipped data).")
 
-            PyMkmHelper.store_to_cache(
-                self.config["local_cache_filename"], "stock", stock_list
-            )
-        else:
-            print("Stock empty.")
+        PyMkmHelper.store_to_cache(
+            self.config["local_cache_filename"], "stock", stock_list
+        )
+        return PyMkmHelper.read_from_cache(self.config["local_cache_filename"], "stock")
 
     def clean_json_for_upload(self, not_uploadable_json):
         for entry in not_uploadable_json:
@@ -337,86 +324,89 @@ class PyMkmApp:
 
     def update_stock_prices_to_trend(self, api, cli_called, cached=None, partial=0):
         """ This function updates all prices in the user's stock to TREND. """
-        self.report("update stock price to trend")
 
         stock_list = self.get_stock_as_array(
             self.api, cli_called, cached, log_time_label="Fetching stock"
         )
 
-        already_checked_articles = PyMkmHelper.read_from_cache(
-            self.config["local_cache_filename"], "partial_updated"
-        )
+        if stock_list:
 
-        if already_checked_articles:
-            print(
-                f"{len(already_checked_articles)} articles found in previous updates, ignoring those."
+            already_checked_articles = PyMkmHelper.read_from_cache(
+                self.config["local_cache_filename"], "partial_updated"
             )
 
-        partial_stock_update_size = 0
-        if partial > 0:
-            partial_stock_update_size = partial
-        elif not cli_called:
-            partial_status_string = ""
             if already_checked_articles:
-                partial_status_string = (
-                    f"({len(already_checked_articles)}/{len(stock_list)} done)"
+                print(
+                    f"{len(already_checked_articles)} articles found in previous updates, ignoring those."
                 )
-            partial_stock_update_size = PyMkmHelper.prompt_string(
-                f"Partial update? {partial_status_string} \n"
-                + "If so, enter number of cards (or press Enter to update all remaining stock)"
-            )
 
-            if partial_stock_update_size != "":
-                partial_stock_update_size = int(partial_stock_update_size)
+            partial_stock_update_size = 0
+            if partial > 0:
+                partial_stock_update_size = partial
+            elif not cli_called:
+                partial_status_string = ""
+                if already_checked_articles:
+                    partial_status_string = (
+                        f"({len(already_checked_articles)}/{len(stock_list)} done)"
+                    )
+                partial_stock_update_size = PyMkmHelper.prompt_string(
+                    f"Partial update? {partial_status_string} \n"
+                    + "If so, enter number of cards (or press Enter to update all remaining stock)"
+                )
+
+                if partial_stock_update_size != "":
+                    partial_stock_update_size = int(partial_stock_update_size)
+                else:
+                    partial_stock_update_size = 0
+
+            if cli_called or not self.config["enable_undercut_local_market"]:
+                undercut_local_market = False
             else:
-                partial_stock_update_size = 0
+                undercut_local_market = PyMkmHelper.prompt_bool(
+                    "Try to undercut local market? (slower, more requests)"
+                )
 
-        if cli_called or not self.config["enable_undercut_local_market"]:
-            undercut_local_market = False
-        else:
-            undercut_local_market = PyMkmHelper.prompt_bool(
-                "Try to undercut local market? (slower, more requests)"
-            )
-
-        (
-            uploadable_json,
-            checked_articles,
-            num_filtered_articles,
-        ) = self.calculate_new_prices_for_stock(
-            stock_list,
-            undercut_local_market,
-            partial_stock_update_size,
-            already_checked_articles,
-            api=self.api,
-        )
-
-        cache_size = 0
-        if checked_articles:  # TODO: subtract the sticky prices
-            cache_size = PyMkmHelper.append_to_cache(
-                self.config["local_cache_filename"],
-                "partial_updated",
+            (
+                uploadable_json,
                 checked_articles,
+                num_filtered_articles,
+            ) = self.calculate_new_prices_for_stock(
+                stock_list,
+                undercut_local_market,
+                partial_stock_update_size,
+                already_checked_articles,
+                api=self.api,
             )
-            if cache_size + num_filtered_articles == len(stock_list):
-                print(f"Entire stock updated in partial updates.")
-                PyMkmHelper.clear_cache(
-                    self.config["local_cache_filename"], "partial_updated"
+
+            cache_size = 0
+            if checked_articles:  # TODO: subtract the sticky prices
+                cache_size = PyMkmHelper.append_to_cache(
+                    self.config["local_cache_filename"],
+                    "partial_updated",
+                    checked_articles,
                 )
+                if cache_size + num_filtered_articles == len(stock_list):
+                    print(f"Entire stock updated in partial updates.")
+                    PyMkmHelper.clear_cache(
+                        self.config["local_cache_filename"], "partial_updated"
+                    )
 
-        if len(uploadable_json) > 0:
+            if len(uploadable_json) > 0:
 
-            self.display_price_changes_table(uploadable_json)
+                self.display_price_changes_table(uploadable_json)
 
-            if cli_called or PyMkmHelper.prompt_bool(
-                "Do you want to update these prices?"
-            ):
-                print("Updating prices...")
-                api.set_stock(uploadable_json)
-                print("Prices updated.")
+                if cli_called or PyMkmHelper.prompt_bool(
+                    "Do you want to update these prices?"
+                ):
+                    print("Updating prices...")
+                    api.set_stock(uploadable_json)
+                    print("Prices updated.")
+                else:
+                    print("Prices not updated.")
             else:
-                print("Prices not updated.")
+                print("No prices to update.")
         else:
-            print("No prices to update.")
+            print("No stock to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
 
@@ -434,7 +424,6 @@ class PyMkmApp:
 
     def update_product_to_trend(self, api):
         """ This function updates one product in the user's stock to TREND. """
-        self.report("update product price to trend")
 
         search_string = PyMkmHelper.prompt_string("Search product name")
 
@@ -454,7 +443,7 @@ class PyMkmApp:
                 article = self.select_from_list_of_articles(filtered_articles)
             else:
                 article = filtered_articles[0]
-                found_string = f"Found: {article['product']['enName']}"
+                found_string = f"Found: {article['product']['enName']} "
                 if article["product"].get("expansion"):
                     found_string += f"[{article['product'].get('expansion')}] "
                 if article["isFoil"]:
@@ -503,12 +492,12 @@ class PyMkmApp:
         self.logger.debug("-> update_product_to_trend: Done")
 
     def list_competition_for_product(self, api):
-        self.report("list competition for product")
         print("Note: does not support playsets, booster displays etc (yet).")
 
-        search_string = PyMkmHelper.prompt_string("Search product name")
-        is_foil = PyMkmHelper.prompt_bool("Foil?")
+        search_string = PyMkmHelper.prompt_string("Search product name on Cardmarket")
+        # is_foil = PyMkmHelper.prompt_bool("Foil?")
 
+        print("Finding product...")
         try:
             result = api.find_product(
                 search_string,
@@ -527,10 +516,7 @@ class PyMkmApp:
                 products = result
 
                 stock_list_products = [
-                    x["idProduct"]
-                    for x in self.get_stock_as_array(
-                        api=self.api, log_time_label="Fetching stock"
-                    )
+                    x["idProduct"] for x in self.get_stock_as_array(api=self.api)
                 ]
                 products = [
                     x for x in products if x["idProduct"] in stock_list_products
@@ -547,15 +533,13 @@ class PyMkmApp:
                         product = products[0]
 
                     self.show_competition_for_product(
-                        product["idProduct"], product["enName"], is_foil, api=self.api
+                        product["idProduct"], product["enName"], api=self.api
                     )
             else:
                 print("No results found.")
         self.logger.debug("-> list_competition_for_product: Done")
 
     def find_deals_from_user(self, api):
-        self.report("find deals from user")
-
         search_string = PyMkmHelper.prompt_string("Enter username")
 
         try:
@@ -675,11 +659,7 @@ class PyMkmApp:
         self.logger.debug("-> find_deals_from_user: Done")
 
     def show_top_expensive_articles_in_stock(self, num_articles, api):
-        self.report("show top expensive in stock")
-
-        stock_list = self.get_stock_as_array(
-            api=self.api, log_time_label="Fetching stock"
-        )
+        stock_list = self.get_stock_as_array(api=self.api)
 
         table_data = []
         total_price = 0
@@ -731,8 +711,6 @@ class PyMkmApp:
         return None
 
     def track_prices_to_csv(self, api, wantslist_name=None, cached=False):
-        self.report("track prices")
-
         wantslists, wantslists_lists = self.get_wantslists_data(api, cached)
         if wantslist_name is None:
             selected_list = self.select_from_list_of_wantslists(wantslists)
@@ -813,7 +791,6 @@ class PyMkmApp:
                 print(err.value)
 
     def clean_purchased_from_wantslists(self, api):
-        self.report("clean wantslists")
         print("This will show items in your wantslists you have already received.")
 
         wantslists, wantslists_lists = self.get_wantslists_data(
@@ -982,13 +959,6 @@ class PyMkmApp:
         else:
             print("No wantslists or received orders.")
 
-    def show_account_info(self, api):
-        self.report("show account info")
-
-        pp = pprint.PrettyPrinter()
-        pp.pprint(api.get_account())
-        self.logger.debug("-> show_account_info: Done")
-
     def clear_partial_updates(self, api):
         print("Clearing partial update data...")
         PyMkmHelper.clear_cache(self.config["local_cache_filename"], "partial_updated")
@@ -996,7 +966,6 @@ class PyMkmApp:
         print("Done.")
 
     def clear_entire_stock(self, api):
-        self.report("clear entire stock")
 
         stock_list = self.get_stock_as_array(
             api=self.api, log_time_label="Fetching stock"
@@ -1022,8 +991,6 @@ class PyMkmApp:
             print("Aborted.")
 
     def import_from_csv(self, api):
-        self.report("import from csv")
-
         print(
             "Note the required format: Card, Set name, Quantity, Foil, Language (with header row)."
         )
@@ -1209,14 +1176,7 @@ class PyMkmApp:
     def select_from_list_of_products(self, products):
         index = 1
         for product in products:
-            print(
-                "{}: {} [{}] {}".format(
-                    index,
-                    product["enName"],
-                    product["expansionName"],
-                    product["rarity"],
-                )
-            )
+            print(f"{index}: {product['enName']}")
             index += 1
         choice = ""
         while not isinstance(choice, int) or choice > len(products):
@@ -1237,9 +1197,10 @@ class PyMkmApp:
         choice = int(input("Choose card: "))
         return articles[choice - 1]
 
-    def show_competition_for_product(self, product_id, product_name, is_foil, api):
+    def show_competition_for_product(self, product_id, product_name, api):
         print("Selected product: {}".format(product_name))
-        table_data_local, table_data = self.get_competition(api, product_id, is_foil)
+
+        table_data_local, table_data = self.get_competition(api, product_id)
         if table_data_local:
             self.print_product_top_list("Local competition:", table_data_local, 4, 20)
         if table_data:
@@ -1247,10 +1208,12 @@ class PyMkmApp:
         else:
             print("No prices found.")
 
-    def get_competition(self, api, product_id, is_foil):
+    @timeit
+    def get_competition(self, api, product_id, log_time_label="Fetching competition"):
         # TODO: Add support for playsets
         # TODO: Add support for card condition
-        self.account = api.get_account()["account"]
+        print("Fetching competition...")
+        # self.account = api.get_account()["account"]
         country_code = self.account["country"]
 
         config = self.config
@@ -1263,7 +1226,7 @@ class PyMkmApp:
         articles = api.get_articles(
             product_id,
             **{
-                "isFoil": str(is_foil).lower(),
+                # "isFoil": str(is_foil).lower(),
                 "isAltered": is_altered,
                 "isSigned": is_signed,
                 "minCondition": min_condition,
@@ -1568,61 +1531,36 @@ class PyMkmApp:
         )
 
     @timeit
-    def get_stock_as_array(self, api, cli_called=False, cached=None, **kwargs):
+    def get_stock_as_array(
+        self,
+        api,
+        cli_called=False,
+        cached=None,
+        log_time_label="Fetching stock",
+        **kwargs,
+    ):
+        self.logger.debug("--> Fetching stock")
+        print(f"{log_time_label}...")
+
         # Check for cached stock
         local_stock_cache = None
         local_stock_cache = PyMkmHelper.read_from_cache(
             self.config["local_cache_filename"], "stock"
         )
 
-        if local_stock_cache:
-            if not cli_called:
+        if not cli_called:
+            if not local_stock_cache:
+                return self.get_stock_as_file_to_cache(self.api)
+            else:
                 if PyMkmHelper.prompt_bool(
-                    f"Cached stock ({len(local_stock_cache)} items) found, use it? Note that prices may be outdated."
+                    f"Cached stock ({len(local_stock_cache)} items) found, use it?"
                 ):
                     return local_stock_cache
-            else:
-                if cached:
-                    return local_stock_cache
-
-            PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
-
-        print(
-            "Getting your stock from Cardmarket (the API can be slow for large stock)..."
-        )
-
-        try:
-            d = api.get_stock()
-        except CardmarketError as err:
-            self.logger.error(err.mkm_msg())
-            print(err.mkm_msg())
-            sys.exit(0)
-        # except Exception as err:
-        #    msg = f"No response from API. Error: {err}"
-        #    print(msg)
-        #    self.logger.error(msg)
-        #    sys.exit(0)
+                else:
+                    return self.get_stock_as_file_to_cache(self.api)
         else:
-            keys = [
-                "idArticle",
-                "idProduct",
-                "product",
-                "count",
-                "comments",
-                "price",
-                "condition",
-                "isFoil",
-                "isPlayset",
-                "isSigned",
-                "language",
-            ]
-            stock_list = [
-                {x: y for x, y in article.items() if x in keys} for article in d
-            ]
-            print("Stock fetched.")
+            if cached:
+                return local_stock_cache
+            else:
+                return self.get_stock_as_file_to_cache(self.api)
 
-            PyMkmHelper.store_to_cache(
-                self.config["local_cache_filename"], "stock", stock_list
-            )
-
-            return stock_list
