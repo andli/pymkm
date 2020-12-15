@@ -381,6 +381,16 @@ class PyMkmApi:
         ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         url = f"{self.base_url}/stock"
 
+        # idProduct
+        # idLanguage
+        # comments
+        # count
+        # price
+        # condition
+        # isFoil
+        # isSigned
+        # isPlayset
+
         # clean data because the API treats "False" as true, must be "false".
         for entry in payload:
             for key, value in entry.items():
@@ -401,15 +411,18 @@ class PyMkmApi:
                     timeout=self.config["cardmarket_request_timeout"],
                 )
                 inserted = r.json()
-                for item in inserted["inserted"]:
-                    if not item["success"]:
-                        raise CardmarketError(
-                            f"{item['error']}: {item['tried']}"  # , url=r.request.url
-                        )
-                    else:
-                        self.logger.debug(
-                            f">> Added {item['idArticle']['product']['enName']}."
-                        )
+                if "error" in inserted:
+                    raise CardmarketError(inserted["error"])
+                else:
+                    for item in inserted["inserted"]:
+                        if not item["success"]:
+                            raise CardmarketError(
+                                f"{item['error']}: {item['tried']}"  # , url=r.request.url
+                            )
+                        else:
+                            self.logger.debug(
+                                f">> Added {item['idArticle']['product']['enName']}."
+                            )
 
             except CardmarketError as err:
                 self.logger.error(f"{err.mkm_msg()} {err.url}")

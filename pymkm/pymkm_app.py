@@ -93,7 +93,13 @@ class PyMkmApp:
         self.logger.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
         print("Fetching Cardmarket account data...")
-        self.account = self.api.get_account()["account"]
+        self.account = self.get_account_data(
+            self.api, log_time_label="Fetching account data"
+        )
+
+    @timeit
+    def get_account_data(self, api, **kwargs):
+        return api.get_account()["account"]
 
     def check_latest_version(self):
         latest_version = None
@@ -198,6 +204,16 @@ class PyMkmApp:
                     menu.add_function_item(
                         f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
                     )
+                    menu.add_function_item(
+                        f"⚠ Backup stock",
+                        self.stock_backup_to_cache,
+                        {"api": self.api},
+                    )
+                    menu.add_function_item(
+                        f"⚠ Restore stock",
+                        self.stock_restore_from_cache,
+                        {"api": self.api},
+                    )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
                 else:
@@ -225,6 +241,40 @@ class PyMkmApp:
         del product_json["product"]["links"]
         pp = pprint.PrettyPrinter()
         pp.pprint(product_json)
+
+    def stock_backup_to_cache(self, api):
+        if PyMkmHelper.prompt_bool("Sure?"):
+            print("Backing up cached stock...")
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"],
+                "stock_backup",
+                PyMkmHelper.read_from_cache(
+                    self.config["local_cache_filename"], "stock"
+                ),
+            )
+            print("Done.")
+
+    def stock_restore_from_cache(self, api):
+        if PyMkmHelper.prompt_bool("Sure?"):
+            print("Restoring cached stock...")
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"],
+                "stock",
+                PyMkmHelper.read_from_cache(
+                    self.config["local_cache_filename"], "stock_backup"
+                ),
+            )
+
+            new_stock = PyMkmHelper.read_from_cache(
+                self.config["local_cache_filename"], "stock"
+            )
+
+            for article in new_stock:
+                del article["idArticle"]
+
+            api.add_stock(new_stock)
+
+            print("Done.")
 
     def add_fake_stock(self, api):
         """ Dev function to add fake stock. """
@@ -271,7 +321,7 @@ class PyMkmApp:
             "Foil?": "isFoil",
             "Playset?": "isPlayset",
             "Signed?": "isSigned",
-            "Language": "language",
+            "Language": "idLanguage",
         }
         stock_list = [
             {
@@ -544,6 +594,7 @@ class PyMkmApp:
         search_string = PyMkmHelper.prompt_string("Enter username")
 
         try:
+            print("Fetching user's stock...")
             result = api.find_user_articles(search_string)
         except CardmarketError as err:
             self.logger.error(err.mkm_msg())
@@ -671,7 +722,7 @@ class PyMkmApp:
             foil = article.get("isFoil")
             playset = article.get("isPlayset")
             condition = article.get("condition")
-            language_code = article.get("language")
+            language_code = article.get("idLanguage")
             if isinstance(language_code, int):
                 language_name = PyMkmApi.languages[int(language_code)]
             else:
@@ -1209,8 +1260,7 @@ class PyMkmApp:
         else:
             print("No prices found.")
 
-    @timeit
-    def get_competition(self, api, product_id, log_time_label="Fetching competition"):
+    def get_competition(self, api, product_id):
         # TODO: Add support for playsets
         # TODO: Add support for card condition
         print("Fetching competition...")
@@ -1361,12 +1411,12 @@ class PyMkmApp:
     def update_price_for_article(
         self, article, product, undercut_local_market=False, api=None
     ):
-        if isinstance(article["language"], int):
-            language_id = PyMkmHelper.string_to_float_or_int(article["language"])
-            language_name = PyMkmApi.languages[language_id]
+        if isinstance(article["idLanguage"], int):
+            language_id = PyMkmHelper.string_to_float_or_int(article["idLanguage"])
+            # language_name = PyMkmApi.languages[language_id]
         else:
             language_id = article["language"]["idLanguage"]
-            language_name = article["language"]["languageName"]
+            # language_name = article["language"]["languageName"]
 
         new_price = self.get_price_for_product(
             product,
@@ -1387,7 +1437,7 @@ class PyMkmApp:
                     "expansion": article["product"]["expansion"],
                     "isFoil": article.get("isFoil", False),
                     "isPlayset": article.get("isPlayset", False),
-                    "language": language_name,
+                    "idLanguage": language_id,
                     "condition": article["condition"],
                     "old_price": article["price"],
                     "price": new_price,
@@ -1508,7 +1558,7 @@ class PyMkmApp:
                         "\u2713" if item["isFoil"] else "",
                         "\u2713" if item["isPlayset"] else "",
                         item["condition"],
-                        item["language"],
+                        PyMkmApi.languages[item["idLanguage"]],
                         item["old_price"],
                         item["price"],
                         item["price_diff"],
@@ -1533,15 +1583,10 @@ class PyMkmApp:
 
     @timeit
     def get_stock_as_array(
-        self,
-        api,
-        cli_called=False,
-        cached=None,
-        log_time_label="Fetching stock",
-        **kwargs,
+        self, api, cli_called=False, cached=None, **kwargs,
     ):
         self.logger.debug("--> Fetching stock")
-        print(f"{log_time_label}...")
+        print(f"Fetching stock...")
 
         # Check for cached stock
         local_stock_cache = None
