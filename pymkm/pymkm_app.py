@@ -92,6 +92,7 @@ class PyMkmApp:
         fh.setLevel(self.config["log_level"])
         self.logger.setLevel(self.config["log_level"])
         self.api = PyMkmApi(config=self.config)
+        print("Fetching Cardmarket account data...")
         self.account = self.api.get_account()["account"]
 
     def check_latest_version(self):
