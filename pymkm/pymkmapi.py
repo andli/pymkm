@@ -230,6 +230,7 @@ class PyMkmApi:
             # redirect to the given request URI, because a new Authorization
             # header needs to be compiled for the redirected resource. (MKM API docs)
             self.__handle_response(r)
+            mkm_oauth.close()
             return r
         except CardmarketError as err:
             self.logger.error(f"{err.mkm_msg()} {url}")
@@ -360,6 +361,7 @@ class PyMkmApi:
 
         self.logger.debug(">> Setting vacation status to: " + str(vacation_status))
         r = mkm_oauth.put(url, params={"onVacation": str(vacation_status).lower()})
+        mkm_oauth.close()
         # cancelOrders
         # relistItems
 
@@ -373,6 +375,7 @@ class PyMkmApi:
 
         self.logger.debug(">> Setting display language to: " + str(display_language))
         r = mkm_oauth.put(url, params={"idDisplayLanguage": display_language})
+        mkm_oauth.close()
 
         if self.__handle_response(r):
             return r.json()
@@ -410,6 +413,7 @@ class PyMkmApi:
                     data=xml_payload,
                     timeout=self.config["cardmarket_request_timeout"],
                 )
+                mkm_oauth.close()
                 inserted = r.json()
                 if "error" in inserted:
                     raise CardmarketError(inserted["error"])
@@ -468,6 +472,7 @@ class PyMkmApi:
             r = mkm_oauth.put(
                 url, data=xml_payload, timeout=self.config["cardmarket_request_timeout"]
             )
+            mkm_oauth.close()
             try:
                 json_response = r.json()
                 if len(json_response["updatedArticles"]) > 0:
