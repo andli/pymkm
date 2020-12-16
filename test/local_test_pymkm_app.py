@@ -22,14 +22,16 @@ class TestPyMkmApp(LocalTestCommon):
         app.start(self.parsed_args)
         self.assertRegex(mock_stdout.getvalue(), r"╭─── PyMKM")
 
-    # @patch("sys.stdout", new_callable=io.StringIO)
-    # @patch("builtins.input", side_effect=["1", "", "", "y", "0"])
-    ## TODO: instead of patching, trigger each depending on the stdout
-    # def test_stock_update(self, mock_input, mock_stdout, *args):
-    #    self.assertEquals(True, True)
-    #    app = PyMkmApp()
-    #    app.start(self.parsed_args)
-    #    self.assertRegex(mock_stdout.getvalue(), r"Stock updated")
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("builtins.input", side_effect=["backupstock", "y", "restorestock", "y", "0"])
+    # TODO: instead of patching, trigger each depending on the stdout
+    def test_stock_update(self, mock_input, mock_stdout, *args):
+        self.assertEquals(True, True)
+        app = PyMkmApp()
+        app.start(self.parsed_args)
+        out = mock_stdout.getvalue()
+        self.assertRegex(mock_stdout.getvalue(), r"Restoring cached stock...")
+        self.assertRegex(mock_stdout.getvalue(), r"Done.")
 
 
 if __name__ == "__main__":

@@ -71,10 +71,12 @@ class PyMkmApp:
         if config is None:
             self.logger.debug(">> Loading config file")
             try:
-                self.config = json.load(open("config.json"))
+                with open("config.json", "r") as config_file:
+                    self.config = json.load(config_file)
 
                 # Sync missing attributes to active config
-                template_config = json.load(open("config_template.json"))
+                with open("config_template.json", "r") as template_config_file:
+                    template_config = json.load(template_config_file)
                 # template_config.update(self.config)
                 PyMkmHelper.update_recursive(self.config, template_config)
                 # self.config = template_config
