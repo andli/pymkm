@@ -238,7 +238,8 @@ class PyMkmApp:
         """ Dev function check on a product id. """
         pid = int(PyMkmHelper.prompt_string("pid"))
         product_json = api.get_product(pid)
-        del product_json["product"]["reprint"]
+        if "reprint" in product_json["product"]:
+            del product_json["product"]["reprint"]
         del product_json["product"]["links"]
         pp = pprint.PrettyPrinter()
         pp.pprint(product_json)
