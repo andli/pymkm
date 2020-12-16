@@ -17,6 +17,7 @@ import pprint
 import uuid
 import sys
 import time
+import re
 import pkg_resources
 
 import micromenu
@@ -52,8 +53,17 @@ class PyMkmApp:
         self.logger.addHandler(sh)
 
         # Check that dependencies are ok
-        micromenu_version = pkg_resources.get_distribution("micromenu").version
-        if parse_version(micromenu_version) < parse_version("1.3.0"):
+        micromenu_version = parse_version(
+            pkg_resources.get_distribution("micromenu").version
+        )
+        needed_micromenu_version = micromenu_version
+        with open("requirements.txt", "r") as file:
+            for line in file.readlines():
+                if line.startswith("micromenu"):
+                    needed_micromenu_version = parse_version(
+                        re.search(r"([\d.]+)", line).group(1)
+                    )
+        if micromenu_version < needed_micromenu_version:
             print("Dependencies for PyMkm need updating, run:")
             print("pip install --upgrade -r requirements.txt")
             sys.exit(0)
@@ -150,21 +160,25 @@ class PyMkmApp:
                     f"Update stock prices {stock_status}",
                     self.update_stock_prices_to_trend,
                     {"api": self.api, "cli_called": False},
+                    uid="updatestockprices",
                 )
                 menu.add_function_item(
                     "Update price for a product",
                     self.update_product_to_trend,
                     {"api": self.api},
+                    uid="update1product",
                 )
                 menu.add_function_item(
                     "List competition for a product",
                     self.list_competition_for_product,
                     {"api": self.api},
+                    uid="listcompetition",
                 )
                 menu.add_function_item(
                     "Find deals from a user",
                     self.find_deals_from_user,
                     {"api": self.api},
+                    uid="finddeals",
                 )
                 menu.add_function_item(
                     f"Show top {self.config['show_top_x_expensive_items']} expensive items in stock",
@@ -173,47 +187,63 @@ class PyMkmApp:
                         "num_articles": self.config["show_top_x_expensive_items"],
                         "api": self.api,
                     },
+                    uid="showtopx",
                 )
                 menu.add_function_item(
                     "Wantslists cleanup suggestions",
                     self.clean_purchased_from_wantslists,
                     {"api": self.api},
+                    uid="wantslistscleanup",
                 )
                 menu.add_function_item(
                     "Clear partial updates",
                     self.clear_partial_updates,
                     {"api": self.api},
+                    uid="clearpartial",
                 )
                 menu.add_function_item(
-                    "Clear entire stock", self.clear_entire_stock, {"api": self.api},
+                    "Clear entire stock",
+                    self.clear_entire_stock,
+                    {"api": self.api},
+                    uid="clearstock",
                 )
                 menu.add_function_item(
                     f"Import stock from {self.config['csv_import_filename']}",
                     self.import_from_csv,
                     {"api": self.api},
+                    uid="importcsv",
                 )
                 menu.add_function_item(
                     f"Track price data to {self.config['csv_prices_filename']}",
                     self.track_prices_to_csv,
                     {"api": self.api},
+                    uid="trackprices",
                 )
                 if self.DEV_MODE:
                     menu.add_divider()
                     menu.add_function_item(
-                        f"⚠ Check product id", self.check_product_id, {"api": self.api},
+                        f"⚠ Check product id",
+                        self.check_product_id,
+                        {"api": self.api},
+                        uid="checkpid",
                     )
                     menu.add_function_item(
-                        f"⚠ Add fake stock", self.add_fake_stock, {"api": self.api},
+                        f"⚠ Add fake stock",
+                        self.add_fake_stock,
+                        {"api": self.api},
+                        uid="addfakestock",
                     )
                     menu.add_function_item(
                         f"⚠ Backup stock",
                         self.stock_backup_to_cache,
                         {"api": self.api},
+                        uid="backupstock",
                     )
                     menu.add_function_item(
                         f"⚠ Restore stock",
                         self.stock_restore_from_cache,
                         {"api": self.api},
+                        uid="restorestock",
                     )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
