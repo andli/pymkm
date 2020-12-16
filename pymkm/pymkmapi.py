@@ -588,36 +588,41 @@ class PyMkmApi:
         r = self.mkm_request(mkm_oauth, tmp_url, params=params)
 
         max_items = 0
-        if r.status_code == requests.codes.partial_content:
-            max_items = self.__get_max_items_from_header(r)
-            self.logger.debug(f"> Content-Range header: {r.headers['Content-Range']}")
-            self.logger.debug(
-                f"> # {item_name}s in response: {str(len(r.json()[item_name]))}"
-            )
-            next_start = start + INCREMENT
-            if next_start >= max_items and self.__handle_response(r):
+        if r:
+            if r.status_code == requests.codes.partial_content:
+                max_items = self.__get_max_items_from_header(r)
+                self.logger.debug(
+                    f"> Content-Range header: {r.headers['Content-Range']}"
+                )
+                self.logger.debug(
+                    f"> # {item_name}s in response: {str(len(r.json()[item_name]))}"
+                )
+                next_start = start + INCREMENT
+                if next_start >= max_items and self.__handle_response(r):
+                    return r.json()[item_name]
+                else:
+                    self.logger.debug(
+                        f"-> get {item_name}s recurring to next_start={next_start}"
+                    )
+                    # item_name,url,start=0,avoid_redirect=False,provided_oauth=None,**kwargs,
+                    return r.json()[item_name] + self.handle_partial_content(
+                        item_name,
+                        url,
+                        # mkm_oauth,
+                        next_start,
+                        avoid_redirect=avoid_redirect,
+                        provided_oauth=provided_oauth,
+                        **kwargs,
+                    )
+            elif r.status_code == requests.codes.no_content:
+                raise CardmarketError(f"No {item_name}s found.")
+                return False
+            elif r.status_code == requests.codes.ok:
                 return r.json()[item_name]
             else:
-                self.logger.debug(
-                    f"-> get {item_name}s recurring to next_start={next_start}"
-                )
-                # item_name,url,start=0,avoid_redirect=False,provided_oauth=None,**kwargs,
-                return r.json()[item_name] + self.handle_partial_content(
-                    item_name,
-                    url,
-                    # mkm_oauth,
-                    next_start,
-                    avoid_redirect=avoid_redirect,
-                    provided_oauth=provided_oauth,
-                    **kwargs,
-                )
-        elif r.status_code == requests.codes.no_content:
-            raise CardmarketError(f"No {item_name}s found.")
-            return False
-        elif r.status_code == requests.codes.ok:
-            return r.json()[item_name]
+                raise ConnectionError(r)
         else:
-            raise ConnectionError(r)
+            pass
 
     def find_product(self, search, provided_oauth=None, **kwargs):
         ## https://api.cardmarket.com/ws/documentation/API_2.0:Find_Products

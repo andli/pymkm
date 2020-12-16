@@ -609,114 +609,116 @@ class PyMkmApp:
             self.logger.error(err.mkm_msg())
             print(err.mkm_msg())
         else:
-            filtered_articles = [x for x in result if x.get("price") > 1]
-            # language from configured filter
-            language_filter_string = self.config["search_filters"]["language"]
-            if language_filter_string:
-                language_filter_code = api.get_language_code_from_string(
-                    language_filter_string
-                )
-                if language_filter_code:
-                    filtered_articles = [
-                        x
-                        for x in filtered_articles
-                        if x.get("language").get("idLanguage") == language_filter_code
-                    ]
-
-            sorted_articles = sorted(
-                filtered_articles, key=lambda x: x["price"], reverse=True
-            )
-            print(
-                f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria."
-            )
-            num_searches = int(
-                PyMkmHelper.prompt_string(
-                    f"Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})"
-                )
-            )
-            if 1 <= num_searches <= len(sorted_articles):
-                table_data = []
-
-                products_to_get = []
-                index = 0
-                bar = progressbar.ProgressBar(max_value=num_searches)
-                bar.update(index)
-                products_to_get = [
-                    x["idProduct"] for x in sorted_articles[:num_searches]
-                ]
-                products = api.get_items_async("products", products_to_get)
-
-                # remove any None results (probably caused by being booster boxes etc)
-                products = [x for x in products if x != None]
-
-                for article in sorted_articles[:num_searches]:
-                    try:
-                        p = next(
-                            x
-                            for x in products
-                            if x["product"]["idProduct"] == article["idProduct"]
-                        )
-                    except StopIteration:
-                        # Stock item not found in update batch, continuing
-                        continue
-                    name = p["product"]["enName"]
-                    expansion = p["product"].get("expansion")
-                    price = float(article["price"])
-                    if expansion:
-                        expansion_name = expansion.get("enName")
-                    else:
-                        expansion_name = "N/A"
-                    if article.get("isFoil"):
-                        market_price = p["product"]["priceGuide"]["TRENDFOIL"]
-                    else:
-                        market_price = p["product"]["priceGuide"]["TREND"]
-                    if market_price > 0:
-                        price_diff = price - market_price
-                        percent_deal = round(-100 * (price_diff / market_price))
-                        if price_diff < -1 or percent_deal >= 10:
-                            table_data.append(
-                                [
-                                    name,
-                                    expansion_name,
-                                    article.get("condition"),
-                                    article.get("language").get("languageName"),
-                                    "\u2713" if article.get("isFoil") else "",
-                                    "\u2713" if article.get("isPlayset") else "",
-                                    price,
-                                    market_price,
-                                    price_diff,
-                                    percent_deal,
-                                ]
-                            )
-
-                    index += 1
-                    bar.update(index)
-                bar.finish()
-
-                if table_data:
-                    print("Found some interesting prices:")
-                    print(
-                        tb.tabulate(
-                            sorted(table_data, key=lambda x: x[9], reverse=True),
-                            headers=[
-                                "Name",
-                                "Expansion",
-                                "Condition",
-                                "Language",
-                                "Foil",
-                                "Playset",
-                                "Price",
-                                "Market price",
-                                "Market diff",
-                                "Deal %",
-                            ],
-                            tablefmt="simple",
-                        )
+            if result:
+                filtered_articles = [x for x in result if x.get("price") > 1]
+                # language from configured filter
+                language_filter_string = self.config["search_filters"]["language"]
+                if language_filter_string:
+                    language_filter_code = api.get_language_code_from_string(
+                        language_filter_string
                     )
+                    if language_filter_code:
+                        filtered_articles = [
+                            x
+                            for x in filtered_articles
+                            if x.get("language").get("idLanguage")
+                            == language_filter_code
+                        ]
+
+                sorted_articles = sorted(
+                    filtered_articles, key=lambda x: x["price"], reverse=True
+                )
+                print(
+                    f"User '{search_string}' has {len(sorted_articles)} articles that meet the criteria."
+                )
+                num_searches = int(
+                    PyMkmHelper.prompt_string(
+                        f"Searching top X expensive cards for deals, choose X (1-{len(sorted_articles)})"
+                    )
+                )
+                if 1 <= num_searches <= len(sorted_articles):
+                    table_data = []
+
+                    products_to_get = []
+                    index = 0
+                    bar = progressbar.ProgressBar(max_value=num_searches)
+                    bar.update(index)
+                    products_to_get = [
+                        x["idProduct"] for x in sorted_articles[:num_searches]
+                    ]
+                    products = api.get_items_async("products", products_to_get)
+
+                    # remove any None results (probably caused by being booster boxes etc)
+                    products = [x for x in products if x != None]
+
+                    for article in sorted_articles[:num_searches]:
+                        try:
+                            p = next(
+                                x
+                                for x in products
+                                if x["product"]["idProduct"] == article["idProduct"]
+                            )
+                        except StopIteration:
+                            # Stock item not found in update batch, continuing
+                            continue
+                        name = p["product"]["enName"]
+                        expansion = p["product"].get("expansion")
+                        price = float(article["price"])
+                        if expansion:
+                            expansion_name = expansion.get("enName")
+                        else:
+                            expansion_name = "N/A"
+                        if article.get("isFoil"):
+                            market_price = p["product"]["priceGuide"]["TRENDFOIL"]
+                        else:
+                            market_price = p["product"]["priceGuide"]["TREND"]
+                        if market_price > 0:
+                            price_diff = price - market_price
+                            percent_deal = round(-100 * (price_diff / market_price))
+                            if price_diff < -1 or percent_deal >= 10:
+                                table_data.append(
+                                    [
+                                        name,
+                                        expansion_name,
+                                        article.get("condition"),
+                                        article.get("language").get("languageName"),
+                                        "\u2713" if article.get("isFoil") else "",
+                                        "\u2713" if article.get("isPlayset") else "",
+                                        price,
+                                        market_price,
+                                        price_diff,
+                                        percent_deal,
+                                    ]
+                                )
+
+                        index += 1
+                        bar.update(index)
+                    bar.finish()
+
+                    if table_data:
+                        print("Found some interesting prices:")
+                        print(
+                            tb.tabulate(
+                                sorted(table_data, key=lambda x: x[9], reverse=True),
+                                headers=[
+                                    "Name",
+                                    "Expansion",
+                                    "Condition",
+                                    "Language",
+                                    "Foil",
+                                    "Playset",
+                                    "Price",
+                                    "Market price",
+                                    "Market diff",
+                                    "Deal %",
+                                ],
+                                tablefmt="simple",
+                            )
+                        )
+                    else:
+                        print("Found no deals. :(")
                 else:
-                    print("Found no deals. :(")
-            else:
-                print("Invalid number.")
+                    print("Invalid number.")
         self.logger.debug("-> find_deals_from_user: Done")
 
     def show_top_expensive_articles_in_stock(self, num_articles, api):
