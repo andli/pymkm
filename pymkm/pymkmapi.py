@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 __license__ = "MIT"
 
 import asyncio
@@ -404,6 +404,7 @@ class PyMkmApi:
 
         self.logger.debug(">> Adding stock")
         chunked_list = list(self.__chunks(payload, 100))
+        r = None
         for chunk in chunked_list:
             # chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
             try:
@@ -465,6 +466,7 @@ class PyMkmApi:
         self.logger.debug(">> Updating stock")
         chunked_list = list(self.__chunks(clean_payload, 100))
         index = 0
+        r = None
         for chunk in chunked_list:
             index += 1
             self.logger.debug(f"chunk {index}/{len(chunked_list)}")
@@ -502,6 +504,7 @@ class PyMkmApi:
 
         self.logger.debug(">> Deleting stock")
         chunked_list = list(self.__chunks(payload, 100))
+        r = None
         for chunk in chunked_list:
             xml_payload = self.__json_to_xml(chunk)
             r = mkm_oauth.delete(url, data=xml_payload)

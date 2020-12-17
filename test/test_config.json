@@ -28,7 +28,7 @@
     "userType": "",
     "idLanguage": 1
   },
-  "dev_mode": true,
+  "dev_mode": false,
   "uuid": "xxx",
   "reporting": true,
   "enable_undercut_local_market": false,

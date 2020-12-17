@@ -1,15 +1,8 @@
 """
 Python unittest
 """
-import io
-import json
 import logging
 import unittest
-
-from unittest.mock import MagicMock, Mock, mock_open, patch
-
-from pymkm.pymkm_app import PyMkmApp
-from pymkm.pymkmapi import PyMkmApi
 
 
 class LocalTestCommon(unittest.TestCase):

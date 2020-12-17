@@ -4,19 +4,16 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 __license__ = "MIT"
 
-import os
 import csv
 import json
-import shelve
 import logging
 import logging.handlers
 import pprint
 import uuid
 import sys
-import time
 import re
 import pkg_resources
 
@@ -116,8 +113,10 @@ class PyMkmApp:
     def check_latest_version(self):
         latest_version = None
         try:
-            r = requests.get("https://api.github.com/repos/andli/pymkm/releases/latest")
-            latest_version = r.json()["tag_name"]
+            r = requests.get(
+                "https://api.github.com/repos/andli/pymkm/releases/latest"
+            ).json()
+            latest_version = r["tag_name"]
         except Exception as err:
             self.logger.error("Connection error with github.com")
         if parse_version(__version__) < parse_version(latest_version):
@@ -518,68 +517,73 @@ class PyMkmApp:
 
         search_string = PyMkmHelper.prompt_string("Search product name")
 
+        articles = None
         try:
             articles = api.find_stock_article(search_string, 1)
         except Exception as err:
-            print(err)
+            self.logger.error(err)
 
-        filtered_articles = self.__filter_sticky(articles)
-        filtered_articles = self.__filter_language_data(articles)
+        if articles:
+            filtered_articles = self.__filter_sticky(articles)
+            filtered_articles = self.__filter_language_data(articles)
 
-        ### --- refactor?
+            ### --- refactor?
 
-        if not filtered_articles:
-            print(f"{len(articles)} articles found, no editable prices.")
-        else:
-            if len(filtered_articles) > 1:
-                article = self.select_from_list_of_articles(filtered_articles)
+            if not filtered_articles:
+                print(f"{len(articles)} articles found, no editable prices.")
             else:
-                article = filtered_articles[0]
-                found_string = f"Found: {article['product']['enName']} "
-                if article["product"].get("expansion"):
-                    found_string += f"[{article['product'].get('expansion')}] "
-                if article["isFoil"]:
-                    found_string += f"[foil: {article['isFoil']}] "
-                if article["comments"]:
-                    found_string += f"[comment: {article['comments']}] "
+                if len(filtered_articles) > 1:
+                    article = self.select_from_list_of_articles(filtered_articles)
                 else:
-                    found_string += "."
-                print(found_string)
+                    article = filtered_articles[0]
+                    found_string = f"Found: {article['product']['enName']} "
+                    if article["product"].get("expansion"):
+                        found_string += f"[{article['product'].get('expansion')}] "
+                    if article["isFoil"]:
+                        found_string += f"[foil: {article['isFoil']}] "
+                    if article["comments"]:
+                        found_string += f"[comment: {article['comments']}] "
+                    else:
+                        found_string += "."
+                    print(found_string)
 
-            undercut_local_market = False
-            if self.config["enable_undercut_local_market"]:
-                undercut_local_market = PyMkmHelper.prompt_bool(
-                    "Try to undercut local market? (slower, more requests)"
+                undercut_local_market = False
+                if self.config["enable_undercut_local_market"]:
+                    undercut_local_market = PyMkmHelper.prompt_bool(
+                        "Try to undercut local market? (slower, more requests)"
+                    )
+
+                product = self.api.get_product(article["idProduct"])
+                r = self.update_price_for_article(
+                    article, product, undercut_local_market, api=self.api
                 )
 
-            product = self.api.get_product(article["idProduct"])
-            r = self.update_price_for_article(
-                article, product, undercut_local_market, api=self.api
-            )
+                if r:
+                    self.draw_price_changes_table([r])
 
-            if r:
-                self.draw_price_changes_table([r])
-
-                print(
-                    "\nTotal price difference: {}.".format(
-                        str(
-                            round(
-                                sum(item["price_diff"] * item["count"] for item in [r]),
-                                2,
+                    print(
+                        "\nTotal price difference: {}.".format(
+                            str(
+                                round(
+                                    sum(
+                                        item["price_diff"] * item["count"]
+                                        for item in [r]
+                                    ),
+                                    2,
+                                )
                             )
                         )
                     )
-                )
 
-                if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
-                    # Update articles on MKM
-                    print("Updating prices...")
-                    api.set_stock(self.clean_json_for_upload([r]))
-                    print("Price updated.")
+                    if PyMkmHelper.prompt_bool("Do you want to update these prices?"):
+                        # Update articles on MKM
+                        print("Updating prices...")
+                        api.set_stock(self.clean_json_for_upload([r]))
+                        print("Price updated.")
+                    else:
+                        print("Prices not updated.")
                 else:
-                    print("Prices not updated.")
-            else:
-                print("No prices to update.")
+                    print("No prices to update.")
 
         self.logger.debug("-> update_product_to_trend: Done")
 
@@ -617,12 +621,11 @@ class PyMkmApp:
                 if len(products) == 0:
                     print("No matching cards in stock.")
                 else:
+                    product = products[0]
                     if len(products) > 1:
                         product = self.select_from_list_of_products(
                             [i for i in products if i["categoryName"] == "Magic Single"]
                         )
-                    elif len(products) == 1:
-                        product = products[0]
 
                     self.show_competition_for_product(
                         product["idProduct"], product["enName"], api=self.api
@@ -892,6 +895,7 @@ class PyMkmApp:
             api, log_time_label="Fetching wantslists"
         )
 
+        received_orders = None
         try:
             print("Getting received orders from Cardmarket...")
             received_orders = api.get_orders("buyer", "received", start=1)
@@ -983,11 +987,11 @@ class PyMkmApp:
                             and i["foil"] == a_foil
                         ]
                     else:
-                        a_product_id = article.get("idProduct")
                         product_matches = [
                             i
                             for i in purchased_products
-                            if i["idProduct"] == a_product_id and i["foil"] == a_foil
+                            if i["idProduct"] == article.get("idProduct")
+                            and i["foil"] == a_foil
                         ]
 
                     if product_matches:
@@ -1001,7 +1005,7 @@ class PyMkmApp:
                         if a_type == "product":
                             match.update(
                                 {
-                                    "product_id": a_product_id,
+                                    "product_id": article.get("idProduct"),
                                     "product_name": article.get("product").get(
                                         "enName"
                                     ),
