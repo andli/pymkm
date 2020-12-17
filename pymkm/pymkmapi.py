@@ -299,7 +299,7 @@ class PyMkmApi:
             timeout=self.config["cardmarket_request_timeout"],
         ) as client:
             tasks = []
-            sem = asyncio.Semaphore(100)
+            sem = asyncio.Semaphore(50)
             for item_id in item_id_list:
                 tasks.append(
                     asyncio.ensure_future(
