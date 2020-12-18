@@ -408,7 +408,6 @@ class PyMkmApp:
         )
 
         if stock_list:
-
             already_checked_articles = PyMkmHelper.read_from_cache(
                 self.config["local_cache_filename"], "partial_updated"
             )
@@ -417,6 +416,17 @@ class PyMkmApp:
                 print(
                     f"{len(already_checked_articles)} articles found in previous updates, ignoring those."
                 )
+
+            # Handle articles in shopping carts
+            articles_in_shopping_carts = api.get_articles_in_shoppingcarts()["article"]
+            article_ids_in_shopping_carts = [
+                x["idArticle"] for x in articles_in_shopping_carts
+            ]
+            stock_list = [
+                x
+                for x in stock_list
+                if x["idArticle"] not in article_ids_in_shopping_carts
+            ]
 
             partial_stock_update_size = 0
             if partial > 0:
