@@ -170,12 +170,6 @@ class PyMkmApp:
                     uid="update1product",
                 )
                 menu.add_function_item(
-                    "List competition for a product",
-                    self.list_competition_for_product,
-                    {"api": self.api},
-                    uid="listcompetition",
-                )
-                menu.add_function_item(
                     "Find deals from a user",
                     self.find_deals_from_user,
                     {"api": self.api},
@@ -586,53 +580,6 @@ class PyMkmApp:
                     print("No prices to update.")
 
         self.logger.debug("-> update_product_to_trend: Done")
-
-    def list_competition_for_product(self, api):
-        print("Note: does not support playsets, booster displays etc (yet).")
-
-        search_string = PyMkmHelper.prompt_string("Search product name on Cardmarket")
-        # is_foil = PyMkmHelper.prompt_bool("Foil?")
-
-        print("Finding product...")
-        try:
-            result = api.find_product(
-                search_string,
-                **{
-                    # 'exact ': 'true',
-                    "idGame": 1,
-                    "idLanguage": 1,
-                    # TODO: Add language support
-                },
-            )
-        except CardmarketError as err:
-            self.logger.error(err.mkm_msg())
-            print(err.mkm_msg())
-        else:
-            if result:
-                products = result
-
-                stock_list_products = [
-                    x["idProduct"] for x in self.get_stock_as_array(api=self.api)
-                ]
-                products = [
-                    x for x in products if x["idProduct"] in stock_list_products
-                ]
-
-                if len(products) == 0:
-                    print("No matching cards in stock.")
-                else:
-                    product = products[0]
-                    if len(products) > 1:
-                        product = self.select_from_list_of_products(
-                            [i for i in products if i["categoryName"] == "Magic Single"]
-                        )
-
-                    self.show_competition_for_product(
-                        product["idProduct"], product["enName"], api=self.api
-                    )
-            else:
-                print("No results found.")
-        self.logger.debug("-> list_competition_for_product: Done")
 
     def find_deals_from_user(self, api):
         search_string = PyMkmHelper.prompt_string("Enter username")
@@ -1296,88 +1243,6 @@ class PyMkmApp:
             index += 1
         choice = int(input("Choose card: "))
         return articles[choice - 1]
-
-    def show_competition_for_product(self, product_id, product_name, api):
-        print("Selected product: {}".format(product_name))
-
-        table_data_local, table_data = self.get_competition(api, product_id)
-        if table_data_local:
-            self.print_product_top_list("Local competition:", table_data_local, 4, 20)
-        if table_data:
-            self.print_product_top_list("Top 20 cheapest:", table_data, 4, 20)
-        else:
-            print("No prices found.")
-
-    def get_competition(self, api, product_id):
-        # TODO: Add support for playsets
-        # TODO: Add support for card condition
-        print("Fetching competition...")
-        # self.account = api.get_account()["account"]
-        country_code = self.account["country"]
-
-        config = self.config
-        is_altered = config["search_filters"]["isAltered"]
-        is_signed = config["search_filters"]["isSigned"]
-        min_condition = config["search_filters"]["minCondition"]
-        user_type = config["search_filters"]["userType"]
-        id_language = config["search_filters"]["idLanguage"]
-
-        articles = api.get_articles(
-            product_id,
-            **{
-                # "isFoil": str(is_foil).lower(),
-                "isAltered": is_altered,
-                "isSigned": is_signed,
-                "minCondition": min_condition,
-                "country": country_code,
-                "userType": user_type,
-                "idLanguage": id_language,
-            },
-        )
-        table_data = []
-        table_data_local = []
-        for article in articles:
-            username = article["seller"]["username"]
-            if article["seller"]["username"] == self.account["username"]:
-                username = "-> " + username
-            item = [
-                username,
-                article["seller"]["address"]["country"],
-                article["condition"],
-                article["language"]["languageName"],
-                article["count"],
-                article["price"],
-            ]
-            if article["seller"]["address"]["country"] == country_code:
-                table_data_local.append(item)
-            table_data.append(item)
-        return table_data_local, table_data
-
-    def print_product_top_list(self, title_string, table_data, sort_column, rows):
-        print(70 * "-")
-        print("{} \n".format(title_string))
-        print(
-            tb.tabulate(
-                sorted(table_data, key=lambda x: x[sort_column], reverse=False)[:rows],
-                headers=[
-                    "Username",
-                    "Country",
-                    "Condition",
-                    "Language",
-                    "Count",
-                    "Price",
-                ],
-                tablefmt="simple",
-            )
-        )
-        print(70 * "-")
-        print(
-            "Total average price: {}, Total median price: {}, Total # of articles: {}\n".format(
-                str(PyMkmHelper.calculate_average(table_data, 4, 5)),
-                str(PyMkmHelper.calculate_median(table_data, 4, 5)),
-                str(len(table_data)),
-            )
-        )
 
     def calculate_new_prices_for_stock(
         self,
