@@ -66,7 +66,7 @@ Do you want to update these prices? [y/N]:
 
 1. Install requirements using `pip install -r requirements.txt`
 1. Copy `config_template.json` to `config.json` and fill in your API keys.
-1. Run `pymkm.py`.
+1. Run `python pymkm.py`.
 1. Profit.
 
 ## 📈 Price calculation
