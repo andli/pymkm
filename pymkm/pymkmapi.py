@@ -514,7 +514,9 @@ class PyMkmApi:
             "article", url, provided_oauth=provided_oauth, **kwargs
         )
 
-    def get_stock_file(self, start=0, provided_oauth=None, **kwargs):
+    def get_stock_file(
+        self, start=0, provided_oauth=None, **kwargs,
+    ):
         ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock_file")
         url = f"{self.base_url}/stock/file"
@@ -522,7 +524,10 @@ class PyMkmApi:
         mkm_oauth = self.__setup_auth_session(url, provided_oauth)
 
         self.logger.debug(">> Getting stock as gzip")
-        r = self.mkm_request(mkm_oauth, url).json()
+        query_params = {}
+        if "query_params" in kwargs:
+            query_params = kwargs["query_params"]
+        r = self.mkm_request(mkm_oauth, url, params=query_params).json()
 
         encoded_data = r["stock"]
         if encoded_data:
@@ -659,9 +664,7 @@ class PyMkmApi:
         else:
             raise ConnectionError(r)
 
-    def find_user_articles(
-        self, user_id, game_id=1, start=0, provided_oauth=None, **kwargs
-    ):
+    def find_user_articles(self, user_id, provided_oauth=None, **kwargs):
         ## https://api.cardmarket.com/ws/documentation/API_2.0:User_Articles
         INCREMENT = 1000
         url = f"{self.base_url}/users/{user_id}/articles"

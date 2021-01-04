@@ -25,6 +25,11 @@
     "PL": "1",
     "PO": "1"
   },
+  "stock_settings": {
+    "idGame": 1,
+    "isSealed": false,
+    "idLanguage": 1
+  },
   "search_filters": {
     "language": "",
     "isAltered": false,

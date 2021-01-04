@@ -23,6 +23,7 @@ import requests
 import tabulate as tb
 
 from datetime import datetime
+from distutils.util import strtobool
 from pkg_resources import parse_version
 
 from .pymkm_helper import PyMkmHelper, timeit
@@ -240,6 +241,12 @@ class PyMkmApp:
                         {"api": self.api},
                         uid="restorestock",
                     )
+                    menu.add_function_item(
+                        f"⚠ Show games",
+                        self.print_games,
+                        {"api": self.api},
+                        uid="showgames",
+                    )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
                 else:
@@ -268,6 +275,12 @@ class PyMkmApp:
         del product_json["product"]["links"]
         pp = pprint.PrettyPrinter()
         pp.pprint(product_json)
+
+    def print_games(self, api):
+        # dev function to check game ids
+        games_info = api.get_games()
+        pp = pprint.PrettyPrinter()
+        pp.pprint(games_info)
 
     def stock_backup_to_cache(self, api):
         if PyMkmHelper.prompt_bool("Sure?"):
@@ -327,7 +340,7 @@ class PyMkmApp:
 
     def get_stock_as_file_to_cache(self, api, log_time_label="Fetching stock as file"):
         # print("Fetching stock gzip file...")
-        stock = api.get_stock_file()
+        stock = api.get_stock_file(query_params=self.config["stock_settings"])
 
         unused_attributes = [
             "Exp.",
