@@ -8,6 +8,7 @@ See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
 
 # 📙 PyMKM
 
+> _NEW in 2.2.0: Rudimentary support for other games like Yu-Gi-Oh._  
 > _NEW in 2.0.3: Command line support, see `python pymkm.py --help` for more info._  
 > _NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT._
 
@@ -207,6 +208,14 @@ Default `20`.
 
 Log level for the application and API.
 Default `WARNING`.
+
+### `stock_settings`
+
+| Variable   | Value                                                                        |
+| ---------- | ---------------------------------------------------------------------------- |
+| idGame     | Specifies the Game the stock file is for\. (1=Mtg, 3=YGO, 6=PKM)             |
+| isSealed   | Specifies if sealed product should be returned\. (true, false)               |
+| idLanguage | Specifies the Language of the Local Name column\. (default is 1 for English) |
 
 ## 📄 CSV importing
 
