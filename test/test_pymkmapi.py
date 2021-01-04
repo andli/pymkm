@@ -210,7 +210,7 @@ class TestPyMkmApi(TestCommon):
         user_id = 1
         game_id = 1
 
-        result = self.api.find_user_articles(user_id, game_id, 0, mock_oauth)
+        result = self.api.find_user_articles(user_id, mock_oauth)
         self.assertEqual(result[0]["comments"], "x")
 
         mock_oauth.get = MagicMock(
@@ -219,7 +219,7 @@ class TestPyMkmApi(TestCommon):
             )
         )
 
-        result = self.api.find_user_articles(user_id, game_id, 0, mock_oauth)
+        result = self.api.find_user_articles(user_id, mock_oauth)
         self.assertEqual(result[0]["comments"], "x")
 
     def test_set_vacation_status(self):
