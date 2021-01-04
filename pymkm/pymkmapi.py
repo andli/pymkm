@@ -12,6 +12,7 @@ import copy
 import json
 import logging
 import logging.handlers
+from pymkm.pymkm_helper import PyMkmHelper
 import re
 import sys
 import urllib.parse
@@ -175,17 +176,6 @@ class PyMkmApi:
                     raise ConnectionError("Failed to establish OAuth session.")
                 else:
                     return oauth
-
-    def __json_to_xml(self, json_input):
-        from dicttoxml import dicttoxml
-
-        xml = dicttoxml(
-            json_input,
-            custom_root="request",
-            attr_type=False,
-            item_func=lambda x: "article",
-        )
-        return xml.decode("utf-8")
 
     def __get_max_items_from_header(self, response):
         max_items = 0
@@ -408,7 +398,7 @@ class PyMkmApi:
         for chunk in chunked_list:
             # chunk[0]["comments"] = "DO NOT BUY"  # HACK: temp comment for testing
             try:
-                xml_payload = self.__json_to_xml(chunk)
+                xml_payload = PyMkmHelper.dicttoxml(chunk)
                 r = mkm_oauth.post(
                     url,
                     data=xml_payload,
@@ -470,7 +460,7 @@ class PyMkmApi:
         for chunk in chunked_list:
             index += 1
             self.logger.debug(f"chunk {index}/{len(chunked_list)}")
-            xml_payload = self.__json_to_xml(chunk)
+            xml_payload = PyMkmHelper.dicttoxml(chunk)
             r = mkm_oauth.put(
                 url, data=xml_payload, timeout=self.config["cardmarket_request_timeout"]
             )
@@ -506,7 +496,7 @@ class PyMkmApi:
         chunked_list = list(self.__chunks(payload, 100))
         r = None
         for chunk in chunked_list:
-            xml_payload = self.__json_to_xml(chunk)
+            xml_payload = PyMkmHelper.dicttoxml(chunk)
             r = mkm_oauth.delete(url, data=xml_payload)
 
         # TODO: Only considers the last response.

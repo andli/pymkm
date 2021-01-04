@@ -245,6 +245,9 @@ class TestPyMkmApi(TestCommon):
             result["account"]["idDisplayLanguage"], str(display_language).lower()
         )
 
+    def test_json_to_xml(self):
+        pass
+
     def test_add_stock(self):
         mock_oauth = Mock(spec=OAuth1Session)
         mock_oauth.post = MagicMock(

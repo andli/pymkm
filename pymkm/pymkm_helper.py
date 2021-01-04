@@ -12,6 +12,7 @@ import statistics
 import shelve
 import collections.abc
 import time
+from xml.etree.ElementTree import Element, ElementTree, tostring
 from distutils.util import strtobool
 
 
@@ -157,3 +158,20 @@ class PyMkmHelper:
             elif k not in d:
                 d[k] = v
         return d
+
+    @staticmethod
+    def dicttoxml(input_dict_list, start_tag="request", item_tag="article"):
+        xml_doc = Element(start_tag)
+        for dict in input_dict_list:
+            child = Element(item_tag)
+            for key, value in dict.items():
+                child_property = Element(key)
+                if isinstance(value, bool):
+                    child_property.text = str(value).lower()
+                else:
+                    child_property.text = str(value)
+                child.append(child_property)
+            xml_doc.append(child)
+
+        return tostring(xml_doc, encoding="UTF-8", xml_declaration=True).decode("utf-8")
+
