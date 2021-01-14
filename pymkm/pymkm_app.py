@@ -915,88 +915,91 @@ class PyMkmApp:
             bar = progressbar.ProgressBar(max_value=total_number_of_items)
             matches = []
             for key, articles in wantslists_lists.items():
-                current_wantslist = next(
-                    (x for x in wantslists if x["idWantslist"] == key), None
-                )
+                current_wantslist = None
+                for wl in wantslists:
+                    # Note the capital L below... inconsistent in API reponses
+                    if wl.get("idWantsList") == key:
+                        current_wantslist = wl
 
-                metaproducts_article_list = [
-                    x for x in articles if x.get("type") == "metaproduct"
-                ]
-                metaproducts_to_get = [
-                    x["idMetaproduct"] for x in metaproducts_article_list
-                ]
-                metaproduct_list = api.get_items_async(
-                    "metaproducts", metaproducts_to_get, bar
-                )
-                metaproduct_list = [x for x in metaproduct_list if x]
+                if current_wantslist:
+                    metaproducts_article_list = [
+                        x for x in articles if x.get("type") == "metaproduct"
+                    ]
+                    metaproducts_to_get = [
+                        x["idMetaproduct"] for x in metaproducts_article_list
+                    ]
+                    metaproduct_list = api.get_items_async(
+                        "metaproducts", metaproducts_to_get, bar
+                    )
+                    metaproduct_list = [x for x in metaproduct_list if x]
 
-                for article in articles:
-                    a_type = article.get("type")
-                    a_foil = article.get("isFoil") == True
-                    product_matches = []
+                    for article in articles:
+                        a_type = article.get("type")
+                        a_foil = article.get("isFoil") == True
+                        product_matches = []
 
-                    if a_type == "metaproduct":
-                        try:
-                            metaproduct = next(
-                                x
-                                for x in metaproduct_list
-                                if x["metaproduct"]["idMetaproduct"]
-                                == article["idMetaproduct"]
-                            )
-                        except StopIteration:
-                            # Stock item not found in update batch, continuing
-                            continue
+                        if a_type == "metaproduct":
+                            try:
+                                metaproduct = next(
+                                    x
+                                    for x in metaproduct_list
+                                    if x["metaproduct"]["idMetaproduct"]
+                                    == article["idMetaproduct"]
+                                )
+                            except StopIteration:
+                                # Stock item not found in update batch, continuing
+                                continue
 
-                        metaproduct_product_ids = [
-                            i["idProduct"] for i in metaproduct["product"]
-                        ]
-                        product_matches = [
-                            i
-                            for i in purchased_products
-                            if i["idProduct"] in metaproduct_product_ids
-                            and i["foil"] == a_foil
-                        ]
-                    else:
-                        product_matches = [
-                            i
-                            for i in purchased_products
-                            if i["idProduct"] == article.get("idProduct")
-                            and i["foil"] == a_foil
-                        ]
+                            metaproduct_product_ids = [
+                                i["idProduct"] for i in metaproduct["product"]
+                            ]
+                            product_matches = [
+                                i
+                                for i in purchased_products
+                                if i["idProduct"] in metaproduct_product_ids
+                                and i["foil"] == a_foil
+                            ]
+                        else:
+                            product_matches = [
+                                i
+                                for i in purchased_products
+                                if i["idProduct"] == article.get("idProduct")
+                                and i["foil"] == a_foil
+                            ]
 
-                    if product_matches:
-                        match = {
-                            "wantlist_id": key,
-                            "wantlist_name": current_wantslist["name"],
-                            "date": product_matches[0]["date"],
-                            "is_foil": a_foil,
-                            "count": sum([x.get("count") for x in product_matches]),
-                        }
-                        if a_type == "product":
-                            match.update(
-                                {
-                                    "product_id": article.get("idProduct"),
-                                    "product_name": article.get("product").get(
-                                        "enName"
-                                    ),
-                                    "expansion_name": article.get("product").get(
-                                        "expansionName"
-                                    ),
-                                }
-                            )
-                        elif a_type == "metaproduct":
-                            match.update(
-                                {
-                                    "metaproduct_id": article.get("idMetaproduct"),
-                                    "product_name": article.get("metaproduct").get(
-                                        "enName"
-                                    ),
-                                    "expansion_name": article.get("metaproduct").get(
-                                        "expansionName"
-                                    ),
-                                }
-                            )
-                        matches.append(match)
+                        if product_matches:
+                            match = {
+                                "wantlist_id": key,
+                                "wantlist_name": current_wantslist["name"],
+                                "date": product_matches[0]["date"],
+                                "is_foil": a_foil,
+                                "count": sum([x.get("count") for x in product_matches]),
+                            }
+                            if a_type == "product":
+                                match.update(
+                                    {
+                                        "product_id": article.get("idProduct"),
+                                        "product_name": article.get("product").get(
+                                            "enName"
+                                        ),
+                                        "expansion_name": article.get("product").get(
+                                            "expansionName"
+                                        ),
+                                    }
+                                )
+                            elif a_type == "metaproduct":
+                                match.update(
+                                    {
+                                        "metaproduct_id": article.get("idMetaproduct"),
+                                        "product_name": article.get("metaproduct").get(
+                                            "enName"
+                                        ),
+                                        "expansion_name": article.get(
+                                            "metaproduct"
+                                        ).get("expansionName"),
+                                    }
+                                )
+                            matches.append(match)
             bar.finish()
 
             if matches:
@@ -1005,7 +1008,7 @@ class PyMkmApp:
                         [
                             [
                                 item["wantlist_name"],
-                                item["count"],
+                                # item["count"],
                                 "\u2713" if item["is_foil"] else "",
                                 item["product_name"],
                                 item["expansion_name"],
@@ -1015,7 +1018,7 @@ class PyMkmApp:
                         ],
                         headers=[
                             "Wantlist",
-                            "# bought",
+                            # "# bought",
                             "Foil",
                             "Name",
                             "Expansion",
@@ -1143,12 +1146,10 @@ class PyMkmApp:
             try:
                 print("Gettings wantslists from Cardmarket...")
                 wantslists = api.get_wantslists()
-                wantslists_lists = {
-                    item["idWantslist"]: api.get_wantslist_items(item["idWantslist"])[
-                        "item"
-                    ]
-                    for item in wantslists
-                }
+                wantslists_lists = {}
+                for item in wantslists:
+                    wl_id = item.get("idWantsList")
+                    wantslists_lists[wl_id] = api.get_wantslist_items(wl_id)["item"]
             except Exception as err:
                 print(err)
 
