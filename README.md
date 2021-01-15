@@ -34,7 +34,7 @@ Fetching account data took 0s
 │ 9: Track price data to prices.csv              │
 │ 0: Exit                                        │
 ├────────────────────────────────────────────────┤
-│ Andreas Ehrlund (andli826)                     │
+│ Testa Testerson (testerson123)                 │
 │ API calls used today: 69/5000                  │
 ╰────────────────────────────────────────────────╯
 Action number: 1
