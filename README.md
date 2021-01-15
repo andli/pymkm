@@ -20,20 +20,23 @@ The app also keeps track of how many API requests your have left each day, and c
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
 ```
-╭─── PyMKM 2.0.0 ────────────────────────────────────────╮
-│ 1: Update stock prices                                 │
-│ 2: Update price for a product                          │
-│ 3: List competition for a product                      │
-│ 4: Find deals from a user                              │
-│ 5: Show top 20 expensive items in stock                │
-│ 6: Wantslists cleanup suggestions                      │
-│ 7: Show account info                                   │
-│ 8: Clear entire stock (WARNING)                        │
-│ 9: Import stock from .\list.csv                        │
-│ 0: Exit                                                │
-├────────────────────────────────────────────────────────┤
-│ Remaining API calls today: 66/5000                     │
-╰────────────────────────────────────────────────────────╯
+Fetching Cardmarket account data...
+Fetching account data took 0s
+╭─── PyMKM 2.3.0 ────────────────────────────────╮
+│ 1: Update stock prices (24 items)              │
+│ 2: Update price for a product                  │
+│ 3: Find deals from a user                      │
+│ 4: Show top 10 expensive items in stock        │
+│ 5: Wantslists cleanup suggestions              │
+│ 6: Clear partial updates                       │
+│ 7: Clear entire stock                          │
+│ 8: Import stock from list.csv                  │
+│ 9: Track price data to prices.csv              │
+│ 0: Exit                                        │
+├────────────────────────────────────────────────┤
+│ Andreas Ehrlund (andli826)                     │
+│ API calls used today: 69/5000                  │
+╰────────────────────────────────────────────────╯
 Action number: 1
 100% (74 of 74) |#########################################| Elapsed Time: 0:00:21 Time:  0:00:21
 Total stock value: 49.25
@@ -117,7 +120,7 @@ Here is an example config value for addressing your custom class:
 
 > `"custom_price_calculator": "custom.calculators.DiscountForGoblinsCalculator",`
 
-Use the supplied example class to get started.
+Use the supplied example class to get started. Look at `DefaultPriceCalculator` in `pymkm_calculators` if you want to study the default algorithm.
 
 ### `price_limit_by_rarity`
 
