@@ -3,6 +3,7 @@
 
 See the [Changelog](CHANGELOG.md) for what's new.
 See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
+Hop in on the [Discord server](https://discord.gg/GMZyWhFjpC) if you want help or to discuss development.
 
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F82FJ06)
 
