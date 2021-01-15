@@ -35,6 +35,7 @@ jobs:
           coverage run --source=./pymkm -m unittest discover -p test_*.py
           coverage xml
       - name: Coverage
+        continue-on-error: true
         uses: codecov/codecov-action@v1
         with:
           #token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
@@ -42,5 +43,5 @@ jobs:
           #files: ./coverage1.xml,./coverage2.xml # optional
           flags: unittests # optional
           name: codecov-umbrella # optional
-          fail_ci_if_error: true # optional (default = false)
+          fail_ci_if_error: false # optional (default = false)
           verbose: true # optional (default = false)
