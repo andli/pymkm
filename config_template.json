@@ -25,6 +25,7 @@
     "PL": "1",
     "PO": "1"
   },
+  "custom_price_calculator": "pymkm.pymkm_calculators.DefaultPriceCalculator",
   "stock_settings": {
     "idGame": 1,
     "isSealed": false,
@@ -39,7 +40,6 @@
     "idLanguage": 1
   },
   "reporting": true,
-  "enable_undercut_local_market": false,
   "sticky_price_char": "!",
   "local_cache_filename": "local_pymkm_data.db",
   "csv_prices_filename": "prices.csv",

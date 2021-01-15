@@ -31,7 +31,6 @@
   "dev_mode": false,
   "uuid": "xxx",
   "reporting": true,
-  "enable_undercut_local_market": false,
   "sticky_price_char": "!",
   "local_cache_filename": "local_pymkm_data.db",
   "csv_prices_filename": "prices.csv",
@@ -40,5 +39,6 @@
   "show_num_best_worst_items": 20,
   "show_top_x_expensive_items": 20,
   "cardmarket_request_timeout": 40,
-  "log_level": "WARNING"
+  "log_level": "WARNING",
+  "custom_price_calculator": "pymkm.pymkm_calculators.DefaultPriceCalculator"
 }

@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 __license__ = "MIT"
 
 import csv
@@ -22,12 +22,14 @@ import progressbar
 import requests
 import tabulate as tb
 
+from importlib import import_module
 from datetime import datetime
 from distutils.util import strtobool
 from pkg_resources import parse_version
 
-from .pymkm_helper import PyMkmHelper, timeit
-from .pymkmapi import PyMkmApi, CardmarketError
+from pymkm.pymkm_helper import PyMkmHelper, timeit
+from pymkm.pymkmapi import PyMkmApi, CardmarketError
+from pymkm.pymkm_calculators import AbstractPriceCalculator
 
 
 class PyMkmApp:
@@ -98,6 +100,8 @@ class PyMkmApp:
             self.DEV_MODE = self.config["dev_mode"]
         except Exception as err:
             pass
+
+        self.price_calculator = self.get_price_calculator_instance()
 
         fh.setLevel(self.config["log_level"])
         self.logger.setLevel(self.config["log_level"])
@@ -460,20 +464,12 @@ class PyMkmApp:
                 else:
                     partial_stock_update_size = 0
 
-            if cli_called or not self.config["enable_undercut_local_market"]:
-                undercut_local_market = False
-            else:
-                undercut_local_market = PyMkmHelper.prompt_bool(
-                    "Try to undercut local market? (slower, more requests)"
-                )
-
             (
                 uploadable_json,
                 checked_articles,
                 num_filtered_articles,
             ) = self.calculate_new_prices_for_stock(
                 stock_list,
-                undercut_local_market,
                 partial_stock_update_size,
                 already_checked_articles,
                 api=self.api,
@@ -510,6 +506,33 @@ class PyMkmApp:
             print("No stock to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
+
+    def get_price_calculator_instance(self):
+        # get calculator module and class
+        calc_module_name, calc_class_name = self.config[
+            "custom_price_calculator"
+        ].rsplit(".", maxsplit=1)
+
+        # import module and get class
+        try:
+            calc_module = import_module(calc_module_name)
+            calc_class = getattr(calc_module, calc_class_name)
+        except ModuleNotFoundError:
+            print(f"ERROR: module '{calc_module_name}' not found.")
+            exit(0)
+        except AttributeError:
+            print(
+                f"ERROR: class '{calc_class_name}' not found in module '{calc_module_name}'."
+            )
+            exit(0)
+
+        # validate class
+        if not issubclass(calc_class, AbstractPriceCalculator):
+            print("ERROR: calculator must be of type abstract price calculator")
+
+        # create instance
+        calc_instance = calc_class()
+        return calc_instance
 
     def __filter_sticky(self, article_list):
         sticky_price_char = self.config["sticky_price_char"]
@@ -564,16 +587,8 @@ class PyMkmApp:
                         found_string += "."
                     print(found_string)
 
-                undercut_local_market = False
-                if self.config["enable_undercut_local_market"]:
-                    undercut_local_market = PyMkmHelper.prompt_bool(
-                        "Try to undercut local market? (slower, more requests)"
-                    )
-
                 product = self.api.get_product(article["idProduct"])
-                r = self.update_price_for_article(
-                    article, product, undercut_local_market, api=self.api
-                )
+                r = self.update_price_for_article(article, product, api=self.api)
 
                 if r:
                     self.draw_price_changes_table([r])
@@ -1043,25 +1058,29 @@ class PyMkmApp:
         stock_list = self.get_stock_as_array(
             api=self.api, log_time_label="Fetching stock"
         )
-        if PyMkmHelper.prompt_bool(
-            "Do you REALLY want to clear your entire stock ({} items)?".format(
-                len(stock_list)
-            )
-        ):
+        if stock_list:
+            if PyMkmHelper.prompt_bool(
+                "Do you REALLY want to clear your entire stock ({} items)?".format(
+                    len(stock_list)
+                )
+            ):
 
-            # for article in stock_list:
-            # article['count'] = 0
-            delete_list = [
-                {"count": x["count"], "idArticle": x["idArticle"]} for x in stock_list
-            ]
+                # for article in stock_list:
+                # article['count'] = 0
+                delete_list = [
+                    {"count": x["count"], "idArticle": x["idArticle"]}
+                    for x in stock_list
+                ]
 
-            print("Clearing stock...")
-            api.delete_stock(delete_list)
-            self.logger.debug("-> clear_entire_stock: done")
+                print("Clearing stock...")
+                api.delete_stock(delete_list)
+                self.logger.debug("-> clear_entire_stock: done")
 
-            PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
+                PyMkmHelper.clear_cache(self.config["local_cache_filename"], "stock")
+            else:
+                print("Aborted.")
         else:
-            print("Aborted.")
+            print("Stock empty.")
 
     def import_from_csv(self, api):
         print(
@@ -1269,12 +1288,7 @@ class PyMkmApp:
         return articles[choice - 1]
 
     def calculate_new_prices_for_stock(
-        self,
-        stock_list,
-        undercut_local_market,
-        partial_stock_update_size,
-        already_checked_articles,
-        api,
+        self, stock_list, partial_stock_update_size, already_checked_articles, api,
     ):
         filtered_stock_list = self.__filter_sticky(stock_list)
 
@@ -1329,7 +1343,7 @@ class PyMkmApp:
 
             checked_articles.append(article.get("idArticle"))
             updated_article = self.update_price_for_article(
-                article, product, undercut_local_market, api=self.api
+                article, product, api=self.api
             )
             if updated_article:
                 result_json.append(updated_article)
@@ -1345,9 +1359,7 @@ class PyMkmApp:
             print(f"Note: {sticky_count} items filtered out because of sticky prices.")
         return result_json, checked_articles, sticky_count
 
-    def update_price_for_article(
-        self, article, product, undercut_local_market=False, api=None
-    ):
+    def update_price_for_article(self, article, product, api=None):
         language_id = PyMkmHelper.string_to_float_or_int(article["idLanguage"])
 
         new_price = self.get_price_for_product(
@@ -1357,7 +1369,6 @@ class PyMkmApp:
             article.get("isFoil", False),
             article.get("isPlayset", False),
             language_id=language_id,
-            undercut_local_market=undercut_local_market,
             api=self.api,
         )
         if new_price:
@@ -1397,64 +1408,16 @@ class PyMkmApp:
             return discount
 
     def get_price_for_product(
-        self,
-        product,
-        rarity,
-        condition,
-        is_foil,
-        is_playset,
-        language_id=1,
-        undercut_local_market=False,
-        api=None,
+        self, product, rarity, condition, is_foil, is_playset, language_id=1, api=None,
     ):
         rounding_limit = self.get_rounding_limit_for_rarity(
             rarity, product["product"]["idProduct"]
         )
+        condition_discount = self.get_discount_for_condition(condition)
 
-        if not is_foil:
-            trend_price = product["product"]["priceGuide"]["TREND"]
-        else:
-            trend_price = product["product"]["priceGuide"]["TRENDFOIL"]
-
-        # Set competitive price for region
-        if undercut_local_market:
-            table_data_local, table_data = self.get_competition(
-                api, product["product"]["idProduct"], is_foil
-            )
-
-            if len(table_data_local) > 0:
-                # Undercut if there is local competition
-                lowest_in_country = PyMkmHelper.get_lowest_price_from_table(
-                    table_data_local, 4
-                )
-                new_price = max(
-                    rounding_limit,
-                    min(trend_price, lowest_in_country - rounding_limit),
-                )
-            else:
-                # No competition in our country, set price a bit higher.
-                new_price = trend_price * 1.2
-
-        else:  # don't try to undercut local market
-            new_price = trend_price
-
-        if new_price is None:
-            raise ValueError("No price found!")
-        else:
-            if is_playset:
-                new_price = 4 * new_price
-
-            old_price = new_price
-            # Apply condition discount
-            if condition:
-                new_price = new_price * self.get_discount_for_condition(condition)
-
-            # Round
-            new_price = PyMkmHelper.round_up_to_multiple_of_lower_limit(
-                rounding_limit, new_price
-            )
-
-            return round(new_price, 2)
+        return self.price_calculator.calculate_price(
+            is_foil, is_playset, condition, condition_discount, rounding_limit, product
+        )
 
     def display_price_changes_table(self, changes_json):
         num_items = self.config["show_num_best_worst_items"]

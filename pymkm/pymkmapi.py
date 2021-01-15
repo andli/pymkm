@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 __license__ = "MIT"
 
 import asyncio

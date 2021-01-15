@@ -8,9 +8,7 @@ See the [Trello board](https://trello.com/b/1HF1t58c/pymkm) for ongoing work.
 
 # 📙 PyMKM
 
-> _NEW in 2.2.0: Rudimentary support for other games like Yu-Gi-Oh._  
-> _NEW in 2.0.3: Command line support, see `python pymkm.py --help` for more info._  
-> _NEW in 2.0.0: Asynchronous requests speeds up price updates by a LOT._
+> _NEW in 2.3.0: Custom price calculator modules._
 
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
@@ -37,8 +35,6 @@ The app also keeps track of how many API requests your have left each day, and c
 │ Remaining API calls today: 66/5000                     │
 ╰────────────────────────────────────────────────────────╯
 Action number: 1
-Try to undercut local market? (slower, more requests) [y/N]:
-
 100% (74 of 74) |#########################################| Elapsed Time: 0:00:21 Time:  0:00:21
 Total stock value: 49.25
 Note: 2 items filtered out because of sticky prices.
@@ -83,6 +79,9 @@ _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressive
 
 Base prices (€) and discounts for lower grading (decimal %) can be set in `config.json`.
 
+You can also create your own custom price calculation algorithm by using the config value
+`custom_price_calculator` (see details below).
+
 ## 🔓 Locking prices
 
 Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
@@ -111,6 +110,15 @@ _This dumps price data for all the cards in the wantslist "fancycards" to a .csv
 
 ## ⚙️ Config parameters
 
+### `custom_price_calculator`
+
+This can be used to load in a custom price calculation module.
+Here is an example config value for addressing your custom class:
+
+> `"custom_price_calculator": "custom.calculators.DiscountForGoblinsCalculator",`
+
+Use the supplied example class to get started.
+
 ### `price_limit_by_rarity`
 
 Set a lower price limit (and also rounding target) for different rarities.
@@ -120,10 +128,6 @@ _Example_: `"mythic": "1.0"` would set the lowest price Mythic rarity cards to �
 
 Set a decimal multiplier on each card condition level.
 _Example_: `"PL": "0.5"` would set the price for Played cards to 50% off the trend price.
-
-### `enable_undercut_local_market`
-
-This enables an extra confirmation step for updating prices which tries to undercut your local (same country) competition. Use this when you really want to sell your stock.
 
 ### `search_filters`
 
@@ -163,11 +167,6 @@ This enables an extra confirmation step for updating prices which tries to under
 | 9   | Russian             |
 | 10  | Korean              |
 | 11  | Traditional Chinese |
-
-#### `never_undercut_local_market`
-
-If `true`, disables asking if the user wants to try to undercut local market when doing price updates.
-Default `false`.
 
 #### `sticky_price_char`
 
