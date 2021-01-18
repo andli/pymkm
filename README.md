@@ -96,7 +96,7 @@ This function selects a wantslist and dumps price data for all products in that 
 
 _NOTE: This does not work for metaproducts, only for products._
 
-## CLI
+## 👩‍💻 CLI
 
 Some functions have command line support, see `python pymkm.py --help` for more info.
 
