@@ -1,0 +1,23 @@
+name: Build exe with Pyinstaller
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "test build tags"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Package Application
+        uses: JackMcKew/pyinstaller-action-windows@main
+        with:
+          path: .
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: my-app
+          path: dist/windows
