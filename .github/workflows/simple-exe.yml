@@ -2,6 +2,8 @@ name: Build exe with Pyinstaller
 
 on:
   workflow_dispatch:
+    tags:
+      - '*.*.*'
     inputs:
       tags:
         description: "test build tags"
@@ -11,6 +13,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Get tag
+          id: tag
+          run: |
+            echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
 
       - name: Package Application
         uses: JackMcKew/pyinstaller-action-windows@main
@@ -19,5 +25,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: my-app
-          path: dist/windows
+          name: my-app-${{ steps.tag.outputs.tag }}
+          path: |
+            dist/windows
+            /tmp/pymkm/warn-pymkm.txt
