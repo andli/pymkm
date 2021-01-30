@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __license__ = "MIT"
 
 import csv
@@ -152,7 +152,10 @@ class PyMkmApp:
                 if hasattr(self, "DEV_MODE") and self.DEV_MODE:
                     top_message = "dev mode"
                 menu = micromenu.Menu(
-                    f"PyMKM {__version__}", top_message, cycle=False, min_width=50,
+                    f"PyMKM {__version__}",
+                    top_message,
+                    cycle=False,
+                    min_width=50,
                 )
 
                 menu.add_message_bottom_row(
@@ -857,7 +860,10 @@ class PyMkmApp:
                     "a",
                     newline="",
                     encoding="utf-8",
-                ) as csv_a, open(self.config["csv_prices_filename"], "r",) as csv_r:
+                ) as csv_a, open(
+                    self.config["csv_prices_filename"],
+                    "r",
+                ) as csv_r:
                     csv_reader = csv.reader(csv_r)
                     row_count = sum(1 for row in csv_reader)
                     csv_writer = csv.writer(csv_a, delimiter=";")
@@ -1209,7 +1215,7 @@ class PyMkmApp:
                     ]
                     if len(product_match) == 1:
                         language_id = (
-                            1 if language == "" else api.languages.index(language) + 1
+                            1 if language == "" else api.languages.index(language)
                         )
                         product = api.get_product(product_match[0]["idProduct"])
                         price = self.get_price_for_product(
@@ -1288,7 +1294,11 @@ class PyMkmApp:
         return articles[choice - 1]
 
     def calculate_new_prices_for_stock(
-        self, stock_list, partial_stock_update_size, already_checked_articles, api,
+        self,
+        stock_list,
+        partial_stock_update_size,
+        already_checked_articles,
+        api,
     ):
         filtered_stock_list = self.__filter_sticky(stock_list)
 
@@ -1408,7 +1418,14 @@ class PyMkmApp:
             return discount
 
     def get_price_for_product(
-        self, product, rarity, condition, is_foil, is_playset, language_id=1, api=None,
+        self,
+        product,
+        rarity,
+        condition,
+        is_foil,
+        is_playset,
+        language_id=1,
+        api=None,
     ):
         rounding_limit = self.get_rounding_limit_for_rarity(
             rarity, product["product"]["idProduct"]
@@ -1478,7 +1495,11 @@ class PyMkmApp:
 
     @timeit
     def get_stock_as_array(
-        self, api, cli_called=False, cached=None, **kwargs,
+        self,
+        api,
+        cli_called=False,
+        cached=None,
+        **kwargs,
     ):
         self.logger.debug("--> Fetching stock")
         print(f"Fetching stock...")
@@ -1504,4 +1525,3 @@ class PyMkmApp:
                 return local_stock_cache
             else:
                 return self.get_stock_as_file_to_cache(self.api)
-

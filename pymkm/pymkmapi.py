@@ -4,7 +4,7 @@ This is the main module responsible for calling the cardmarket.com API and retur
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __license__ = "MIT"
 
 import asyncio
@@ -515,7 +515,10 @@ class PyMkmApi:
         )
 
     def get_stock_file(
-        self, start=0, provided_oauth=None, **kwargs,
+        self,
+        start=0,
+        provided_oauth=None,
+        **kwargs,
     ):
         ## https://api.cardmarket.com/ws/documentation/API_2.0:Stock_Management
         self.logger.debug(f"-> get_stock_file")
@@ -707,4 +710,3 @@ class PyMkmApi:
         return self.handle_partial_content(
             "order", url, start, provided_oauth=provided_oauth, **kwargs
         )
-

@@ -4,7 +4,7 @@ Helper functions for the PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __license__ = "MIT"
 
 import math
@@ -174,4 +174,3 @@ class PyMkmHelper:
             xml_doc.append(child)
 
         return tostring(xml_doc, encoding="UTF-8", xml_declaration=True).decode("utf-8")
-
