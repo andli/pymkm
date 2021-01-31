@@ -1090,7 +1090,7 @@ class PyMkmApp:
 
     def import_from_csv(self, api):
         print(
-            "Note the required format: Card, Set name, Quantity, Foil, Language (with header row)."
+            "Note the required format: Card, Set name, Quantity, Foil, Language, Comments (with header row)."
         )
         problem_cards = []
         with open(self.config["csv_import_filename"], newline="") as csvfile:
@@ -1106,13 +1106,13 @@ class PyMkmApp:
                 if index > 0:
                     row_array = [x.strip('"') for x in row_array]
                     try:
-                        (name, set_name, count, foil, language, *other) = row_array
+                        (name, set_name, count, foil, language, comments, *other) = row_array
                     except Exception as err:
                         problem_cards.append(row_array)
                     else:
                         foil = True if foil.lower() == "foil" else False
                         if not self.match_card_and_add_stock(
-                            api, name, set_name, count, foil, language, *other
+                            api, name, set_name, count, foil, language, comments, *other
                         ):
                             problem_cards.append(row_array)
 
@@ -1190,7 +1190,7 @@ class PyMkmApp:
             return wantslists, wantslists_lists
 
     def match_card_and_add_stock(
-        self, api, name, set_name, count, foil, language, *other
+        self, api, name, set_name, count, foil, language, comments, *other
     ):
         if all(v != "" for v in [name, set_name, count]):
             try:
@@ -1230,6 +1230,7 @@ class PyMkmApp:
                         card = {
                             "idProduct": product_match[0]["idProduct"],
                             "idLanguage": language_id,
+                            "comments": comments,
                             "count": count,
                             "price": str(price),
                             "condition": self.config["csv_import_condition"],
