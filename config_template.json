@@ -44,7 +44,16 @@
   "local_cache_filename": "local_pymkm_data.db",
   "csv_prices_filename": "prices.csv",
   "csv_import_filename": "list.csv",
-  "csv_import_condition": "NM",
+  "csv_import_default_condition": "NM",
+  "csv_import_columns": [
+    "name",
+    "set_name",
+    "count",
+    "foil",
+    "language_name",
+    "condition",
+    "comments"
+  ],
   "show_num_best_worst_items": 20,
   "show_top_x_expensive_items": 20,
   "cardmarket_request_timeout": 40,

@@ -375,14 +375,16 @@ class PyMkmApi:
         url = f"{self.base_url}/stock"
 
         # idProduct
+        # count
         # idLanguage
         # comments
-        # count
         # price
         # condition
         # isFoil
         # isSigned
+        # isAltered
         # isPlayset
+        # isFirstEd
 
         # clean data because the API treats "False" as true, must be "false".
         for entry in payload:

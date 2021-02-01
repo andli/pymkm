@@ -1093,6 +1093,7 @@ class PyMkmApp:
             "Note the required format: Card, Set name, Quantity, Foil, Language (with header row)."
         )
         problem_cards = []
+        import_columns = self.config["csv_import_columns"]
         with open(self.config["csv_import_filename"], newline="") as csvfile:
             csv_reader = csvfile.readlines()
             index = 0
@@ -1103,18 +1104,16 @@ class PyMkmApp:
             for row in csv_reader:
                 row = row.rstrip()
                 row_array = row.split(",")
-                if index > 0:
-                    row_array = [x.strip('"') for x in row_array]
-                    try:
-                        (name, set_name, count, foil, language, *other) = row_array
-                    except Exception as err:
+                # if index > 0:
+                row_array = [x.strip('"') for x in row_array]
+                try:
+                    row_dict = dict(zip(import_columns, row_array))
+                    # (name, set_name, count, foil, language, *other) = row_array
+                except Exception as err:
+                    problem_cards.append(row_array)
+                else:
+                    if not self.match_card_and_add_stock(api, row_dict):
                         problem_cards.append(row_array)
-                    else:
-                        foil = True if foil.lower() == "foil" else False
-                        if not self.match_card_and_add_stock(
-                            api, name, set_name, count, foil, language, *other
-                        ):
-                            problem_cards.append(row_array)
 
                 bar.update(index)
                 index += 1
@@ -1189,9 +1188,24 @@ class PyMkmApp:
 
             return wantslists, wantslists_lists
 
-    def match_card_and_add_stock(
-        self, api, name, set_name, count, foil, language, *other
-    ):
+    def match_card_and_add_stock(self, api, row_dict):
+        # splice out the variables
+        name = row_dict["name"]
+        set_name = row_dict["set_name"]
+        language_name = row_dict["language_name"]
+        language_id = 1 if language_name == "" else api.languages.index(language_name)
+        count = row_dict["count"]
+        foil = True if row_dict["foil"].lower() == "foil" else False
+        condition = (
+            row_dict["condition"]
+            if row_dict["condition"] != ""
+            else self.config["csv_import_condition"]
+        )
+        comments = row_dict["comments"]
+        playset = row_dict["playset"]
+        signed = row_dict["signed"]
+        altered = row_dict["altered"]
+
         if all(v != "" for v in [name, set_name, count]):
             try:
                 possible_products = api.find_product(name, idGame="1")  # ["product"]
@@ -1214,26 +1228,39 @@ class PyMkmApp:
                         )
                     ]
                     if len(product_match) == 1:
-                        language_id = (
-                            1 if language == "" else api.languages.index(language)
-                        )
+
                         product = api.get_product(product_match[0]["idProduct"])
                         price = self.get_price_for_product(
                             product,
                             product_match[0]["rarity"],
-                            self.config["csv_import_condition"],
+                            condition,
                             foil,
                             False,
                             language_id=language_id,
                             api=self.api,
                         )
+                        # idProduct
+                        # count
+                        # idLanguage
+                        # comments
+                        # price
+                        # condition
+                        # isFoil
+                        # isSigned
+                        # isAltered
+                        # isPlayset
+                        # isFirstEd
                         card = {
                             "idProduct": product_match[0]["idProduct"],
-                            "idLanguage": language_id,
                             "count": count,
+                            "idLanguage": language_id,
+                            "comments": comments,
                             "price": str(price),
-                            "condition": self.config["csv_import_condition"],
+                            "condition": condition,
                             "isFoil": ("true" if foil else "false"),
+                            "isSigned": ("true" if signed else "false"),
+                            "isAltered": ("true" if altered else "false"),
+                            "isPlayset": ("true" if playset else "false"),
                         }
                         api.add_stock([card])
                         return True

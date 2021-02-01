@@ -222,18 +222,27 @@ Default `WARNING`.
 
 ## 📄 CSV importing
 
-If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list.
+If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list. Only works for Magic.
 
-Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo). The file has to follow this format (including the header row):
+Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo).
 
-```
-Card,Set Name,Quantity,Foil,Language
-Dragon Breath,Scourge,1,Foil,French
-```
-
-Remove all quotation marks and extra commas in card names.
+> Remove all quotation marks and extra commas in card names.
 
 Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
+
+#### Configuration of CSV import
+
+The following columns are imported as default. This can be changed in `config.json`.
+
+> Note that you can only remove or move around columns, not add ones that are not present in the list below!
+
+- `name`: Card name, i.e. "Temple of Silence"
+- `set_name`: Expansion "long name", i.e. "Scars of Mirrodin"
+- `count`: Number of cards to be imported for this row
+- `foil`: Is the card foil? [`"foil"` = true, empty column = false]
+- `language_name`: Language long name, i.e. "English". For a list of compatible langauge names, see `idLanguage` chapter in this README.
+- `condition`: The card condition as per Cardmarket's grading (see `minCondition` chapter in this README).
+- `comments`: The comments to add to the article in your stock.
 
 ## 📊 Competition view
 
