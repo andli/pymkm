@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.3.1"
+__version__ = "2.4.0"
 __license__ = "MIT"
 
 import csv
@@ -1089,9 +1089,7 @@ class PyMkmApp:
             print("Stock empty.")
 
     def import_from_csv(self, api):
-        print(
-            "Note the required format: Card, Set name, Quantity, Foil, Language (with header row)."
-        )
+        print("Study README.md to learn about configuring csv imports.")
         problem_cards = []
         import_columns = self.config["csv_import_columns"]
         with open(self.config["csv_import_filename"], newline="") as csvfile:
@@ -1139,72 +1137,23 @@ class PyMkmApp:
 
     # End of menu item functions ============================================
 
-    @timeit
-    def get_wantslists_data(self, api, cached=False, **kwargs):
-        # Check for cached wantslists
-        local_wantslists_cache = None
-        local_wantslists_cache = PyMkmHelper.read_from_cache(
-            self.config["local_cache_filename"], "wantslists"
-        )
-        local_wantslists_lists_cache = None
-        local_wantslists_lists_cache = PyMkmHelper.read_from_cache(
-            self.config["local_cache_filename"], "wantslists_lists"
-        )
-
-        if local_wantslists_cache:
-            if cached or PyMkmHelper.prompt_bool(
-                f"Cached wantslists ({len(local_wantslists_cache)} items) found, use it? (if not, then it will be cleared)"
-            ):
-                return local_wantslists_cache, local_wantslists_lists_cache
-            else:
-                PyMkmHelper.clear_cache(
-                    self.config["local_cache_filename"], "wantslists"
-                )
-                PyMkmHelper.clear_cache(
-                    self.config["local_cache_filename"], "wantslists_lists"
-                )
-                return self.get_wantslists_data(api)
-        else:  # no local cache
-            wantslists = []
-            wantslists_lists = {}
-            try:
-                print("Gettings wantslists from Cardmarket...")
-                wantslists = api.get_wantslists()
-                wantslists_lists = {}
-                for item in wantslists:
-                    wl_id = item.get("idWantsList")
-                    wantslists_lists[wl_id] = api.get_wantslist_items(wl_id)["item"]
-            except Exception as err:
-                print(err)
-
-            PyMkmHelper.store_to_cache(
-                self.config["local_cache_filename"], "wantslists", wantslists
-            )
-            PyMkmHelper.store_to_cache(
-                self.config["local_cache_filename"],
-                "wantslists_lists",
-                wantslists_lists,
-            )
-
-            return wantslists, wantslists_lists
-
     def match_card_and_add_stock(self, api, row_dict):
         # splice out the variables
-        name = row_dict["name"]
-        set_name = row_dict["set_name"]
-        language_name = row_dict["language_name"]
+        name = row_dict.get("name")
+        set_name = row_dict.get("set_name")
+        language_name = row_dict.get("language_name")
         language_id = 1 if language_name == "" else api.languages.index(language_name)
-        count = row_dict["count"]
-        foil = True if row_dict["foil"].lower() == "foil" else False
+        count = row_dict.get("count")
+        foil = True if row_dict.get("foil").lower() == "foil" else False
         condition = (
-            row_dict["condition"]
-            if row_dict["condition"] != ""
-            else self.config["csv_import_condition"]
+            row_dict.get("condition")
+            if row_dict.get("condition")
+            else self.config["csv_import_default_condition"]
         )
-        comments = row_dict["comments"]
-        playset = row_dict["playset"]
-        signed = row_dict["signed"]
-        altered = row_dict["altered"]
+        comments = "" if row_dict.get("comments") == None else row_dict.get("comments")
+        playset = True if row_dict.get("playset") else False
+        signed = True if row_dict.get("signed") else False
+        altered = True if row_dict.get("altered") else False
 
         if all(v != "" for v in [name, set_name, count]):
             try:
@@ -1235,7 +1184,7 @@ class PyMkmApp:
                             product_match[0]["rarity"],
                             condition,
                             foil,
-                            False,
+                            playset,
                             language_id=language_id,
                             api=self.api,
                         )
@@ -1287,6 +1236,55 @@ class PyMkmApp:
                 return True
             else:
                 return False
+
+    @timeit
+    def get_wantslists_data(self, api, cached=False, **kwargs):
+        # Check for cached wantslists
+        local_wantslists_cache = None
+        local_wantslists_cache = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "wantslists"
+        )
+        local_wantslists_lists_cache = None
+        local_wantslists_lists_cache = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "wantslists_lists"
+        )
+
+        if local_wantslists_cache:
+            if cached or PyMkmHelper.prompt_bool(
+                f"Cached wantslists ({len(local_wantslists_cache)} items) found, use it? (if not, then it will be cleared)"
+            ):
+                return local_wantslists_cache, local_wantslists_lists_cache
+            else:
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "wantslists"
+                )
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "wantslists_lists"
+                )
+                return self.get_wantslists_data(api)
+        else:  # no local cache
+            wantslists = []
+            wantslists_lists = {}
+            try:
+                print("Gettings wantslists from Cardmarket...")
+                wantslists = api.get_wantslists()
+                wantslists_lists = {}
+                for item in wantslists:
+                    wl_id = item.get("idWantsList")
+                    wantslists_lists[wl_id] = api.get_wantslist_items(wl_id)["item"]
+            except Exception as err:
+                print(err)
+
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"], "wantslists", wantslists
+            )
+            PyMkmHelper.store_to_cache(
+                self.config["local_cache_filename"],
+                "wantslists_lists",
+                wantslists_lists,
+            )
+
+            return wantslists, wantslists_lists
 
     def select_from_list_of_wantslists(self, wantslists):
         index = 1

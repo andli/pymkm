@@ -192,9 +192,9 @@ Default `local_pymkm_data.db`.
 The name of the file which CSV importing is done from.
 Default `list.csv`.
 
-#### `csv_import_condition`
+#### `csv_import_default_condition`
 
-The default condition for all CSV imports.
+The default condition for all CSV import rows that are not specified in the csv file.
 Default `NM`.
 
 #### `show_num_best_worst_items`
