@@ -9,6 +9,8 @@ Hop in on the [Discord server](https://discord.gg/GMZyWhFjpC) if you want help o
 
 # 📙 PyMKM
 
+> _NEW in 2.4.0: Configurable csv import columns._
+
 > _NEW in 2.3.0: Custom price calculator modules._
 
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
@@ -72,7 +74,7 @@ Do you want to update these prices? [y/N]:
 
 ## 📈 Price calculation
 
-The price data is supplied by the Cardmarket API.
+The price data is supplied by the Cardmarket API. This app contains a basic algorithm for updating prices:
 
 _NOTE: This is a rough algorithm, designed to be safe and not to sell aggressively._
 
@@ -90,7 +92,7 @@ You can also create your own custom price calculation algorithm by using the con
 
 Should you want to avoid updating certain articles in your stock, set the starting character of the comment for that article to `!` (possible to change which character in `config.json`).
 
-## Price checking wantslist to .csv
+## 💲 Price checking wantslist to .csv
 
 This function selects a wantslist and dumps price data for all products in that list to a .csv file.
 
@@ -111,6 +113,36 @@ _This updates the stock, 500 articles each time, using the local cache of the st
 `python pymkm.py --price_check_wantslist fancycards --cache True`
 
 _This dumps price data for all the cards in the wantslist "fancycards" to a .csv file, using the local cache of the wantslists if available._
+
+## 📄 CSV importing
+
+If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list. Only works for Magic.
+
+Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo).
+
+> Remove all quotation marks and extra commas in card names.
+
+Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
+
+#### Configuration of CSV import
+
+The following columns are imported as default. This can be changed in `config.json`.
+
+> Note that you can only remove or move around columns, not add ones that are not present in the list below!
+
+- `name`: Card name, i.e. "Temple of Silence"
+- `set_name`: Expansion "long name", i.e. "Scars of Mirrodin"
+- `count`: Number of cards to be imported for this row
+- `foil`: Is the card foil? [`"foil"` = true, empty column = false]
+- `language_name`: Language long name, i.e. "English". For a list of compatible langauge names, see `idLanguage` chapter in this README.
+- `condition`: The card condition as per Cardmarket's grading (see `minCondition` chapter in this README).
+- `comments`: The comments to add to the article in your stock.
+
+The following columns are available but not enabled by default:
+
+- `signed`: Is the card signed? [any string = true, empty column = false]
+- `altered`: Is the card altered? [any string = true, empty column = false]
+- `playset`: Is the card a playset? [any string = true, empty column = false]
 
 ## ⚙️ Config parameters
 
@@ -219,63 +251,3 @@ Default `WARNING`.
 | idGame     | Specifies the Game the stock file is for\. (1=Mtg, 3=YGO, 6=PKM)             |
 | isSealed   | Specifies if sealed product should be returned\. (true, false)               |
 | idLanguage | Specifies the Language of the Local Name column\. (default is 1 for English) |
-
-## 📄 CSV importing
-
-If you scan cards using an app like Delver Lens or the TCG Player app, this feature can help you do bulk import of that list. Only works for Magic.
-
-Drop your list of cards into a file called `list.csv` in the root directory (there is an example file included in this repo).
-
-> Remove all quotation marks and extra commas in card names.
-
-Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
-
-#### Configuration of CSV import
-
-The following columns are imported as default. This can be changed in `config.json`.
-
-> Note that you can only remove or move around columns, not add ones that are not present in the list below!
-
-- `name`: Card name, i.e. "Temple of Silence"
-- `set_name`: Expansion "long name", i.e. "Scars of Mirrodin"
-- `count`: Number of cards to be imported for this row
-- `foil`: Is the card foil? [`"foil"` = true, empty column = false]
-- `language_name`: Language long name, i.e. "English". For a list of compatible langauge names, see `idLanguage` chapter in this README.
-- `condition`: The card condition as per Cardmarket's grading (see `minCondition` chapter in this README).
-- `comments`: The comments to add to the article in your stock.
-
-## 📊 Competition view
-
-This feature allows you to get a better view of how you should price individual cards depending on your local market and also the whole market:
-
-```
-Action number: 3
-Note: does not support playsets, booster displays etc (yet).
-Search product name:
-temple gar
-Foil? [y/N]:
-
-Found product: Temple Garden
-----------------------------------------------------------------------
-Local competition:
-
-Username     Country    Condition      Count    Price
------------  ---------  -----------  -------  -------
-Karand       SE         NM                 1        6
--> testuser  SE         NM                 1       13
-----------------------------------------------------------------------
-Total average price: 9.5, Total median price: 9.5, Total # of articles: 2
-
-----------------------------------------------------------------------
-Top 20 cheapest:
-
-Username         Country    Condition      Count    Price
----------------  ---------  -----------  -------  -------
-syresatve        GR         NM                 1     4.9
-Tromeck          ES         NM                 1     4.99
-    <cut out rows to save vertical space in README.md>
-peiraikos        GR         NM                 1     5.95
-finespoo         FI         NM                 2     5.98
-----------------------------------------------------------------------
-Total average price: 9.82, Total median price: 7.79, Total # of articles: 320
-```
