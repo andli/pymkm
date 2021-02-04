@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 __license__ = "MIT"
 
 import csv
@@ -750,51 +750,55 @@ class PyMkmApp:
         table_data = []
         total_price = 0
 
-        for article in stock_list:
-            name = article["product"]["enName"]
-            expansion = article.get("product").get("expansion")
-            foil = article.get("isFoil")
-            playset = article.get("isPlayset")
-            condition = article.get("condition")
-            language_code = article.get("idLanguage")
-            if isinstance(language_code, int):
-                language_name = PyMkmApi.languages[int(language_code)]
-            else:
-                language_name = language_code.get("languageName")
-            price = float(article.get("price"))
-            table_data.append(
-                [
-                    name,
-                    expansion,
-                    "\u2713" if foil else "",
-                    "\u2713" if playset else "",
-                    language_name,
-                    condition,
-                    price,
-                ]
-            )
-            total_price += price
-        if len(table_data) > 0:
-            print(
-                f"Top {str(num_articles)} most expensive articles in stock (total {len(stock_list)} items):\n"
-            )
-            print(
-                tb.tabulate(
-                    sorted(table_data, key=lambda x: x[6], reverse=True)[:num_articles],
-                    headers=[
-                        "Name",
-                        "Expansion",
-                        "Foil",
-                        "Playset",
-                        "Language",
-                        "Condition",
-                        "Price",
-                    ],
-                    tablefmt="simple",
+        if stock_list:
+            for article in stock_list:
+                name = article["product"]["enName"]
+                expansion = article.get("product").get("expansion")
+                foil = article.get("isFoil")
+                playset = article.get("isPlayset")
+                condition = article.get("condition")
+                language_code = article.get("idLanguage")
+                if isinstance(language_code, int):
+                    language_name = PyMkmApi.languages[int(language_code)]
+                else:
+                    language_name = language_code.get("languageName")
+                price = float(article.get("price"))
+                table_data.append(
+                    [
+                        name,
+                        expansion,
+                        "\u2713" if foil else "",
+                        "\u2713" if playset else "",
+                        language_name,
+                        condition,
+                        price,
+                    ]
                 )
-            )
-            print("\nTotal stock value: {}".format(str(total_price)))
-        return None
+                total_price += price
+            if len(table_data) > 0:
+                print(
+                    f"Top {str(num_articles)} most expensive articles in stock (total {len(stock_list)} items):\n"
+                )
+                print(
+                    tb.tabulate(
+                        sorted(table_data, key=lambda x: x[6], reverse=True)[
+                            :num_articles
+                        ],
+                        headers=[
+                            "Name",
+                            "Expansion",
+                            "Foil",
+                            "Playset",
+                            "Language",
+                            "Condition",
+                            "Price",
+                        ],
+                        tablefmt="simple",
+                    )
+                )
+                print("\nTotal stock value: {}".format(str(total_price)))
+        else:
+            print("No stock available.")
 
     def track_prices_to_csv(self, api, wantslist_name=None, cached=False):
         wantslists, wantslists_lists = self.get_wantslists_data(api, cached)
@@ -1372,7 +1376,7 @@ class PyMkmApp:
             except StopIteration:
                 # Stock item not found in update batch, continuing
                 self.logger.error(
-                    f"aid {article['idArticle']} pid {article['idProduct']} - {article['product']['enName']} {article['product']['expansion']} failed to find a product"
+                    f"aid {article['idArticle']} pid {article['idProduct']} - Empty or timed out response for {article['product']['enName']} {article['product']['expansion']}"
                 )
                 continue
 
