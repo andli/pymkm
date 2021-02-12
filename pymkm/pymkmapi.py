@@ -263,6 +263,7 @@ class PyMkmApi:
 
     async def fetch(self, sem, client, url, uri, item_type, item_id, progressbar=None):
         async with sem:
+            self.logger.debug(f"Started fetch on {item_type} {item_id}")
             client_auth = copy.copy(client.auth)
             client_auth.realm = url
             try:
@@ -278,7 +279,9 @@ class PyMkmApi:
                     self.logger.error(f"Error in async fetch: {err.msg}")
             finally:
                 if progressbar:
-                    progressbar.update()
+                    progressbar.update(
+                        progressbar.value + 1
+                    )  # HACK: is this "thread safe"?
 
     async def get_items(self, item_type, item_id_list, progressbar=None):
         async with AsyncOAuth1Client(
@@ -289,7 +292,7 @@ class PyMkmApi:
             timeout=self.config["cardmarket_request_timeout"],
         ) as client:
             tasks = []
-            sem = asyncio.Semaphore(50)
+            sem = asyncio.Semaphore(self.config["api_async_semaphore_value"])
             for item_id in item_id_list:
                 tasks.append(
                     asyncio.ensure_future(
