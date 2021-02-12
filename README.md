@@ -101,6 +101,7 @@ _NOTE: This does not work for metaproducts, only for products._
 ## 👩‍💻 CLI
 
 Some functions have command line support, see `python pymkm.py --help` for more info.
+Note that the `--cached` argument is required to set to be able to use CLI variant of pymkm.
 
 #### Example 1
 

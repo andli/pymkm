@@ -37,7 +37,7 @@ def main():
         "--cached",
         type=bool,
         default=False,
-        help="Use cached values if available (defaults to False).",
+        help="REQUIRED to use CLI pymkm. Use cached values if available (defaults to False).",
     )
 
     args = parser.parse_args()
