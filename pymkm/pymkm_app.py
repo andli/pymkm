@@ -1376,7 +1376,7 @@ class PyMkmApp:
             except StopIteration:
                 # Stock item not found in update batch, continuing
                 self.logger.error(
-                    f"aid {article['idArticle']} pid {article['idProduct']} - Empty or timed out response for {article['product']['enName']} {article['product']['expansion']}"
+                    f"aid {article['idArticle']} pid {article['idProduct']} - Empty or timed out response for {article['product']['enName']} ({article['product']['expansion']})"
                 )
                 continue
 
