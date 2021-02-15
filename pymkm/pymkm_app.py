@@ -161,6 +161,8 @@ class PyMkmApp:
                 menu.add_message_bottom_row(
                     f"{self.account['name']['firstName']} {self.account['name']['lastName']} ({self.account['username']})"
                 )
+                if self.account.get("onVacation"):
+                    menu.add_message_bottom_row("☀ Account is on vacation")
                 menu.add_message_bottom_row(
                     f"API calls used today: {self.api.requests_count}/{self.api.requests_max}"
                 )
