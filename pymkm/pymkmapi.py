@@ -7,6 +7,7 @@ __author__ = "Andreas Ehrlund"
 __version__ = "2.4.1"
 __license__ = "MIT"
 
+import time
 import asyncio
 import copy
 import json
@@ -267,13 +268,18 @@ class PyMkmApi:
             client_auth = copy.copy(client.auth)
             client_auth.realm = url
             try:
+                time_start = time.perf_counter()
                 resp = await client.get(url, auth=client_auth)
                 self.__read_request_limits_from_header(resp)
             except Exception as err:
                 self.logger.debug(f"Timeout on {item_type} {item_id}")
             else:
                 try:
+                    time_done = time.perf_counter()
                     json = resp.json()
+                    self.logger.debug(
+                        f"Got result for {item_type} {item_id} in {time_done - time_start:0.2f} seconds"
+                    )
                     return json
                 except JSONDecodeError as err:
                     self.logger.error(f"Error in async fetch: {err.msg}")
