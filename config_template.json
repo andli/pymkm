@@ -58,5 +58,6 @@
   "show_top_x_expensive_items": 20,
   "cardmarket_request_timeout": 40,
   "api_async_semaphore_value": 50,
+  "max_retries_on_timeouts": 3,
   "log_level": "WARNING"
 }

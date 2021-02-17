@@ -170,7 +170,11 @@ class PyMkmApp:
                 menu.add_function_item(
                     f"Update stock prices {stock_status}",
                     self.update_stock_prices_to_trend,
-                    {"api": self.api, "cli_called": False},
+                    {
+                        "api": self.api,
+                        "cli_called": False,
+                        "retries_left": self.config["max_retries_on_timeouts"],
+                    },
                     uid="updatestockprices",
                 )
                 menu.add_function_item(
@@ -272,7 +276,11 @@ class PyMkmApp:
                 )
             if args.update_stock:
                 self.update_stock_prices_to_trend(
-                    self.api, args.update_stock, args.cached, args.partial
+                    self.api,
+                    args.update_stock,
+                    args.cached,
+                    args.partial,
+                    self.config["max_retries_on_timeouts"],
                 )
 
     def check_product_id(self, api):
@@ -422,7 +430,9 @@ class PyMkmApp:
             del entry["name"]
         return not_uploadable_json
 
-    def update_stock_prices_to_trend(self, api, cli_called, cached=None, partial=0):
+    def update_stock_prices_to_trend(
+        self, api, cli_called, cached=None, partial=0, retries_left=0, no_prompt=False
+    ):
         """ This function updates all prices in the user's stock to TREND. """
 
         stock_list = self.get_stock_as_array(
@@ -451,7 +461,7 @@ class PyMkmApp:
             ]
 
             partial_stock_update_size = 0
-            if partial > 0:
+            if partial > 0 or no_prompt:
                 partial_stock_update_size = partial
             elif not cli_called:
                 partial_status_string = ""
@@ -492,6 +502,11 @@ class PyMkmApp:
                     PyMkmHelper.clear_cache(
                         self.config["local_cache_filename"], "partial_updated"
                     )
+                    self.logger.debug("-> update_stock_prices_to_trend: Done")
+                    return
+
+            total_num_updated, num_stock = self.get_stock_update_result()
+            print(f"{total_num_updated} out of {num_stock} in stock checked.")
 
             if len(uploadable_json) > 0:
 
@@ -502,15 +517,47 @@ class PyMkmApp:
                 ):
                     print("Updating prices...")
                     api.set_stock(uploadable_json)
+
                     print("Prices updated.")
                 else:
                     print("Prices not updated.")
             else:
-                print("No prices to update.")
+                print("No price differences to update this time.")
+
+            # Auto-retry
+            retries_left_after_this = retries_left - 1
+            if retries_left_after_this > 0:
+                if total_num_updated and total_num_updated < num_stock:
+                    print(f"Auto-retrying, {retries_left_after_this} retries left.")
+                    self.logger.debug(
+                        f"Auto-retrying, {retries_left_after_this} retries left."
+                    )
+                    self.update_stock_prices_to_trend(
+                        api,
+                        cli_called,
+                        True,
+                        partial=partial_stock_update_size,
+                        retries_left=retries_left_after_this,
+                        no_prompt=True,
+                    )
+
         else:
             print("No stock to update.")
 
         self.logger.debug("-> update_stock_prices_to_trend: Done")
+
+    def get_stock_update_result(self):
+        # Check stock update progress
+        num_stock = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "stock"
+        )
+        num_checked = PyMkmHelper.read_from_cache(
+            self.config["local_cache_filename"], "partial_updated"
+        )
+        if num_checked and len(num_checked) < len(num_stock):
+            return len(num_checked), len(num_stock)
+        else:
+            return 0, len(num_stock)
 
     def get_price_calculator_instance(self):
         # get calculator module and class
@@ -1541,6 +1588,9 @@ class PyMkmApp:
             self.config["local_cache_filename"], "stock"
         )
 
+        if cached:
+            return local_stock_cache
+
         if not cli_called:
             if not local_stock_cache:
                 return self.get_stock_as_file_to_cache(self.api)
@@ -1552,7 +1602,4 @@ class PyMkmApp:
                 else:
                     return self.get_stock_as_file_to_cache(self.api)
         else:
-            if cached:
-                return local_stock_cache
-            else:
-                return self.get_stock_as_file_to_cache(self.api)
+            return self.get_stock_as_file_to_cache(self.api)
