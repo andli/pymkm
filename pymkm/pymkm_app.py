@@ -134,18 +134,20 @@ class PyMkmApp:
         if "--cached" not in sys.argv:  # if command line args have not been passed
             while True:
                 stock_status = ""
-                num_stock = PyMkmHelper.read_from_cache(
+                cached_stock = PyMkmHelper.read_from_cache(
                     self.config["local_cache_filename"], "stock"
                 )
 
-                num_already_checked = PyMkmHelper.read_from_cache(
+                cached_already_checked = PyMkmHelper.read_from_cache(
                     self.config["local_cache_filename"], "partial_updated"
                 )
 
-                if num_stock and not num_already_checked:
-                    stock_status = f"({len(num_stock)} items)"
-                if num_stock and num_already_checked:
-                    stock_status = f"({len(num_already_checked)}/{len(num_stock)} done)"
+                if cached_stock and not cached_already_checked:
+                    stock_status = f"({len(cached_stock)} items)"
+                if cached_stock and cached_already_checked:
+                    stock_status = (
+                        f"({len(cached_already_checked)}/{len(cached_stock)} done)"
+                    )
 
                 top_message = self.check_latest_version()
 
@@ -502,7 +504,9 @@ class PyMkmApp:
                     PyMkmHelper.clear_cache(
                         self.config["local_cache_filename"], "partial_updated"
                     )
-                    self.logger.debug("-> update_stock_prices_to_trend: Done")
+                    self.logger.debug(
+                        "-> update_stock_prices_to_trend: Done, all products updated."
+                    )
                     return
 
             total_num_updated, num_stock = self.get_stock_update_result()
@@ -798,10 +802,12 @@ class PyMkmApp:
 
         table_data = []
         total_price = 0
+        total_count = 0
 
         if stock_list:
             for article in stock_list:
                 name = article["product"]["enName"]
+                count = article["count"]
                 expansion = article.get("product").get("expansion")
                 foil = article.get("isFoil")
                 playset = article.get("isPlayset")
@@ -820,17 +826,19 @@ class PyMkmApp:
                         "\u2713" if playset else "",
                         language_name,
                         condition,
+                        count,
                         price,
                     ]
                 )
-                total_price += price
+                total_count += count
+                total_price += price * count
             if len(table_data) > 0:
                 print(
-                    f"Top {str(num_articles)} most expensive articles in stock (total {len(stock_list)} items):\n"
+                    f"Top {str(num_articles)} most expensive articles in stock ({len(stock_list)} items, {total_count} cards):\n"
                 )
                 print(
                     tb.tabulate(
-                        sorted(table_data, key=lambda x: x[6], reverse=True)[
+                        sorted(table_data, key=lambda x: x[7], reverse=True)[
                             :num_articles
                         ],
                         headers=[
@@ -840,6 +848,7 @@ class PyMkmApp:
                             "Playset",
                             "Language",
                             "Condition",
+                            "Count",
                             "Price",
                         ],
                         tablefmt="simple",
@@ -1117,11 +1126,10 @@ class PyMkmApp:
         stock_list = self.get_stock_as_array(
             api=self.api, log_time_label="Fetching stock"
         )
+        total_count = sum([x["count"] for x in stock_list])
         if stock_list:
             if PyMkmHelper.prompt_bool(
-                "Do you REALLY want to clear your entire stock ({} items)?".format(
-                    len(stock_list)
-                )
+                f"Do you REALLY want to clear your entire stock ({len(stock_list)} items, {total_count} cards)?"
             ):
 
                 # for article in stock_list:
@@ -1435,15 +1443,17 @@ class PyMkmApp:
             )
             if updated_article:
                 result_json.append(updated_article)
-                total_price += updated_article.get("price")
+                total_price += updated_article.get("price") * updated_article.get(
+                    "count"
+                )
             else:
-                total_price += article.get("price")
+                total_price += article.get("price") * article.get("count")
             # index += 1
             bar.update()
         bar.finish()
 
         print("Value in this update: {}".format(str(round(total_price, 2))))
-        if len(stock_list) != len(filtered_stock_list):
+        if sticky_count > 0:
             print(f"Note: {sticky_count} items filtered out because of sticky prices.")
         return result_json, checked_articles, sticky_count
 
@@ -1595,8 +1605,9 @@ class PyMkmApp:
             if not local_stock_cache:
                 return self.get_stock_as_file_to_cache(self.api)
             else:
+                total_count = sum([x["count"] for x in local_stock_cache])
                 if PyMkmHelper.prompt_bool(
-                    f"Cached stock ({len(local_stock_cache)} items) found, use it?"
+                    f"Cached stock ({len(local_stock_cache)} items, {total_count} cards) found, use it?"
                 ):
                     return local_stock_cache
                 else:

@@ -272,7 +272,8 @@ class PyMkmApi:
                 resp = await client.get(url, auth=client_auth)
                 self.__read_request_limits_from_header(resp)
             except Exception as err:
-                self.logger.debug(f"Timeout on {item_type} {item_id}")
+                pass
+                # self.logger.error(f"Timeout on {item_type} {item_id}")
             else:
                 try:
                     time_done = time.perf_counter()
