@@ -173,4 +173,6 @@ class PyMkmHelper:
                 child.append(child_property)
             xml_doc.append(child)
 
-        return tostring(xml_doc, encoding="UTF-8", xml_declaration=True).decode("utf-8")
+        return_string = tostring(xml_doc, encoding="UTF-8").decode("utf-8")
+
+        return return_string

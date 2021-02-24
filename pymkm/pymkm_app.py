@@ -453,14 +453,15 @@ class PyMkmApp:
 
             # Handle articles in shopping carts
             articles_in_shopping_carts = api.get_articles_in_shoppingcarts()["article"]
-            article_ids_in_shopping_carts = [
-                x["idArticle"] for x in articles_in_shopping_carts
-            ]
-            stock_list = [
-                x
-                for x in stock_list
-                if x["idArticle"] not in article_ids_in_shopping_carts
-            ]
+            if articles_in_shopping_carts:
+                article_ids_in_shopping_carts = [
+                    x["idArticle"] for x in articles_in_shopping_carts
+                ]
+                stock_list = [
+                    x
+                    for x in stock_list
+                    if x["idArticle"] not in article_ids_in_shopping_carts
+                ]
 
             partial_stock_update_size = 0
             if partial > 0 or no_prompt:
