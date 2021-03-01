@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Auto-retries for stock price update. Configure with `max_retries_on_timeouts`.
 
+### Fixed
+
+- Fixed an issue with python 3.6 compatibility.
+
 ## [2.4.1]
 
 ### Changed
@@ -116,7 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Added error handling for set_stock where Cardmarket sends a 200 OK but with an error in it.
+- Added error handling for set_stock where Cardmarket sends a 200 OK but with
+  an error in it.
 
 ## [2.0.0]
 
