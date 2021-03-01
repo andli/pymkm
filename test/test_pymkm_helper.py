@@ -29,8 +29,7 @@ class TestPyMkmHelperFunctions(unittest.TestCase):
             }
         ]
 
-        add_to_stock_xml = """<?xml version='1.0' encoding='UTF-8'?>
-           <request>
+        add_to_stock_xml = """<request>
                <article>
                    <idProduct>100569</idProduct>
                    <idLanguage>1</idLanguage>
