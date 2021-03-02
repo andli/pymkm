@@ -487,67 +487,81 @@ class PyMkmApp:
                 else:
                     partial_stock_update_size = 0
 
-            (
-                uploadable_json,
-                checked_articles,
-                num_filtered_articles,
-            ) = self.calculate_new_prices_for_stock(
-                stock_list,
-                partial_stock_update_size,
-                already_checked_articles,
-                api=self.api,
-            )
-
-            cache_size = 0
-            if checked_articles:  # TODO: subtract the sticky prices
-                cache_size = PyMkmHelper.append_to_cache(
-                    self.config["local_cache_filename"],
-                    "partial_updated",
-                    checked_articles,
+            if already_checked_articles and len(already_checked_articles) == len(
+                stock_list
+            ):
+                print("Stock updated.")
+                PyMkmHelper.clear_cache(
+                    self.config["local_cache_filename"], "partial_updated"
                 )
-                if cache_size + num_filtered_articles == len(stock_list):
-                    print(f"Entire stock updated in partial updates.")
+            else:
+                (
+                    uploadable_json,
+                    checked_articles,
+                    num_filtered_articles,
+                ) = self.calculate_new_prices_for_stock(
+                    stock_list,
+                    partial_stock_update_size,
+                    already_checked_articles,
+                    api=self.api,
+                )
+
+                if checked_articles:  # TODO: subtract the sticky prices
+                    PyMkmHelper.append_to_cache(
+                        self.config["local_cache_filename"],
+                        "partial_updated",
+                        checked_articles,
+                    )
+
+                total_num_updated, num_stock = self.get_stock_update_result()
+                print(f"{total_num_updated} out of {num_stock} in stock checked.")
+
+                if len(uploadable_json) > 0:
+
+                    self.display_price_changes_table(uploadable_json)
+
+                    if cli_called or PyMkmHelper.prompt_bool(
+                        "Do you want to update these prices?"
+                    ):
+                        print("Updating prices...")
+                        api.set_stock(uploadable_json)
+
+                        print("Prices updated.")
+                    else:
+                        print("Prices not updated.")
+                else:
+                    print("No price differences to update this time.")
+
+                # Auto-retry
+                retries_left_after_this = retries_left - 1
+                if retries_left_after_this > 0:
+                    if (
+                        partial_stock_update_size == 0
+                        or partial_stock_update_size > len(checked_articles)
+                    ):
+                        if total_num_updated and total_num_updated < num_stock:
+                            print(
+                                f"Auto-retrying, {retries_left_after_this} retries left."
+                            )
+                            self.logger.debug(
+                                f"Auto-retrying, {retries_left_after_this} retries left."
+                            )
+                            self.update_stock_prices_to_trend(
+                                api,
+                                cli_called,
+                                True,
+                                partial=partial_stock_update_size,
+                                retries_left=retries_left_after_this,
+                                no_prompt=True,
+                            )
+
+                if len(checked_articles) + num_filtered_articles == len(stock_list):
+                    print(f"Entire stock updated.")
                     PyMkmHelper.clear_cache(
                         self.config["local_cache_filename"], "partial_updated"
                     )
                     self.logger.debug(
                         "-> update_stock_prices_to_trend: Done, all products updated."
-                    )
-
-            total_num_updated, num_stock = self.get_stock_update_result()
-            print(f"{total_num_updated} out of {num_stock} in stock checked.")
-
-            if len(uploadable_json) > 0:
-
-                self.display_price_changes_table(uploadable_json)
-
-                if cli_called or PyMkmHelper.prompt_bool(
-                    "Do you want to update these prices?"
-                ):
-                    print("Updating prices...")
-                    api.set_stock(uploadable_json)
-
-                    print("Prices updated.")
-                else:
-                    print("Prices not updated.")
-            else:
-                print("No price differences to update this time.")
-
-            # Auto-retry
-            retries_left_after_this = retries_left - 1
-            if retries_left_after_this > 0:
-                if total_num_updated and total_num_updated < num_stock:
-                    print(f"Auto-retrying, {retries_left_after_this} retries left.")
-                    self.logger.debug(
-                        f"Auto-retrying, {retries_left_after_this} retries left."
-                    )
-                    self.update_stock_prices_to_trend(
-                        api,
-                        cli_called,
-                        True,
-                        partial=partial_stock_update_size,
-                        retries_left=retries_left_after_this,
-                        no_prompt=True,
                     )
 
         else:
@@ -563,7 +577,7 @@ class PyMkmApp:
         num_checked = PyMkmHelper.read_from_cache(
             self.config["local_cache_filename"], "partial_updated"
         )
-        if num_checked and len(num_checked) < len(num_stock):
+        if num_checked and len(num_checked) <= len(num_stock):
             return len(num_checked), len(num_stock)
         else:
             return 0, len(num_stock)
