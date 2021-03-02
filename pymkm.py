@@ -5,7 +5,7 @@ This is a working app for showcasing the PyMKM module.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.4.2"
+__version__ = "2.5.0"
 __license__ = "MIT"
 
 import argparse
@@ -35,10 +35,17 @@ def main():
     )
     parser.add_argument(
         "--cached",
-        type=bool,
-        default=False,
-        help="REQUIRED to use CLI pymkm. Use cached values if available (defaults to False).",
+        dest="cached",
+        action="store_true",
+        help="Use cached values if available.",
     )
+    parser.add_argument(
+        "--no-cached",
+        dest="cached",
+        action="store_false",
+        help="Don't use cached values.",
+    )
+    parser.set_defaults(cached=True)
 
     args = parser.parse_args()
 

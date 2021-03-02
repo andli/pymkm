@@ -4,7 +4,7 @@ The PyMKM example app.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.4.2"
+__version__ = "2.5.0"
 __license__ = "MIT"
 
 import csv
@@ -131,7 +131,9 @@ class PyMkmApp:
 
     def start(self, args=None):
 
-        if "--cached" not in sys.argv:  # if command line args have not been passed
+        if (
+            "--cached" not in sys.argv and "--no-cached" not in sys.argv
+        ):  # if command line args have not been passed
             while True:
                 stock_status = ""
                 cached_stock = PyMkmHelper.read_from_cache(
@@ -257,10 +259,10 @@ class PyMkmApp:
                         uid="restorestock",
                     )
                     menu.add_function_item(
-                        f"⚠ Show games",
-                        self.print_games,
+                        f"⚠ Set all prices to 1",
+                        self.dev_reset_prices,
                         {"api": self.api},
-                        uid="showgames",
+                        uid="dev_reset_prices",
                     )
                 if self.api.requests_count < self.api.requests_max:
                     break_signal = menu.show()
@@ -295,11 +297,14 @@ class PyMkmApp:
         pp = pprint.PrettyPrinter()
         pp.pprint(product_json)
 
-    def print_games(self, api):
-        # dev function to check game ids
-        games_info = api.get_games()
-        pp = pprint.PrettyPrinter()
-        pp.pprint(games_info)
+    def dev_reset_prices(self, api):
+        stock_list = self.get_stock_as_array(api=self.api)
+        uploadable_json = []
+        for article in stock_list:
+            uploadable_json.append(self.article_to_uploadable_json(article, 1))
+
+        print("Updating prices...")
+        api.set_stock(uploadable_json)
 
     def stock_backup_to_cache(self, api):
         if PyMkmHelper.prompt_bool("Sure?"):
@@ -508,7 +513,6 @@ class PyMkmApp:
                     self.logger.debug(
                         "-> update_stock_prices_to_trend: Done, all products updated."
                     )
-                    return
 
             total_num_updated, num_stock = self.get_stock_update_result()
             print(f"{total_num_updated} out of {num_stock} in stock checked.")
@@ -1474,19 +1478,23 @@ class PyMkmApp:
             price_diff = new_price - article["price"]
             if price_diff != 0:
                 # table data created here
-                return {
-                    "name": article["product"]["enName"],
-                    "expansion": article["product"]["expansion"],
-                    "isFoil": article.get("isFoil", False),
-                    "isPlayset": article.get("isPlayset", False),
-                    "idLanguage": language_id,
-                    "condition": article["condition"],
-                    "old_price": article["price"],
-                    "price": new_price,
-                    "price_diff": price_diff,
-                    "idArticle": article["idArticle"],
-                    "count": article["count"],
-                }
+                uploadable_json = self.article_to_uploadable_json(article, new_price)
+                uploadable_json["price_diff"] = price_diff
+                return uploadable_json
+
+    def article_to_uploadable_json(self, article, new_price):
+        return {
+            "name": article["product"]["enName"],
+            "expansion": article["product"]["expansion"],
+            "isFoil": article.get("isFoil", False),
+            "isPlayset": article.get("isPlayset", False),
+            "idLanguage": PyMkmHelper.string_to_float_or_int(article["idLanguage"]),
+            "condition": article["condition"],
+            "old_price": article["price"],
+            "price": new_price,
+            "idArticle": article["idArticle"],
+            "count": article["count"],
+        }
 
     def get_rounding_limit_for_rarity(self, rarity, product_id):
         rounding_limit = float(self.config["price_limit_by_rarity"]["default"])

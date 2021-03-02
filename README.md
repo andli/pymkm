@@ -1,3 +1,5 @@
+# 📙 PyMKM
+
 ![Python application](https://github.com/andli/pymkm/workflows/Python%20application/badge.svg)
 [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm)
 
@@ -7,22 +9,18 @@ Hop in on the [Discord server](https://discord.gg/GMZyWhFjpC) if you want help o
 
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F82FJ06)
 
-# 📙 PyMKM
-
-> _NEW in 2.4.0: Configurable csv import columns._
-
-> _NEW in 2.3.0: Custom price calculator modules._
-
 Python wrapper for the [cardmarket.com API](https://api.cardmarket.com/ws/documentation/API_2.0:Main_Page) (version 2.0, using OAuth1 and the "Dedicated app" option).
 
 The included sample app can update your stock prices to trend, all rounded to nearest configurable value per rarity (default .25 €). A confirmation step allows you to check the result before uploading the new prices.
 
 The app can import a .csv list of cards to your stock. It can also be used to clear your entire stock.
-The app also keeps track of how many API requests your have left each day, and can do partial updates if you have more than 5000 articles to update.
+The app keeps track of how many API requests your have left each day, and can do partial updates if you have more than 5000 articles to update.
+
+The price calculation is modular and you can write your own algorithm in python if you want.
 
 **NOTE:** Use all functionality at your own risk, I take no responsibility for the resulting prices or wiped stock. See 'price calculation' below for more details.
 
-```
+```terminal
 Fetching Cardmarket account data...
 Fetching account data took 0s
 ╭─── PyMKM 2.3.0 ────────────────────────────────╮
@@ -101,19 +99,19 @@ _NOTE: This does not work for metaproducts, only for products._
 ## 👩‍💻 CLI
 
 Some functions have command line support, see `python pymkm.py --help` for more info.
-Note that the `--cached` argument is required to set to be able to use CLI variant of pymkm.
+Note that the `--cached` or `--no-cached` argument is required to set to be able to use CLI variant of pymkm.
 
-#### Example 1
+### Example 1
 
-`python pymkm.py --update_stock --partial 500 --cache True`
+`python pymkm.py --update_stock --partial 500 --cached`
 
 _This updates the stock, 500 articles each time, using the local cache of the stock if available._
 
-#### Example 2
+### Example 2
 
-`python pymkm.py --price_check_wantslist fancycards --cache True`
+`python pymkm.py --price_check_wantslist fancycards --no-cached`
 
-_This dumps price data for all the cards in the wantslist "fancycards" to a .csv file, using the local cache of the wantslists if available._
+_This dumps price data for all the cards in the wantslist "fancycards" to a .csv file, not using the local cache of the wantslists._
 
 ## 📄 CSV importing
 
@@ -125,7 +123,7 @@ Drop your list of cards into a file called `list.csv` in the root directory (the
 
 Any cards that fail to import are written to a new .csv file called `failed_imports.csv`.
 
-#### Configuration of CSV import
+### Configuration of CSV import
 
 The following columns are imported as default. This can be changed in `config.json`.
 
