@@ -113,7 +113,11 @@ class PyMkmApp:
 
     @timeit
     def get_account_data(self, api, **kwargs):
-        return api.get_account()["account"]
+        try:
+            return api.get_account()["account"]
+        except:
+            # Could not get account details, must quit
+            sys.exit(0)
 
     def check_latest_version(self):
         latest_version = None
