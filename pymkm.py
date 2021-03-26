@@ -5,7 +5,7 @@ This is a working app for showcasing the PyMKM module.
 """
 
 __author__ = "Andreas Ehrlund"
-__version__ = "2.5.0"
+__version__ = "2.5.1"
 __license__ = "MIT"
 
 import argparse

@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="pymkm",
-    version="2.5.0",
+    version="2.5.1",
     packages=setuptools.find_packages(),
     url="https://github.com/andli/pymkm/",
     license="MIT",
