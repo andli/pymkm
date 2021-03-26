@@ -135,7 +135,7 @@ class PyMkmApi:
         try:
             json_data = response.json()
         except json.decoder.JSONDecodeError:
-            self.logger.error(f"Text in response: {response.text}")
+            self.logger.error(f"Cardmarket says: {response.text}")
         finally:
             if item_ref:
                 try: 
