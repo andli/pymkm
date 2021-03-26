@@ -12,7 +12,7 @@ from test.local_test_common import LocalTestCommon
 class TestPyMkmApp(LocalTestCommon):
     @patch("sys.stdout", new_callable=io.StringIO)
     @patch("builtins.input", side_effect=["0"])
-    def test_app_starts(self, mock_input, mock_stdout, *args):
+    def test_app_starts_and_connects_to_Cardmarket(self, mock_input, mock_stdout, *args):
         self.assertEqual(True, True)
         app = PyMkmApp()
         app.start(self.parsed_args)
