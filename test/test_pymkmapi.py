@@ -8,9 +8,29 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 
 from requests_oauthlib import OAuth1Session
 
-from pymkm.pymkmapi import PyMkmApi, CardmarketError
+from pymkm.pymkmapi import PyMkmApi, CardmarketError, PyMkmApiConfig
 from pymkm.pymkm_app import PyMkmApp
 from test.test_common import TestCommon, MockResponse, MockRequest
+
+
+def test_init_base_url_config_production():
+    prod_ulr = "production.cardmarket.com"
+    test_ulr = "random.test.url"
+    config = PyMkmApiConfig(
+        production_enabled=True, production_mkm_url=prod_ulr, test_mkm_url=test_ulr
+    )
+    api = PyMkmApi(config)
+    assert api.base_url == prod_ulr
+
+
+def test_init_base_url_config_test():
+    prod_ulr = "production.cardmarket.com"
+    test_ulr = "random.test.url"
+    config = PyMkmApiConfig(
+        production_enabled=False, production_mkm_url=prod_ulr, test_mkm_url=test_ulr
+    )
+    api = PyMkmApi(config)
+    assert api.base_url == test_ulr
 
 
 class TestPyMkmApi(TestCommon):
@@ -18,7 +38,7 @@ class TestPyMkmApi(TestCommon):
     api = None
 
     def setUp(self):
-        super(TestPyMkmApi, self).setUp()
+        self.config = PyMkmApiConfig()
 
         self.api = PyMkmApi(self.config)
 
@@ -31,7 +51,7 @@ class TestPyMkmApi(TestCommon):
 
         empty_response = self.api.get_expansions(1, mock_oauth)
         mock.assert_called_with(
-            "[Cardmarket API] No results found. https://api.cardmarket.com/ws/v2.0/output.json/games/1/expansions"
+            f"[Cardmarket API] No results found. {self.config.test_mkm_url}/games/1/expansions"
         )
 
     def test_get_language_code_from_string(self):

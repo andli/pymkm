@@ -20,6 +20,7 @@ import urllib.parse
 import base64, zlib
 import csv
 import codecs
+from dataclasses import dataclass
 
 import requests
 from json import JSONDecodeError
@@ -45,6 +46,20 @@ class CardmarketError(Exception):
         else:
             error_string = self.args[0].get("mkm_error_description")
         return prefix_string + error_string
+
+
+@dataclass
+class PyMkmApiConfig:
+    app_token: str = "a"
+    app_secret: str = "b"
+    access_token: str = "c"
+    access_token_secret: str = "d"
+    production_enabled: bool = False
+    production_mkm_url: str = "https://api.cardmarket.com/ws/v2.0/output.json"
+    test_mkm_url: str = "https://sandbox.cardmarket.com/"
+    log_level: str = "WARNING"
+    cardmarket_request_timeout: int = 40
+    api_async_semaphore_value: int = 50
 
 
 class PyMkmApi:
@@ -92,22 +107,20 @@ class PyMkmApi:
         "Currency Code",
     ]
 
-    def __init__(self, config=None, logger=None):
+    def __init__(self, config: PyMkmApiConfig = PyMkmApiConfig(), logger=None):
 
         if logger:
             self.logger = logger
         else:
             self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(
-                config["log_level"]
-            )  # HACK: config may not be available
+            self.logger.setLevel(config.log_level)  # HACK: config may not be available
             formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
             fh = logging.handlers.RotatingFileHandler(
                 f"log_pymkm.log", maxBytes=500000, backupCount=2
             )
-            fh.setLevel(config["log_level"])  # HACK: config may not be available
+            fh.setLevel(config.log_level)  # HACK: config may not be available
             fh.setFormatter(formatter)
             self.logger.addHandler(fh)
             sh = logging.StreamHandler()
@@ -118,18 +131,12 @@ class PyMkmApi:
         self.requests_max = 0
         self.requests_count = 0
 
-        if config is None:
-            self.logger.debug(">> Loading config file")
-            try:
-                self.config = json.load(open("config.json"))
-            except FileNotFoundError:
-                self.logger.error(
-                    "You must copy config_template.json to config.json and populate the fields."
-                )
-                sys.exit(0)
+        self.config = config
+        if self.config.production_enabled:
+            self.base_url = config.production_mkm_url
         else:
-            self.config = config
-    
+            self.base_url = config.test_mkm_url
+
     def __get_json(self, response, item_ref=None):
         json_data = None
         try:
@@ -138,7 +145,7 @@ class PyMkmApi:
             self.logger.error(f"Cardmarket says: {response.text}")
         finally:
             if item_ref:
-                try: 
+                try:
                     return json_data[item_ref]
                 except:
                     self.logger.error(f"CANNOT FIND ITEM REFERENCE IN JSON")
@@ -181,10 +188,10 @@ class PyMkmApi:
         else:
             if self.config is not None:
                 oauth = OAuth1Session(
-                    self.config["app_token"],
-                    client_secret=self.config["app_secret"],
-                    resource_owner_key=self.config["access_token"],
-                    resource_owner_secret=self.config["access_token_secret"],
+                    self.config.app_token,
+                    client_secret=self.config.app_secret,
+                    resource_owner_key=self.config.access_token,
+                    resource_owner_secret=self.config.access_token_secret,
                     realm=url,
                 )
 
@@ -307,14 +314,14 @@ class PyMkmApi:
 
     async def get_items(self, item_type, item_id_list, progressbar=None):
         async with AsyncOAuth1Client(
-            client_id=self.config["app_token"],
-            client_secret=self.config["app_secret"],
-            token=self.config["access_token"],
-            token_secret=self.config["access_token_secret"],
-            timeout=self.config["cardmarket_request_timeout"],
+            client_id=self.config.app_token,
+            client_secret=self.config.app_secret,
+            token=self.config.access_token,
+            token_secret=self.config.access_token_secret,
+            timeout=self.config.cardmarket_request_timeout,
         ) as client:
             tasks = []
-            sem = asyncio.Semaphore(self.config["api_async_semaphore_value"])
+            sem = asyncio.Semaphore(self.config.api_async_semaphore_value)
             for item_id in item_id_list:
                 tasks.append(
                     asyncio.ensure_future(
@@ -429,7 +436,7 @@ class PyMkmApi:
                 r = mkm_oauth.post(
                     url,
                     data=xml_payload,
-                    timeout=self.config["cardmarket_request_timeout"],
+                    timeout=self.config.cardmarket_request_timeout,
                 )
                 mkm_oauth.close()
                 inserted = self.__get_json(r)
@@ -489,7 +496,7 @@ class PyMkmApi:
             self.logger.debug(f"chunk {index}/{len(chunked_list)}")
             xml_payload = PyMkmHelper.dicttoxml(chunk)
             r = mkm_oauth.put(
-                url, data=xml_payload, timeout=self.config["cardmarket_request_timeout"]
+                url, data=xml_payload, timeout=self.config.cardmarket_request_timeout
             )
             mkm_oauth.close()
             try:
@@ -638,7 +645,9 @@ class PyMkmApi:
                         f"-> get {item_name}s recurring to next_start={next_start}"
                     )
                     # item_name,url,start=0,avoid_redirect=False,provided_oauth=None,**kwargs,
-                    return self.__get_json(r, item_ref=item_name) + self.handle_partial_content(
+                    return self.__get_json(
+                        r, item_ref=item_name
+                    ) + self.handle_partial_content(
                         item_name,
                         url,
                         # mkm_oauth,
