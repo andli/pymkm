@@ -1,5 +1,8 @@
 # 📙 PyMKM
 
+| :exclamation:  Cardmarket API down, this app and API wrapper won't work until they reopen it   |
+|-----------------------------------------|
+
 ![Python application](https://github.com/andli/pymkm/workflows/Python%20application/badge.svg)
 [![codecov](https://codecov.io/gh/andli/pymkm/branch/master/graph/badge.svg)](https://codecov.io/gh/andli/pymkm)
 
